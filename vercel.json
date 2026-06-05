@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/pulse/oracle",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
