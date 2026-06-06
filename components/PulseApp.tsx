@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Zap } from "lucide-react";
-import { authenticateWithWorld, isWorldReady, payWithWorld } from "@/lib/world";
+import { authenticateWithWorld, hapticError, hapticImpact, hapticSuccess, isWorldReady, payWithWorld, requestNotificationPermission } from "@/lib/world";
 import { PulseView } from "./PulseView";
 import type { HistoryRecord } from "@/types/reputation";
 import type { VerifiedHuman } from "@/types/user";
@@ -35,11 +35,15 @@ export function PulseApp() {
     try {
       const result = await authenticateWithWorld();
       if (!result.ok || !result.address) {
+        void hapticError();
         setToast({ title: "Login failed", detail: result.error ?? "Open inside World App." });
         return;
       }
+      void hapticSuccess();
       setUser({ wallet: result.address, username: "@world_human", mode: "world", lastSeenAt: new Date().toISOString() });
       setToast({ title: "Welcome to PULSE", detail: "Verified human. Start predicting." });
+      // Request notification permission after successful login (docs: behavior-triggered is best practice)
+      void requestNotificationPermission();
     } finally {
       setBusy(false);
     }
@@ -63,11 +67,14 @@ export function PulseApp() {
     if (!amount || amount <= 0) return;
     setPaymentBusy(true);
     try {
+      void hapticImpact();
       const result = await payWithWorld({ amount, description: paymentPrompt.detail, feature: paymentPrompt.feature ?? "tip-pulse" });
       if (!result.ok) {
+        void hapticError();
         setToast({ title: "Payment failed", detail: "error" in result && result.error ? String(result.error) : "Try again inside World App." });
         return;
       }
+      void hapticSuccess();
       await paymentPrompt.onConfirmed?.(amount);
       setToast({ title: `${amount} WLD confirmed`, detail: paymentPrompt.success });
       setPaymentPrompt(null);

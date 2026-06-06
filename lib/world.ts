@@ -120,6 +120,27 @@ export async function shareWithWorld(opts: { title: string; text: string; url: s
   });
 }
 
+// ── Haptic feedback helpers (docs: sendHapticFeedback) ───────────────────────
+export async function hapticSuccess() {
+  if (!isWorldReady()) return;
+  try { await MiniKit.sendHapticFeedback({ hapticsType: "notification", style: "success" }); } catch { /* ignore */ }
+}
+
+export async function hapticError() {
+  if (!isWorldReady()) return;
+  try { await MiniKit.sendHapticFeedback({ hapticsType: "notification", style: "error" }); } catch { /* ignore */ }
+}
+
+export async function hapticImpact() {
+  if (!isWorldReady()) return;
+  try { await MiniKit.sendHapticFeedback({ hapticsType: "impact", style: "medium" }); } catch { /* ignore */ }
+}
+
+export async function hapticSelection() {
+  if (!isWorldReady()) return;
+  try { await MiniKit.sendHapticFeedback({ hapticsType: "selection-changed" }); } catch { /* ignore */ }
+}
+
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!isWorldReady()) return false;
   try {
