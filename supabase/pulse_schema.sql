@@ -1,5 +1,6 @@
 -- PULSE — Human Prediction Network
 -- Run this in your Supabase SQL editor (Dashboard → SQL Editor → New Query)
+-- Version 2 — adds goal_backs, creator fields, increment RPC, streak columns
 
 -- Markets (AI-generated or manually created)
 CREATE TABLE IF NOT EXISTS pulse_markets (
@@ -41,7 +42,7 @@ CREATE TABLE IF NOT EXISTS pulse_bets (
 
 CREATE INDEX IF NOT EXISTS idx_pulse_bets_market    ON pulse_bets(market_id);
 CREATE INDEX IF NOT EXISTS idx_pulse_bets_nullifier ON pulse_bets(world_nullifier);
--- Prevent same human betting on the same market twice
+-- Prevent same human betting on the same market twice (once confirmed)
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_pulse_bet_per_human_per_market
   ON pulse_bets(market_id, world_nullifier) WHERE confirmed = true;
 
@@ -60,21 +61,41 @@ CREATE TABLE IF NOT EXISTS pulse_player_stats (
 
 -- Personal goals staked by humans
 CREATE TABLE IF NOT EXISTS pulse_goals (
-  id               TEXT PRIMARY KEY,
-  owner_nullifier  TEXT NOT NULL,
-  title            TEXT NOT NULL,
-  description      TEXT,
-  deadline         TIMESTAMPTZ NOT NULL,
-  stake_wld        NUMERIC(12,4) NOT NULL CHECK (stake_wld > 0),
-  yes_pool         NUMERIC(14,4) NOT NULL DEFAULT 0,
-  no_pool          NUMERIC(14,4) NOT NULL DEFAULT 0,
-  status           TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','completed','failed','cancelled')),
-  evidence         TEXT,
+  id                TEXT PRIMARY KEY,
+  creator_nullifier TEXT NOT NULL,
+  creator_username  TEXT,
+  title             TEXT NOT NULL,
+  description       TEXT,
+  deadline          TIMESTAMPTZ NOT NULL,
+  stake_wld         NUMERIC(12,4) NOT NULL CHECK (stake_wld > 0),
+  yes_pool          NUMERIC(14,4) NOT NULL DEFAULT 0,
+  no_pool           NUMERIC(14,4) NOT NULL DEFAULT 0,
+  status            TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','completed','failed','cancelled')),
+  evidence          TEXT,
+  tx_reference      TEXT NOT NULL UNIQUE,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pulse_goals_creator ON pulse_goals(creator_nullifier);
+CREATE INDEX IF NOT EXISTS idx_pulse_goals_status  ON pulse_goals(status);
+
+-- Backings on personal goals (YES = believe they'll do it, NO = they won't)
+CREATE TABLE IF NOT EXISTS pulse_goal_backs (
+  id               TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  goal_id          TEXT NOT NULL REFERENCES pulse_goals(id) ON DELETE CASCADE,
+  backer_nullifier TEXT NOT NULL,
+  backer_username  TEXT,
+  position         TEXT NOT NULL CHECK (position IN ('yes','no')),
+  amount_wld       NUMERIC(12,4) NOT NULL CHECK (amount_wld > 0),
+  tx_reference     TEXT NOT NULL UNIQUE,
+  payout_wld       NUMERIC(12,4),
+  settled          BOOLEAN NOT NULL DEFAULT false,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_pulse_goals_owner  ON pulse_goals(owner_nullifier);
-CREATE INDEX IF NOT EXISTS idx_pulse_goals_status ON pulse_goals(status);
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_goal_back_per_human
+  ON pulse_goal_backs(goal_id, backer_nullifier);
+CREATE INDEX IF NOT EXISTS idx_goal_backs_goal ON pulse_goal_backs(goal_id);
 
 -- 1v1 Clash challenges
 CREATE TABLE IF NOT EXISTS pulse_clashes (
@@ -101,15 +122,33 @@ CREATE INDEX IF NOT EXISTS idx_pulse_clashes_challenger ON pulse_clashes(challen
 CREATE INDEX IF NOT EXISTS idx_pulse_clashes_market     ON pulse_clashes(market_id);
 CREATE INDEX IF NOT EXISTS idx_pulse_clashes_status     ON pulse_clashes(status);
 
--- Row-level security: read-only for anon, write via service role only
+-- ── Row-level security ────────────────────────────────────────────────────────
 ALTER TABLE pulse_markets      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pulse_bets         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pulse_player_stats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pulse_goals        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pulse_goal_backs   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pulse_clashes      ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE pulse_clashes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "public read markets"      ON pulse_markets      FOR SELECT USING (true);
 CREATE POLICY "public read leaderboard"  ON pulse_player_stats FOR SELECT USING (true);
 CREATE POLICY "public read goals"        ON pulse_goals        FOR SELECT USING (true);
+CREATE POLICY "public read goal_backs"   ON pulse_goal_backs   FOR SELECT USING (true);
 CREATE POLICY "public read clashes"      ON pulse_clashes      FOR SELECT USING (true);
 -- bets are private — only service role reads them server-side
+
+-- ── Helper RPC: atomically increment a goal pool ──────────────────────────────
+CREATE OR REPLACE FUNCTION increment_goal_pool(
+  p_goal_id TEXT,
+  p_field   TEXT,
+  p_amount  NUMERIC
+) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  IF p_field = 'yes_pool' THEN
+    UPDATE pulse_goals SET yes_pool = yes_pool + p_amount WHERE id = p_goal_id;
+  ELSIF p_field = 'no_pool' THEN
+    UPDATE pulse_goals SET no_pool = no_pool + p_amount WHERE id = p_goal_id;
+  END IF;
+END;
+$$;
