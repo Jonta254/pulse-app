@@ -49,18 +49,6 @@ export async function POST(req: NextRequest) {
     return noStoreJson({ ok: false, error: result.error }, { status: 400 });
   }
 
-  // Apply streak multipliers to payouts
-  const enhancedPayouts = (result.payouts ?? []).map((p: { nullifier: string; payout: number; streak?: number }) => {
-    const streak = p.streak ?? 0;
-    const { multiplier, label } = getStreakMultiplier(streak);
-    return {
-      ...p,
-      streakMultiplier: multiplier,
-      streakLabel: label,
-      finalPayout: +(p.payout * multiplier).toFixed(4),
-    };
-  });
-
   // Fire-and-forget notifications to all bettors
   if (nullifiers.length > 0) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -74,5 +62,6 @@ export async function POST(req: NextRequest) {
     }).catch(() => null);
   }
 
-  return noStoreJson({ ok: true, payouts: enhancedPayouts, outcome });
+  const { multiplier, label } = getStreakMultiplier(0); // baseline export — multipliers applied per-user in db
+  return noStoreJson({ ok: true, payouts: result.payouts, outcome, streakInfo: { multiplier, label } });
 }
