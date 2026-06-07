@@ -20,11 +20,13 @@ import {
   authenticateWithWorld,
   hapticError,
   hapticImpact,
+  hapticSelection,
   hapticSuccess,
   isWorldReady,
   payWithWorld,
   requestNotificationPermission,
 } from "@/lib/world";
+import { applyTheme, getStoredTheme, saveTheme, toggleTheme, type PulseTheme } from "@/lib/pulse/theme";
 import { PulseView } from "./PulseView";
 import type { HistoryRecord } from "@/types/reputation";
 import type { VerifiedHuman } from "@/types/user";
@@ -44,7 +46,25 @@ export function PulseApp() {
   const [toast, setToast]                     = useState<Toast | null>(null);
   const [paymentPrompt, setPaymentPrompt]     = useState<PaymentRequest | null>(null);
   const [paymentBusy, setPaymentBusy]         = useState(false);
+  const [theme, setTheme]                     = useState<PulseTheme>("night");
   const notifRequested                        = useRef(false);
+
+  // ── Theme — load from localStorage on mount, apply to <html> ────────────
+  useEffect(() => {
+    const stored = getStoredTheme();
+    setTheme(stored);
+    applyTheme(stored);
+  }, []);
+
+  const handleThemeToggle = useCallback(() => {
+    void hapticSelection();
+    setTheme((prev) => {
+      const next = toggleTheme(prev);
+      applyTheme(next);
+      saveTheme(next);
+      return next;
+    });
+  }, []);
 
   // ── MiniKit readiness poll (docs: avoid race conditions) ─────────────────
   useEffect(() => {
@@ -299,6 +319,23 @@ export function PulseApp() {
   // ── Main app ─────────────────────────────────────────────────────────────
   return (
     <div className="pulse-shell">
+      {/* Theme toggle — floats in top-right, always visible */}
+      <button
+        className="pulse-theme-toggle"
+        onClick={handleThemeToggle}
+        type="button"
+        aria-label={theme === "night" ? "Switch to day mode" : "Switch to night mode"}
+        title={theme === "night" ? "Switch to day mode" : "Switch to night mode"}
+        style={{
+          position: "fixed",
+          top: "calc(var(--safe-top) + 12px)",
+          right: "calc(var(--safe-right) + 12px)",
+          zIndex: 100,
+        }}
+      >
+        {theme === "night" ? "☀️" : "🌙"}
+      </button>
+
       <PulseView
         humanIdentity={user}
         openPayment={openPayment}

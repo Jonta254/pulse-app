@@ -1,28 +1,111 @@
+/* ── PULSE Design Tokens ─────────────────────────────────────────────────── */
+/* Default = DARK (night) mode — matches World App's dark aesthetic            */
 :root {
-  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-top:    env(safe-area-inset-top,    0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-left:   env(safe-area-inset-left,   0px);
+  --safe-right:  env(safe-area-inset-right,  0px);
   --app-height: 100dvh;
-  /* PULSE design tokens */
-  --pulse-bg: #07091a;
-  --pulse-surface: #0d1228;
-  --pulse-surface-2: #111930;
-  --pulse-border: rgba(99, 102, 241, 0.16);
-  --pulse-border-bright: rgba(99, 102, 241, 0.32);
-  --pulse-accent: #6366f1;
-  --pulse-yes: #00e887;
-  --pulse-no: #ff4d6d;
-  --pulse-gold: #f59e0b;
-  --pulse-text: #e8eaf6;
-  --pulse-muted: rgba(232, 234, 246, 0.52);
-  --pulse-glow: 0 0 24px rgba(99, 102, 241, 0.22);
+
+  /* ── NIGHT (dark) palette — default ─── */
+  --pulse-bg:           #07091a;
+  --pulse-surface:      #0d1228;
+  --pulse-surface-2:    #111930;
+  --pulse-border:       rgba(99, 102, 241, 0.16);
+  --pulse-border-bright:rgba(99, 102, 241, 0.32);
+  --pulse-accent:       #6366f1;
+  --pulse-yes:          #00e887;
+  --pulse-no:           #ff4d6d;
+  --pulse-gold:         #f59e0b;
+  --pulse-text:         #e8eaf6;
+  --pulse-muted:        rgba(232, 234, 246, 0.52);
+  --pulse-glow:         0 0 24px rgba(99, 102, 241, 0.22);
+  --pulse-card-bg:      #0d1228;
+  --pulse-card-border:  rgba(99, 102, 241, 0.2);
+  --pulse-nav-bg:       #0d1228;
+  --pulse-input-bg:     #111930;
+  --pulse-header-bg:    #07091a;
+  --pulse-sheet-bg:     linear-gradient(145deg, #131730, #0d0f24);
+
   /* world safe area aliases */
-  --world-safe-top: var(--safe-top);
+  --world-safe-top:    var(--safe-top);
   --world-safe-bottom: var(--safe-bottom);
-  --world-safe-left: var(--safe-left);
-  --world-safe-right: var(--safe-right);
+  --world-safe-left:   var(--safe-left);
+  --world-safe-right:  var(--safe-right);
 }
+
+/* ── DAY (light) palette — applied when html has data-theme="day" ──────── */
+[data-theme="day"] {
+  --pulse-bg:           #f0f2ff;
+  --pulse-surface:      #ffffff;
+  --pulse-surface-2:    #f4f6ff;
+  --pulse-border:       rgba(99, 102, 241, 0.18);
+  --pulse-border-bright:rgba(99, 102, 241, 0.4);
+  --pulse-accent:       #4f46e5;
+  --pulse-yes:          #059669;
+  --pulse-no:           #dc2626;
+  --pulse-gold:         #d97706;
+  --pulse-text:         #1e1b4b;
+  --pulse-muted:        rgba(30, 27, 75, 0.52);
+  --pulse-glow:         0 0 24px rgba(99, 102, 241, 0.16);
+  --pulse-card-bg:      #ffffff;
+  --pulse-card-border:  rgba(99, 102, 241, 0.18);
+  --pulse-nav-bg:       #ffffff;
+  --pulse-input-bg:     #f4f6ff;
+  --pulse-header-bg:    #ffffff;
+  --pulse-sheet-bg:     linear-gradient(145deg, #ffffff, #f4f6ff);
+}
+
+/* Apply card bg token everywhere cards use explicit hex */
+[data-theme="day"] .pulse-market-card,
+[data-theme="day"] .pulse-sheet,
+[data-theme="day"] .pulse-gate-card { background: var(--pulse-card-bg); }
+
+[data-theme="day"] .pulse-bottom-nav { background: var(--pulse-nav-bg); border-top-color: var(--pulse-border); }
+
+[data-theme="day"] .pulse-header { background: var(--pulse-header-bg); }
+
+[data-theme="day"] .pulse-gate {
+  background: linear-gradient(180deg, #e8eaff, #f0f2ff);
+}
+
+[data-theme="day"] .pulse-gate-card {
+  background: linear-gradient(145deg, #ffffff, #f4f6ff);
+  border-color: var(--pulse-border-bright);
+  box-shadow: 0 12px 40px rgba(79, 70, 229, 0.12);
+}
+
+[data-theme="day"] .pulse-gate-btn {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: white;
+  box-shadow: 0 8px 28px rgba(79, 70, 229, 0.35);
+}
+
+[data-theme="day"] .pulse-pool-bar { background: rgba(99, 102, 241, 0.1); }
+
+[data-theme="day"] .pulse-leaderboard-item { background: #ffffff; }
+
+[data-theme="day"] .pulse-toast {
+  background: linear-gradient(135deg, #ffffff, #f4f6ff);
+  color: var(--pulse-text);
+}
+
+[data-theme="day"] h1, [data-theme="day"] h2, [data-theme="day"] strong { color: var(--pulse-text); }
+
+/* Theme toggle button */
+.pulse-theme-toggle {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border: 1px solid var(--pulse-border);
+  border-radius: 12px;
+  background: var(--pulse-surface-2);
+  cursor: pointer;
+  font-size: 1.15rem;
+  transition: background 0.2s, border-color 0.2s;
+  color: var(--pulse-text);
+  flex-shrink: 0;
+}
+.pulse-theme-toggle:hover { border-color: var(--pulse-accent); background: var(--pulse-surface); }
 
 *, *::before, *::after { box-sizing: border-box; min-width: 0; }
 
