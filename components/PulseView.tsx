@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronRight, Copy, Swords, Target, Trophy, TrendingUp, UserMinus, UserPlus, Users, X, Zap } from "lucide-react";
-import { seedLeaderboard, seedMarkets } from "@/lib/pulse/data";
+// Use tiny client seed (3 markets) instead of full 601-line data.ts
+// The full seed is server-side only (API routes). This keeps the browser bundle small.
+import { clientSeedMarkets as seedMarkets, clientSeedLeaderboard as seedLeaderboard } from "@/lib/pulse/clientSeed";
 import {
   addBetToLocalPools,
   applyLocalPools,

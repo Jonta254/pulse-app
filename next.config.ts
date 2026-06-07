@@ -2,19 +2,39 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+
+  // Brotli/gzip compression at the edge
+  compress: true,
+
+  // No source maps in production — smaller deploy, faster parse
+  productionBrowserSourceMaps: false,
+
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "*.worldcoin.org" },
       { protocol: "https", hostname: "*.world.org" },
     ],
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 86400,
   },
+
+  // Tree-shake heavy packages — only import what's used
+  experimental: {
+    optimizePackageImports: [
+      "@worldcoin/minikit-js",
+      "lucide-react",
+      "@supabase/supabase-js",
+    ],
+  },
+
   async headers() {
     return [
       {
+        // All pages — security headers + preconnect hints
         source: "/(.*)",
         headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Content-Type-Options",  value: "nosniff" },
+          { key: "Referrer-Policy",          value: "strict-origin-when-cross-origin" },
           {
             key: "Content-Security-Policy",
             value: [
@@ -28,11 +48,42 @@ const nextConfig: NextConfig = {
               "base-uri 'self'",
             ].join("; "),
           },
+          // Preconnect to every external domain the app uses.
+          // Opens TCP+TLS handshake before the browser even parses JS.
+          { key: "Link", value: [
+            "<https://developer.worldcoin.org>; rel=preconnect",
+            "<https://developer.world.org>; rel=preconnect",
+            "<https://usernames.worldcoin.org>; rel=preconnect; crossorigin",
+          ].join(", ") },
         ],
       },
       {
+        // Next.js static chunks are content-hashed — cache forever
+        source: "/_next/static/(.*)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Public images — 24h cache, revalidate in background
+        source: "/(.*\\.png|.*\\.jpg|.*\\.webp|.*\\.svg|.*\\.ico)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=3600" },
+        ],
+      },
+      {
+        // Manifest — short cache so updates propagate quickly
+        source: "/manifest.webmanifest",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=3600" },
+        ],
+      },
+      {
+        // API routes — never cache
         source: "/api/:path*",
-        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
+        headers: [
+          { key: "Cache-Control", value: "no-store, max-age=0" },
+        ],
       },
     ];
   },
