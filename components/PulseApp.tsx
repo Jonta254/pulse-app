@@ -319,28 +319,14 @@ export function PulseApp() {
   // ── Main app ─────────────────────────────────────────────────────────────
   return (
     <div className="pulse-shell">
-      {/* Theme toggle — floats in top-right, always visible */}
-      <button
-        className="pulse-theme-toggle"
-        onClick={handleThemeToggle}
-        type="button"
-        aria-label={theme === "night" ? "Switch to day mode" : "Switch to night mode"}
-        title={theme === "night" ? "Switch to day mode" : "Switch to night mode"}
-        style={{
-          position: "fixed",
-          top: "calc(var(--safe-top) + 12px)",
-          right: "calc(var(--safe-right) + 12px)",
-          zIndex: 100,
-        }}
-      >
-        {theme === "night" ? "☀️" : "🌙"}
-      </button>
-
       <PulseView
         humanIdentity={user}
         openPayment={openPayment}
         earnPoints={earnPoints}
         recordHistory={recordHistory}
+        theme={theme}
+        onThemeToggle={handleThemeToggle}
+        onSignOut={() => setUser(null)}
       />
 
       {/* Payment confirmation sheet */}

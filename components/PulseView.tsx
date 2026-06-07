@@ -36,6 +36,8 @@ import type { PulseBet, PulseCategory, PulseClash, PulseCopyFollow, PulseGoal, P
 import type { EarnPoints, OpenPayment } from "@/types/ui";
 import type { HistoryRecord } from "@/types/reputation";
 import type { VerifiedHuman } from "@/types/user";
+import type { PulseTheme } from "@/lib/pulse/theme";
+import { ProfileSheet, ProfileTrigger } from "./ProfileSheet";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -44,6 +46,9 @@ type PulseViewProps = {
   humanIdentity: VerifiedHuman | null;
   openPayment: OpenPayment;
   recordHistory: (record: Omit<HistoryRecord, "id" | "time">) => void;
+  theme: PulseTheme;
+  onThemeToggle: () => void;
+  onSignOut: () => void;
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -514,7 +519,7 @@ function StatsBar({ stats }: { stats: ReturnType<typeof calcPlayerStats> }) {
 
 // ── Main view ─────────────────────────────────────────────────────────────────
 
-export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistory }: PulseViewProps) {
+export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistory, theme, onThemeToggle, onSignOut }: PulseViewProps) {
   const [pulseTab, setPulseTab] = useState<PulseTab>("markets");
   const [category, setCategory] = useState<PulseCategory>("all");
   const [bets, setBets] = useState<PulseBet[]>(loadPulseBets);
@@ -526,6 +531,7 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
   const [clashAccept, setClashAccept] = useState<PulseClash | null>(null);
   const [pendingShareClash, setPendingShareClash] = useState<PulseClash | null>(null);
   const [goalSheet, setGoalSheet] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [localMarkets, setLocalMarkets] = useState<PulseMarket[]>(() => applyLocalPools(seedMarkets));
   const [leaderboard, setLeaderboard] = useState(seedLeaderboard);
   const stats = calcPlayerStats(bets);
@@ -780,12 +786,23 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
     <div className="pulse-screen" ref={scrollRef}>
       {/* Header */}
       <header className="pulse-header">
-        <div className="pulse-brand">
-          <div className="pulse-brand-icon"><Zap size={22} /></div>
-          <div>
-            <strong>PULSE</strong>
-            <span>Human Prediction Network</span>
+        <div className="pulse-header-top">
+          {/* Brand mark */}
+          <div className="pulse-brand">
+            <div className="pulse-brand-icon"><Zap size={22} /></div>
+            <div>
+              <strong>PULSE</strong>
+              <span>Human Prediction Network</span>
+            </div>
           </div>
+          {/* Profile trigger — per docs: display username, not address */}
+          {humanIdentity && (
+            <ProfileTrigger
+              user={humanIdentity}
+              bets={bets}
+              onClick={() => setProfileOpen(true)}
+            />
+          )}
         </div>
         <StatsBar stats={stats} />
       </header>
@@ -1149,6 +1166,26 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
       {/* Goal sheet */}
       {goalSheet && (
         <GoalSheet onClose={() => setGoalSheet(false)} onSave={handleGoalCreate} />
+      )}
+
+      {/* Profile sheet — accessed from header avatar */}
+      {profileOpen && humanIdentity && (
+        <ProfileSheet
+          user={humanIdentity}
+          bets={bets}
+          follows={copyFollows}
+          leaderboard={leaderboard}
+          theme={theme}
+          onThemeToggle={onThemeToggle}
+          onUnfollow={(nullifier) => {
+            setCopyFollows((prev) => {
+              const next = prev.filter((f) => f.leaderNullifier !== nullifier);
+              return next;
+            });
+          }}
+          onClose={() => setProfileOpen(false)}
+          onSignOut={onSignOut}
+        />
       )}
     </div>
   );
