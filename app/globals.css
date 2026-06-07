@@ -77,77 +77,134 @@ img, video { max-width: 100%; }
 
 /* ── Login gate ─────────────────────────────────────────────────────────── */
 
+/* ── Login Gate (World ID) ──────────────────────────────────────────────── */
+
 .pulse-gate {
-  min-height: 100vh; min-height: 100dvh;
-  display: grid; align-content: center;
-  padding: 24px 16px calc(24px + var(--safe-bottom));
+  min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  /* World App guideline: 24px default padding */
+  padding: calc(24px + var(--safe-top)) 24px calc(24px + var(--safe-bottom));
   background:
-    radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.2), transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.14), transparent 40%),
+    radial-gradient(ellipse at 20% 0%,  rgba(99,102,241,0.22), transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.16), transparent 40%),
     linear-gradient(180deg, #080e1a, #07091a);
 }
 
 .pulse-gate-card {
-  display: grid; gap: 18px;
-  padding: 28px 22px;
+  width: 100%; max-width: 390px;
+  display: flex; flex-direction: column; gap: 20px;
+  padding: 32px 24px;
   border: 1px solid var(--pulse-border-bright);
   border-radius: 28px;
   background:
-    radial-gradient(circle at 85% 12%, rgba(245,158,11,0.14), transparent 12rem),
-    linear-gradient(145deg, #0f133a, #1a1060 60%, #0d0f26);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.5), var(--pulse-glow);
+    radial-gradient(circle at 85% 10%, rgba(99,102,241,0.16), transparent 14rem),
+    linear-gradient(145deg, #0f133a, #0d0f26);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), var(--pulse-glow);
 }
 
-.pulse-gate-icon {
+/* Logo */
+.pulse-gate-logo {
   width: 72px; height: 72px;
   display: grid; place-items: center;
-  border-radius: 22px; color: #fff;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), transparent 60%),
-    linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   box-shadow: 0 12px 32px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.18);
-  justify-self: start;
 }
 
-.pulse-gate-card h1 {
-  margin: 0; font-size: 2.8rem; font-weight: 950; color: #fff;
-  line-height: 0.96; letter-spacing: -0.03em;
+.pulse-gate-bolt { font-size: 2.2rem; line-height: 1; }
+
+.pulse-gate-title {
+  margin: 0; font-size: 3rem; font-weight: 950; color: #fff;
+  line-height: 0.9; letter-spacing: -0.03em;
 }
 
-.pulse-gate-card p {
-  margin: 0; font-size: 1rem; line-height: 1.48;
-  color: rgba(232,234,246,0.8);
+.pulse-gate-sub {
+  margin: -8px 0 0; font-size: 0.88rem; font-weight: 600;
+  color: var(--pulse-muted); letter-spacing: 0.04em; text-transform: uppercase;
 }
 
-.pulse-gate-pills {
-  display: flex; flex-wrap: wrap; gap: 8px;
-}
-
-.pulse-gate-pills span {
-  padding: 6px 11px;
+/* Value props */
+.pulse-gate-props {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 16px;
   border: 1px solid var(--pulse-border);
-  border-radius: 999px;
-  font-size: 0.76rem; font-weight: 900;
-  color: rgba(232,234,246,0.76);
-  background: rgba(232,234,246,0.06);
+  border-radius: 16px;
+  background: rgba(99,102,241,0.05);
 }
 
+.pulse-gate-prop {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.pulse-gate-prop-icon {
+  font-size: 1.4rem; width: 32px; text-align: center; flex-shrink: 0;
+}
+
+.pulse-gate-prop strong {
+  display: block; font-size: 0.9rem; font-weight: 700; color: #fff; margin: 0;
+}
+
+.pulse-gate-prop span {
+  display: block; font-size: 0.76rem; color: var(--pulse-muted); margin: 0;
+}
+
+/* Error */
+.pulse-gate-error {
+  padding: 10px 14px;
+  border: 1px solid rgba(255,77,109,0.35);
+  border-radius: 12px;
+  background: rgba(255,77,109,0.1);
+  font-size: 0.84rem; color: #ff8fa3; line-height: 1.4;
+}
+
+/* Primary CTA — World ID sign-in button */
 .pulse-gate-btn {
-  min-height: 54px; width: 100%;
+  min-height: 56px; width: 100%;
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  border: 0; border-radius: 16px;
-  color: #07091a; font-size: 1rem; font-weight: 950;
-  background: linear-gradient(135deg, #fff, #e8eaf6);
-  box-shadow: 0 8px 28px rgba(255,255,255,0.16);
-  transition: opacity 0.14s;
+  border: 0; border-radius: 16px; cursor: pointer;
+  color: #07091a; font-size: 1rem; font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #e8eaf6 100%);
+  box-shadow: 0 8px 28px rgba(255,255,255,0.2);
+  transition: opacity 0.15s, transform 0.1s;
+  position: relative;
+}
+.pulse-gate-btn:hover:not(:disabled) { opacity: 0.92; }
+.pulse-gate-btn:active:not(:disabled) { transform: scale(0.98); }
+.pulse-gate-btn:disabled { opacity: 0.55; cursor: wait; }
+
+.pulse-gate-worldid-icon { display: flex; align-items: center; }
+
+/* Spinner for auth states */
+.pulse-gate-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(7,9,26,0.3);
+  border-top-color: #07091a;
+  border-radius: 50%;
+  animation: pulse-spin 0.75s linear infinite;
+  flex-shrink: 0;
 }
 
-.pulse-gate-btn:disabled { opacity: 0.6; cursor: wait; }
+/* Retry + Preview buttons */
+.pulse-gate-retry {
+  min-height: 44px; width: 100%;
+  border: 1px solid rgba(255,77,109,0.4);
+  border-radius: 14px; cursor: pointer;
+  color: #ff8fa3; background: transparent;
+  font-size: 0.86rem; font-weight: 700;
+}
 
 .pulse-gate-preview {
-  min-height: 42px; width: 100%;
+  min-height: 44px; width: 100%;
   border: 1px solid var(--pulse-border);
-  border-radius: 14px; color: var(--pulse-muted);
-  background: transparent; font-size: 0.86rem; font-weight: 900;
+  border-radius: 14px; cursor: pointer;
+  color: var(--pulse-muted); background: transparent;
+  font-size: 0.84rem; font-weight: 600;
+}
+
+/* Legal note */
+.pulse-gate-legal {
+  margin: 0; font-size: 0.72rem; line-height: 1.5;
+  color: rgba(232,234,246,0.36); text-align: center;
 }
 
 /* ── Toast ──────────────────────────────────────────────────────────────── */
