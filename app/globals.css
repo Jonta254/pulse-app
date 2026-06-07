@@ -110,24 +110,49 @@
 *, *::before, *::after { box-sizing: border-box; min-width: 0; }
 
 html, body {
-  margin: 0; width: 100%; min-height: 100%;
+  margin: 0;
+  /* Lock the document to viewport — World App mini-app pattern.
+     All scrolling happens inside .pulse-screen, NOT the body.
+     This prevents the iOS rubber-band / over-scroll bounce on the body. */
+  width: 100%; height: 100%; overflow: hidden;
   background: var(--pulse-bg);
   color: var(--pulse-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-  overflow-x: hidden; -webkit-overflow-scrolling: touch;
-  /* World App guideline: disable iOS rubber-band scroll bounce */
+  /* Docs: disable iOS bounce at root */
   overscroll-behavior: none;
+  /* Docs: do NOT use touch — it re-enables momentum/bounce on iOS */
   -webkit-overflow-scrolling: auto;
+  touch-action: pan-y;
 }
 
 button, input, textarea, select { font: inherit; cursor: pointer; }
 img, video { max-width: 100%; }
 
+/* ── Global scroll rules (World Developer docs) ─────────────────────────── */
+/* All horizontal scroll containers: no vertical bounce bleed */
+[class*="-scroll"] {
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: auto;
+}
+/* Touch targets: every interactive element min 44×44px (docs requirement) */
+button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
+/* Exception: nav icon buttons use 56px (bottom nav) */
+.pulse-nav-btn { min-height: 56px; }
+/* All scrollable panels: contain scroll */
+[class*="-list"], [class*="-scroll"], .pulse-sheet, .pulse-screen {
+  overscroll-behavior: contain;
+}
+/* No focus flash on tap in World App WebView */
+:focus:not(:focus-visible) { outline: none; }
+:focus-visible { outline: 2px solid var(--pulse-accent); outline-offset: 2px; border-radius: 4px; }
+
 /* ── App shell ──────────────────────────────────────────────────────────── */
 
 .pulse-shell {
-  width: 100%; min-height: 100vh; min-height: 100dvh;
-  position: relative; overflow-x: hidden;
+  /* Shell = full viewport, does NOT scroll — children scroll */
+  width: 100%; height: 100dvh;
+  position: relative; overflow: hidden;
 }
 
 /* ── Splash screen ──────────────────────────────────────────────────────── */
@@ -163,6 +188,11 @@ img, video { max-width: 100%; }
 /* ── Login Gate (World ID) ──────────────────────────────────────────────── */
 
 .pulse-gate {
+  /* Gate scrolls if content is tall (small phones), no bounce */
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: auto;
   min-height: 100dvh;
   display: flex; align-items: center; justify-content: center;
   /* World App guideline: 24px default padding */
@@ -326,8 +356,20 @@ img, video { max-width: 100%; }
 /* ── PULSE screen (main view) ───────────────────────────────────────────── */
 
 .pulse-screen {
-  min-height: 100vh; min-height: 100dvh;
-  overflow-x: hidden; padding: 0 0 32px;
+  /* THE scroll container — full height, scrolls internally.
+     World App docs: scrolling must be inside a contained element,
+     not on the body/html, to prevent bounce and overscroll. */
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  /* Docs: contain scroll within this element — no parent bounce */
+  overscroll-behavior-y: contain;
+  /* Docs: no -webkit-overflow-scrolling touch (causes bounce) */
+  -webkit-overflow-scrolling: auto;
+  /* Bottom padding = bottom-nav height (56px) + safe area + 12px buffer.
+     World App docs: 12px buffer below drawers/tab bars from system bars. */
+  padding: 0 0 calc(56px + var(--safe-bottom) + 12px);
+  scroll-padding-bottom: calc(56px + var(--safe-bottom) + 12px);
   background:
     radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.18) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 10%, rgba(139,92,246,0.14) 0%, transparent 40%),
@@ -360,14 +402,33 @@ img, video { max-width: 100%; }
 .pulse-stat strong { font-size: 0.96rem; font-weight: 950; color: var(--pulse-accent); line-height: 1; }
 .pulse-stat span { font-size: 0.62rem; font-weight: 850; color: var(--pulse-muted); }
 
-.pulse-tabs { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-bottom: 1px solid var(--pulse-border); background: var(--pulse-surface); }
+/* Tabs are sticky — always visible in the scroll container.
+   World App docs: tab navigation must remain accessible. */
+.pulse-tabs {
+  display: grid; grid-template-columns: repeat(4,minmax(0,1fr));
+  border-bottom: 1px solid var(--pulse-border);
+  background: var(--pulse-surface);
+  position: sticky; top: 0; z-index: 10;
+  /* Hair of shadow so it reads above content when scrolled */
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
 .pulse-tab-btn { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-bottom: 2px solid transparent; color: var(--pulse-muted); background: transparent; font-size: 0.78rem; font-weight: 900; transition: color 0.18s, border-color 0.18s; }
 .pulse-tab-btn.active { color: var(--pulse-accent); border-bottom-color: var(--pulse-accent); }
 .pulse-tab-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--pulse-gold); flex-shrink: 0; }
 
 .pulse-content { padding: 14px 14px 0; }
 
-.pulse-cat-scroll { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 3px; margin-bottom: 14px; scrollbar-width: none; }
+.pulse-cat-scroll {
+  display: flex; gap: 7px; overflow-x: auto;
+  padding-bottom: 3px; margin-bottom: 14px;
+  scrollbar-width: none;
+  /* Docs: horizontal scrollers must not bounce vertically */
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
+  /* Smooth momentum scroll on iOS without rubber-band */
+  -webkit-overflow-scrolling: auto;
+  touch-action: pan-x;
+}
 .pulse-cat-scroll::-webkit-scrollbar { display: none; }
 .pulse-cat-pill { flex: 0 0 auto; min-height: 32px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--pulse-border); border-radius: 999px; padding: 6px 11px; color: var(--pulse-muted); background: var(--pulse-surface); font-size: 0.76rem; font-weight: 900; white-space: nowrap; transition: all 0.16s; }
 
@@ -412,7 +473,23 @@ img, video { max-width: 100%; }
 .pulse-clash-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; border: 1px dashed rgba(245,158,11,0.3); border-radius: 10px; padding: 0 12px; color: var(--pulse-gold); background: rgba(245,158,11,0.07); font-size: 0.76rem; font-weight: 950; width: 100%; justify-content: center; }
 
 .pulse-sheet-backdrop { position: fixed; inset: 0; z-index: 20; background: rgba(7,9,26,0.72); backdrop-filter: blur(6px); display: flex; align-items: flex-end; justify-content: center; }
-.pulse-sheet { width: min(100%,430px); max-height: 90vh; overflow-y: auto; border-radius: 28px 28px 0 0; padding: 14px 18px calc(28px + var(--safe-bottom)); background: radial-gradient(circle at 50% 0%, rgba(99,102,241,0.14), transparent 20rem), linear-gradient(180deg, #131730, #0d0f24); border: 1px solid var(--pulse-border-bright); border-bottom: 0; box-shadow: 0 -18px 48px rgba(0,0,0,0.5); display: grid; gap: 14px; }
+.pulse-sheet {
+  width: min(100%, 430px);
+  /* Use dvh so the sheet respects the actual visible viewport (keyboard, notch) */
+  max-height: 90dvh;
+  overflow-y: auto;
+  /* Contain scroll within sheet — don't let it bleed to body */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: auto;
+  border-radius: 28px 28px 0 0;
+  /* Bottom safe area + 28px breathing room */
+  padding: 14px 18px calc(28px + var(--safe-bottom));
+  background: radial-gradient(circle at 50% 0%, rgba(99,102,241,0.14), transparent 20rem),
+    linear-gradient(180deg, #131730, #0d0f24);
+  border: 1px solid var(--pulse-border-bright); border-bottom: 0;
+  box-shadow: 0 -18px 48px rgba(0,0,0,0.5);
+  display: grid; gap: 14px;
+}
 .pulse-sheet-handle { width: 38px; height: 4px; border-radius: 999px; background: rgba(232,234,246,0.18); justify-self: center; margin-bottom: 4px; }
 .pulse-sheet-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .pulse-sheet-header > div { display: grid; gap: 3px; }
