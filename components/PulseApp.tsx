@@ -15,7 +15,6 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MiniKit } from "@worldcoin/minikit-js";
 import {
   authenticateWithWorld,
   hapticError,
@@ -112,28 +111,22 @@ export function PulseApp() {
       setAuthState("signing");
       const result = await authenticateWithWorld();
 
-      if (!result.ok || !result.address) {
+      if (!result.ok) {
         void hapticError();
-        const msg = result.error ?? "Open PULSE inside World App.";
-        setAuthError(msg);
+        setAuthError(result.error ?? "Open PULSE inside World App.");
         setAuthState("error");
         return;
       }
 
-      // Per docs: after walletAuth, read username from MiniKit.user
-      // MiniKit.user is populated after successful walletAuth
-      const mkUser = isWorldReady()
-        ? (MiniKit as unknown as { user?: { username?: string; walletAddress?: string } }).user
-        : null;
-      const username = mkUser?.username
-        ? `@${mkUser.username}`
-        : `@${result.address.slice(0, 6)}…${result.address.slice(-4)}`;
-
+      // username + profilePictureUrl come from authenticateWithWorld()
+      // which reads MiniKit.user (populated by SDK after walletAuth)
+      // and falls back to getUserByAddress() per World Developer docs.
       void hapticSuccess();
       setAuthState("done");
       setUser({
         wallet: result.address,
-        username,
+        username: result.username,          // "@realname" from World ID
+        profilePictureUrl: result.profilePictureUrl,
         mode: "world",
         lastSeenAt: new Date().toISOString(),
       });

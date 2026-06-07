@@ -34,12 +34,28 @@ export function getWorldContext() {
   };
 }
 
-export async function authenticateWithWorld(): Promise<{ ok: boolean; address?: string; error?: string }> {
+// ── MiniKit user type (per World Developer docs) ─────────────────────────────
+// Docs: "After Wallet Auth, username and profilePictureUrl are accessible
+// directly through MiniKit.user without additional method calls."
+type MiniKitUser = {
+  walletAddress?: string;
+  username?: string;
+  profilePictureUrl?: string;
+};
+
+export type WorldAuthResult =
+  | { ok: true;  address: string; username: string; profilePictureUrl?: string }
+  | { ok: false; error: string };
+
+export async function authenticateWithWorld(): Promise<WorldAuthResult> {
   if (!isWorldReady()) return { ok: false, error: "Open inside World App." };
 
+  // 1. Get a fresh nonce from our backend
   const r = await fetch("/api/world/nonce");
   const { nonce } = await r.json() as { nonce: string };
 
+  // 2. Trigger MiniKit walletAuth (SIWE)
+  // Docs: after this completes, MiniKit.user is populated with username + profilePictureUrl
   const result = await MiniKit.walletAuth({
     expirationTime: new Date(Date.now() + 600_000),
     nonce,
@@ -47,11 +63,13 @@ export async function authenticateWithWorld(): Promise<{ ok: boolean; address?: 
   });
 
   if (result.executedWith !== "minikit") {
-    return { ok: false, error: "World wallet auth must run inside World App." };
+    return { ok: false, error: "Open PULSE inside World App to sign in." };
   }
 
+  // 3. Verify SIWE payload on backend (docs: always verify server-side)
   const verify = await fetch("/api/world/complete-siwe", {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ nonce, payload: result.data }),
   });
 
@@ -61,7 +79,38 @@ export async function authenticateWithWorld(): Promise<{ ok: boolean; address?: 
   }
 
   const data = await verify.json() as { ok: boolean; address: string };
-  return { ok: data.ok, address: data.address };
+  if (!data.ok) return { ok: false, error: "Backend verification rejected." };
+
+  const address = data.address ?? result.data.address;
+
+  // 4. Read username + profile picture from MiniKit.user
+  // Docs: "MiniKit.user.username is available after Wallet Auth"
+  // Primary: MiniKit.user (populated by SDK after walletAuth)
+  const mkUser = (MiniKit as unknown as { user?: MiniKitUser }).user;
+
+  let username  = mkUser?.username ?? "";
+  let profilePictureUrl = mkUser?.profilePictureUrl;
+
+  // 5. Fallback: explicit getUserByAddress if MiniKit.user wasn't populated
+  // Docs: "await MiniKit.getUserByAddress(userAddress)" as alternative
+  if (!username && address) {
+    try {
+      const fetched = await (MiniKit as unknown as {
+        getUserByAddress: (addr: string) => Promise<MiniKitUser>
+      }).getUserByAddress(address);
+      username         = fetched?.username ?? "";
+      profilePictureUrl = fetched?.profilePictureUrl ?? profilePictureUrl;
+    } catch {
+      // getUserByAddress failed — we'll use the address-based display name
+    }
+  }
+
+  // 6. Final fallback display name: @0x1234…abcd
+  const displayUsername = username
+    ? `@${username}`
+    : `@${address.slice(0, 6)}…${address.slice(-4)}`;
+
+  return { ok: true, address, username: displayUsername, profilePictureUrl };
 }
 
 const CONFIRM_DELAYS = [0, 2000, 4000, 6000, 9000, 13000, 18000, 25000];
