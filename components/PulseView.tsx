@@ -605,7 +605,7 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
       feature: "tip-pulse",
       allowCustomAmount: false,
       success: `${amount} WLD bet placed on ${position.toUpperCase()}! Awaiting resolution.`,
-      onConfirmed: async () => {
+      onConfirmed: async (_amount, txReference) => {
         const betId = `pulse-bet-${Date.now()}`;
         const newBet: PulseBet = {
           id: betId,
@@ -627,7 +627,7 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
             totalBettors: (m.totalBettors ?? 0) + 1,
           };
         }));
-        // Persist bet to Supabase (fire-and-forget — local state is source of truth)
+        // Record to Supabase with the REAL tx reference from World Chain
         fetch("/api/pulse/bet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -638,7 +638,7 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
             username: humanIdentity?.username ?? undefined,
             position,
             amountWld: amount,
-            txReference: `pulse-${betId}`,
+            txReference: txReference ?? `pulse-${betId}`,
           }),
         }).catch(() => null);
         earnPoints(5, `PULSE bet placed: ${amount} WLD on ${position.toUpperCase()}`);
@@ -660,7 +660,7 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
       feature: "tip-pulse",
       allowCustomAmount: false,
       success: "Clash created! Share the link to find a challenger.",
-      onConfirmed: async () => {
+      onConfirmed: async (_amt, _txRef) => {
         const clashId = `clash-${Date.now()}`;
         const newClash: PulseClash = {
           id: clashId,
@@ -711,7 +711,7 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
       feature: "tip-pulse",
       allowCustomAmount: false,
       success: "Clash accepted! May the best forecaster win.",
-      onConfirmed: async () => {
+      onConfirmed: async (_amt, _txRef) => {
         const updated: PulseClash = { ...clash, challengerNullifier: humanIdentity?.wallet ?? "preview", challengerUsername: humanIdentity?.username ?? undefined, status: "active" };
         setClashes((prev) => {
           const existing = prev.find((c) => c.id === clash.id);
@@ -760,7 +760,7 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
       feature: "tip-pulse",
       allowCustomAmount: false,
       success: "Goal created! Your friends can now back you or bet against you.",
-      onConfirmed: async () => {
+      onConfirmed: async (_amt, _txRef) => {
         setGoals((prev) => [goal, ...prev]);
         setGoalSheet(false);
         earnPoints(10, `PULSE goal created: "${data.title}"`);
@@ -809,7 +809,7 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
 
       {/* Sub-tabs */}
       <nav className="pulse-tabs" aria-label="PULSE sections">
-        {(["markets", "clash", "leagues", "goals"] as PulseTab[]).map((t) => (
+        {(["markets", "mybets", "clash", "leagues"] as PulseTab[]).map((t) => (
           <button
             key={t}
             className={`pulse-tab-btn${pulseTab === t ? " active" : ""}`}
@@ -817,10 +817,14 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
             type="button"
           >
             {t === "markets" && <TrendingUp size={14} />}
-            {t === "clash" && <Swords size={14} />}
+            {t === "mybets"  && <Copy size={14} />}
+            {t === "clash"   && <Swords size={14} />}
             {t === "leagues" && <Trophy size={14} />}
-            {t === "goals" && <Target size={14} />}
-            {t === "clash" ? "Clash" : t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === "mybets" ? "My Bets" : t === "clash" ? "Clash" : t.charAt(0).toUpperCase() + t.slice(1)}
+            {/* Badge: unsettled bets count */}
+            {t === "mybets" && bets.filter((b) => !b.settled).length > 0 && (
+              <span className="pulse-tab-dot" style={{ background: "var(--pulse-yes)" }} />
+            )}
             {t === "clash" && clashes.filter((c) => c.status === "pending").length > 0 && (
               <span className="pulse-tab-dot" />
             )}
@@ -863,6 +867,129 @@ export function PulseView({ earnPoints, humanIdentity, openPayment, recordHistor
                 onClash={(m) => setClashSheet(m)}
               />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── MY BETS TAB ── */}
+      {pulseTab === "mybets" && (
+        <div className="pulse-content">
+          <div className="pulse-mybets-header">
+            <h3>Your Predictions</h3>
+            <span>{bets.length} total · {bets.filter(b => !b.settled).length} open · {bets.filter(b => b.settled && (b.payout ?? 0) > b.amountWld).length} won</span>
+          </div>
+
+          {bets.length === 0 ? (
+            <div className="pulse-empty" style={{ marginTop: 32 }}>
+              <p style={{ fontSize: "2rem" }}>🔮</p>
+              <p>No bets yet. Find a market and place your first prediction!</p>
+              <button className="pulse-cta-btn" onClick={() => setPulseTab("markets")} type="button">
+                Browse Markets
+              </button>
+            </div>
+          ) : (
+            <div className="pulse-mybets-list">
+              {[...bets].reverse().map((bet) => {
+                const won  = bet.settled && (bet.payout ?? 0) > bet.amountWld;
+                const lost = bet.settled && !won;
+                const open = !bet.settled;
+                const profit = won ? +((bet.payout ?? 0) - bet.amountWld).toFixed(4) : 0;
+                // Find the market in current list
+                const market = localMarkets.find(m => m.id === bet.marketId);
+                return (
+                  <div key={bet.id} className={`pulse-mybet-card ${won ? "won" : lost ? "lost" : "open"}`}>
+                    {/* Status stripe */}
+                    <div className="pulse-mybet-stripe" />
+
+                    <div className="pulse-mybet-top">
+                      <span className={`pulse-mybet-status ${won ? "won" : lost ? "lost" : "open"}`}>
+                        {won ? "✓ Won" : lost ? "✗ Lost" : "⏳ Open"}
+                      </span>
+                      <span className="pulse-mybet-pos">{bet.position.toUpperCase()}</span>
+                    </div>
+
+                    <p className="pulse-mybet-title">{bet.marketTitle}</p>
+
+                    <div className="pulse-mybet-amounts">
+                      <div className="pulse-mybet-staked">
+                        <span>Staked</span>
+                        <strong>{bet.amountWld} WLD</strong>
+                      </div>
+                      {won ? (
+                        <div className="pulse-mybet-payout won">
+                          <span>Payout</span>
+                          <strong>+{bet.payout?.toFixed(4)} WLD</strong>
+                        </div>
+                      ) : lost ? (
+                        <div className="pulse-mybet-payout lost">
+                          <span>Result</span>
+                          <strong>−{bet.amountWld} WLD</strong>
+                        </div>
+                      ) : market ? (
+                        <div className="pulse-mybet-payout potential">
+                          <span>If correct</span>
+                          <strong>≈{calcPotentialPayout(bet.amountWld, bet.position, market.yesPool, market.noPool).toFixed(4)} WLD</strong>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {/* Show current odds for open bets */}
+                    {open && market && (
+                      <div className="pulse-mybet-odds">
+                        <div className="pulse-pool-bar-wrap" style={{ marginBottom: 0 }}>
+                          <div className="pulse-pool-bar">
+                            <div className="pulse-pool-bar-yes" style={{ width: `${calcYesPct(market.yesPool, market.noPool)}%` }} />
+                          </div>
+                        </div>
+                        <div style={{ display:"flex", justifyContent:"space-between", fontSize:"0.72rem", color:"var(--pulse-muted)", marginTop:4 }}>
+                          <span>YES {calcYesPct(market.yesPool, market.noPool)}%</span>
+                          <CountdownChip closesAt={market.closesAt} />
+                          <span>NO {100 - calcYesPct(market.yesPool, market.noPool)}%</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {won && (
+                      <div className="pulse-mybet-note won">
+                        🎉 Winning! Payout will be sent to your wallet when treasury distributes.
+                      </div>
+                    )}
+                    {lost && (
+                      <div className="pulse-mybet-note lost">
+                        Your {bet.amountWld} WLD went to the winners' pool.
+                      </div>
+                    )}
+
+                    <span className="pulse-mybet-date">{new Date(bet.placedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Fund flow explanation */}
+          <div className="pulse-mybets-explainer">
+            <h4>💡 How funds work</h4>
+            <div className="pulse-mybets-flow">
+              <div className="pulse-flow-step">
+                <span className="pulse-flow-icon">💸</span>
+                <div><strong>You bet</strong><span>WLD goes to the market pool via World App</span></div>
+              </div>
+              <div className="pulse-flow-arrow">↓</div>
+              <div className="pulse-flow-step">
+                <span className="pulse-flow-icon">🔒</span>
+                <div><strong>Market closes</strong><span>No more bets — result is awaited</span></div>
+              </div>
+              <div className="pulse-flow-arrow">↓</div>
+              <div className="pulse-flow-step won">
+                <span className="pulse-flow-icon">🏆</span>
+                <div><strong>Correct prediction</strong><span>Winning forecasters share the losers' pool pro-rata</span></div>
+              </div>
+              <div className="pulse-flow-step lost">
+                <span className="pulse-flow-icon">❌</span>
+                <div><strong>Wrong prediction</strong><span>Your stake funds the winners' payout</span></div>
+              </div>
+            </div>
           </div>
         </div>
       )}

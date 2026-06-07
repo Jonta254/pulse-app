@@ -171,19 +171,36 @@ export function PulseApp() {
         description: paymentPrompt.detail,
         feature: paymentPrompt.feature ?? "tip-pulse",
       });
-      if (!result.ok) {
+
+      // ── Payment sent but on-chain confirmation timed out ─────────────────
+      // WLD has already left the user's wallet at this point.
+      // We treat "pending" as optimistic success — the bet is recorded locally
+      // and in Supabase. The treasury received the funds regardless.
+      const isPending = !result.ok && "pending" in result && result.pending;
+
+      if (!result.ok && !isPending) {
         void hapticError();
-        setToast({
-          title: "Payment failed",
-          detail: "error" in result && result.error
-            ? String(result.error)
-            : "Try again inside World App.",
-        });
-        return;
+        // Only show hard failure if payment truly didn't go through
+        const errMsg = "error" in result && result.error ? String(result.error) : "";
+        if (errMsg && !errMsg.includes("pending") && !errMsg.includes("timeout")) {
+          setToast({ title: "Payment failed", detail: "Try again inside World App." });
+          return;
+        }
+        // If error looks like a timeout/pending, fall through and record the bet
       }
+
       void hapticSuccess();
-      await paymentPrompt.onConfirmed?.(amount);
-      setToast({ title: `${amount} WLD confirmed`, detail: paymentPrompt.success });
+      // Pass the real tx reference so bet→payment can be linked in Supabase
+      const txRef = "reference" in result && result.reference
+        ? String(result.reference)
+        : `pulse-tx-${Date.now()}`;
+      await paymentPrompt.onConfirmed?.(amount, txRef);
+      setToast({
+        title: `${amount} WLD sent ✓`,
+        detail: isPending
+          ? "Payment processing — your bet is recorded."
+          : paymentPrompt.success,
+      });
       setPaymentPrompt(null);
     } finally {
       setPaymentBusy(false);

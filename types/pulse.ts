@@ -93,4 +93,4 @@ export type PulseCopyFollow = {
   since: string;
 };
 
-export type PulseTab = "markets" | "clash" | "leagues" | "goals";
+export type PulseTab = "markets" | "mybets" | "clash" | "leagues" | "goals";

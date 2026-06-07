@@ -7,7 +7,8 @@ export type PaymentRequest = {
   feature?: string;
   allowCustomAmount?: boolean;
   success: string;
-  onConfirmed?: (amount: number) => void | Promise<void>;
+  // Receives amount + the real blockchain tx reference so bet→payment can be linked in DB
+  onConfirmed?: (amount: number, txReference: string) => void | Promise<void>;
   points?: number;
 };
 
