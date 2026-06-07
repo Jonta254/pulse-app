@@ -1,23 +1,23 @@
 "use client";
 
 /**
- * Page — shows splash immediately, loads PulseApp as a separate JS chunk.
+ * Page — shows splash immediately, loads VerdexApp as a separate JS chunk.
  *
  * Performance wins:
  * - Removed requestAnimationFrame delay (was adding 1 unnecessary frame)
- * - PulseApp (+ PulseView 1153 lines) loaded as a separate dynamic chunk
+ * - VerdexApp (+ VerdexView 1153 lines) loaded as a separate dynamic chunk
  *   so the critical path only needs the tiny splash screen CSS/HTML
  * - ssr:false because MiniKit only exists in the browser
  */
 import dynamic from "next/dynamic";
 
-const PulseApp = dynamic(
-  () => import("@/components/PulseApp").then((m) => ({ default: m.PulseApp })),
+const VerdexApp = dynamic(
+  () => import("@/components/VerdexApp").then((m) => ({ default: m.VerdexApp })),
   {
     loading: () => (
-      <div className="pulse-splash" aria-label="Loading PULSE">
-        <div className="pulse-splash-logo" aria-hidden="true">⚡</div>
-        <strong>PULSE</strong>
+      <div className="verdex-splash" aria-label="Loading VeRdex">
+        <div className="verdex-splash-logo" aria-hidden="true">⚡</div>
+        <strong>VeRdex</strong>
         <span>Human Prediction Network</span>
       </div>
     ),
@@ -26,5 +26,5 @@ const PulseApp = dynamic(
 );
 
 export default function Page() {
-  return <PulseApp />;
+  return <VerdexApp />;
 }

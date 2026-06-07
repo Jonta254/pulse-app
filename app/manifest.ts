@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "PULSE",
-    short_name: "PULSE",
+    name: "VeRdex",
+    short_name: "VeRdex",
     description: "The Human Prediction Network. Verified humans forecast reality — bet WLD, challenge 1v1, copy top forecasters.",
     start_url: "/",
     display: "standalone",

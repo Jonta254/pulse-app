@@ -2,10 +2,10 @@ import { randomUUID } from "crypto";
 import { NextRequest } from "next/server";
 import { isRateLimited, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
 
-// tip-pulse allows variable amounts 0.1–100 WLD for bets and clash stakes
+// tip-verdex allows variable amounts 0.1–100 WLD for bets and clash stakes
 function isValidPulsePayment(feature: string, amount: number): boolean {
   if (!Number.isFinite(amount) || amount <= 0) return false;
-  if (feature === "tip-pulse") return amount >= 0.1 && amount <= 100 && Number(amount.toFixed(2)) === amount;
+  if (feature === "tip-verdex") return amount >= 0.1 && amount <= 100 && Number(amount.toFixed(2)) === amount;
   return false;
 }
 

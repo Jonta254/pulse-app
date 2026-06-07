@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/pulse/oracle",
+      "path": "/api/verdex/oracle",
       "schedule": "0 9 * * *"
     }
   ]

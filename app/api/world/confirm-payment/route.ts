@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { Tokens, tokenToDecimals } from "@worldcoin/minikit-js/commands";
 import type { PayResult } from "@worldcoin/minikit-js/commands";
 import { isRateLimited, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
-import { getWorldAppId, getWorldDevPortalApiKey, getPulseTreasury } from "@/lib/worldConfig";
+import { getWorldAppId, getWorldDevPortalApiKey, getVerdexTreasury } from "@/lib/worldConfig";
 
 export async function POST(req: NextRequest) {
   if (isRateLimited(req, "confirm-payment", 20)) return rateLimitResponse();
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   const isMined = tx.transaction_status === "mined" || tx.status === "mined" || tx.transaction_status === "confirmed" || tx.status === "confirmed";
   if (!isMined) return noStoreJson({ ok: false, pending: true });
 
-  const treasury = getPulseTreasury().toLowerCase();
+  const treasury = getVerdexTreasury().toLowerCase();
   const expectedAmounts = new Set([tokenToDecimals(amount, Tokens.WLD).toString(), Math.round(amount * 1_000_000).toString()]);
   const txRef = typeof tx.reference === "string" ? tx.reference : "";
   const txToken = typeof tx.token === "string" ? tx.token.toUpperCase() : "";

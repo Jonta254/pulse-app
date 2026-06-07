@@ -3,7 +3,7 @@
 import { MiniKit } from "@worldcoin/minikit-js";
 import { Permission, Tokens, tokenToDecimals } from "@worldcoin/minikit-js/commands";
 import type { PayResult } from "@worldcoin/minikit-js/commands";
-import { getWorldAppId, getPulseTreasury } from "./worldConfig";
+import { getWorldAppId, getVerdexTreasury } from "./worldConfig";
 
 export { Permission };
 
@@ -59,11 +59,11 @@ export async function authenticateWithWorld(): Promise<WorldAuthResult> {
   const result = await MiniKit.walletAuth({
     expirationTime: new Date(Date.now() + 600_000),
     nonce,
-    statement: "Sign in to PULSE — Human Prediction Network.",
+    statement: "Sign in to VeRdex — Human Prediction Network.",
   });
 
   if (result.executedWith !== "minikit") {
-    return { ok: false, error: "Open PULSE inside World App to sign in." };
+    return { ok: false, error: "Open VeRdex inside World App to sign in." };
   }
 
   // 3. Verify SIWE payload on backend (docs: always verify server-side)
@@ -115,8 +115,8 @@ export async function authenticateWithWorld(): Promise<WorldAuthResult> {
 
 const CONFIRM_DELAYS = [0, 2000, 4000, 6000, 9000, 13000, 18000, 25000];
 
-export async function payWithWorld({ amount, description, feature = "tip-pulse" }: { amount: number; description: string; feature?: string }) {
-  const treasury = getPulseTreasury();
+export async function payWithWorld({ amount, description, feature = "tip-verdex" }: { amount: number; description: string; feature?: string }) {
+  const treasury = getVerdexTreasury();
   if (!treasury) return { ok: false, pendingSetup: true, message: "Treasury wallet not configured." };
   if (!isWorldReady()) return { ok: false, pendingWorldApp: true, message: "Open inside World App." };
 
