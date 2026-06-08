@@ -9,5 +9,6 @@ export function getWorldDevPortalApiKey() {
 }
 
 export function getVerdexTreasury() {
-  return process.env.NEXT_PUBLIC_VERDEX_TREASURY ?? "";
+  // Accept either name — old deployments may still have PULSE_TREASURY set
+  return process.env.NEXT_PUBLIC_VERDEX_TREASURY ?? process.env.NEXT_PUBLIC_PULSE_TREASURY ?? "";
 }
