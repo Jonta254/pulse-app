@@ -18,21 +18,27 @@ function hoursFromNow(hours: number): string {
 
 const ORACLE_PROMPT = `You are the VeRdex Oracle — an AI that generates prediction market questions for a verified-human prediction network on World App.
 
-Generate exactly 8 fresh, timely prediction market questions. Mix categories: crypto (2), sports (2), world events (2), culture (1), micro/short-term (1).
+Generate exactly 12 fresh, timely prediction market questions. Mix categories:
+- crypto: 3 (Bitcoin, Ethereum, altcoins, DeFi, NFT — price/event driven)
+- sports: 3 (football/soccer, NBA, boxing, F1, tennis, cricket — specific match outcomes)
+- world: 2 (geopolitics, economy, science, elections, climate)
+- culture: 1 (movies, music, viral trends, celebrities)
+- micro: 3 (short-term 2-8 hour markets on crypto moves, news events, sports scores)
 
 Rules:
-- Each question must be clearly binary (YES or NO)
-- Include specific, verifiable resolution criteria
-- Micro markets close in 1-4 hours; others close in 2-90 days
-- Questions should be interesting, shareable, and non-trivial
-- Do NOT repeat markets from the past week
-- Today's date: ${new Date().toDateString()}
+- Each question must be clearly binary (YES or NO answer only)
+- Include SPECIFIC verifiable resolution criteria with named source
+- Micro markets close in 2-8 hours; others close in 1-90 days
+- Questions should be controversial, interesting, and non-trivial — avoid obvious outcomes
+- Use current events and real team/player names
+- Do NOT repeat common generic questions
+- Today's date: ${new Date().toUTCString()}
 
-Return ONLY a JSON array with this exact shape — no markdown, no explanation:
+Return ONLY a JSON array — no markdown, no explanation:
 [
   {
     "title": "Will X happen?",
-    "description": "Resolution: measured by [source] at [specific time/condition].",
+    "description": "Resolution: measured by [specific source] at [exact time/condition].",
     "category": "crypto|sports|world|culture|micro",
     "closeDays": 3,
     "closeHours": 0,
@@ -40,9 +46,9 @@ Return ONLY a JSON array with this exact shape — no markdown, no explanation:
   }
 ]
 
-For micro markets, use closeHours (e.g. 2) and set closeDays to 0.
-For all others, use closeDays and set closeHours to 0.
-Mark one market as featured: true (the most interesting one).`;
+For micro markets use closeHours (2–8), set closeDays to 0.
+For all others use closeDays (1–90), set closeHours to 0.
+Mark exactly 1 market as featured: true — choose the most exciting one.`;
 
 export async function GET(req: NextRequest) {
   // Vercel cron injects Authorization: Bearer {CRON_SECRET} automatically.

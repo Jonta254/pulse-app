@@ -557,7 +557,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
       .catch(() => null);
   }, []);
 
-  // ── Fetch markets from API ──────────────────────────────────────────────────
+  // ── Fetch markets from API (auto-refresh every 3 min) ──────────────────────
   const fetchMarkets = useCallback(async (cat: string) => {
     try {
       const res = await fetch(`/api/verdex/markets?category=${cat}`, { cache: "no-store" });
@@ -570,8 +570,27 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
     }
   }, []);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { void fetchMarkets(category); }, [category, fetchMarkets]);
+  useEffect(() => {
+    void fetchMarkets(category);
+    // Refresh every 3 minutes so markets stay live without full reload
+    const t = setInterval(() => void fetchMarkets(category), 3 * 60_000);
+    return () => clearInterval(t);
+  }, [category, fetchMarkets]);
+
+  // ── Fetch flash markets (auto-refresh every 60 sec) ─────────────────────────
+  const [flashMarkets, setFlashMarkets] = useState<VerdexMarket[]>([]);
+  useEffect(() => {
+    async function loadFlash() {
+      try {
+        const res = await fetch("/api/verdex/flash", { cache: "no-store" });
+        const payload = await res.json() as { ok: boolean; markets?: VerdexMarket[] };
+        if (payload.ok && payload.markets?.length) setFlashMarkets(payload.markets);
+      } catch { /* silent */ }
+    }
+    void loadFlash();
+    const t = setInterval(loadFlash, 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   // ── Fetch leaderboard from API ──────────────────────────────────────────────
   useEffect(() => {
@@ -841,6 +860,26 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
               <CategoryPill key={cat} cat={cat} active={category === cat} onClick={() => setCategory(cat)} />
             ))}
           </div>
+
+          {/* ⚡ Flash ticker — live micro markets */}
+          {flashMarkets.length > 0 && category !== "micro" && (
+            <div className="verdex-flash-strip">
+              <span className="verdex-flash-label">⚡ FLASH</span>
+              <div className="verdex-flash-scroll">
+                {flashMarkets.map((fm) => (
+                  <button
+                    key={fm.id}
+                    className="verdex-flash-chip"
+                    type="button"
+                    onClick={() => setCategory("micro")}
+                  >
+                    <span>{fm.title.length > 42 ? fm.title.slice(0, 42) + "…" : fm.title}</span>
+                    <span className="verdex-flash-timer"><CountdownChip closesAt={fm.closesAt} /></span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Market hero (featured) */}
           {category === "all" && (
