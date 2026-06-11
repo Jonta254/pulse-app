@@ -20,12 +20,12 @@ const ORACLE_PROMPT = `You are the VeRdex Oracle — you create REAL prediction 
 
 FIRST: use web search to find real upcoming events — confirmed sports fixtures, scheduled economic data releases (CPI, Fed/ECB decisions, jobs reports), confirmed launches (rockets, products, games, films), elections, court rulings with dates. NEVER invent an event, fixture, or date. If you did not verify it via search, do not use it.
 
-Generate exactly 12 markets. Category mix:
+Generate exactly 14 markets. Category mix:
+- sports: 6 — FOOTBALL FIRST. Search for the current FIFA World Cup 2026 schedule (running June 11 – July 19, 2026 in USA/Mexico/Canada) and build markets on real upcoming matches: match winners, "will both teams score", "will there be 3+ goals", group qualification, star players scoring. Also check Copa América/EPL transfers/NBA finals if relevant. ONLY fixtures you verified via search — real teams, real kickoff dates.
 - crypto: 3 (price thresholds / ETF flows / protocol events — exact numbers)
-- sports: 3 (ONLY fixtures you verified via search — real teams, real dates)
 - world: 2 (scheduled econ releases, elections, science/space events you verified)
 - culture: 1 (verified release/event — box office, charts, awards with dates)
-- micro: 3 (2–8 hour crypto/data questions — exact price levels)
+- micro: 2 (2–8 hour crypto/data questions — exact price levels)
 
 FAIRNESS RULES (strict — a market violating any rule is invalid):
 1. Binary YES/NO with ONE unambiguous outcome. No "and" conditions joining unrelated things.
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     const message = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 4000,
-      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
+      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 7 }],
       messages: [{ role: "user", content: ORACLE_PROMPT }],
     });
     raw = message.content
