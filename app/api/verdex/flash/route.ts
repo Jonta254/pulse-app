@@ -2,6 +2,7 @@
 // Flash markets auto-refresh every hour via the oracle cron.
 // This endpoint serves the current live flash batch for the UI ticker.
 import { NextRequest } from "next/server";
+import { after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isRateLimited, noStoreJson, rateLimitResponse } from "@/lib/serverApi";
 import type { VerdexMarket } from "@/types/verdex";
@@ -26,12 +27,12 @@ function getLiveFlashFallback(): VerdexMarket[] {
       closesAt: add(4),
       resolvesAt: add(5),
       outcome: null,
-      yesPool: 180 + Math.floor(Math.random() * 300),
-      noPool: 140 + Math.floor(Math.random() * 260),
+      yesPool: 0,
+      noPool: 0,
       status: "open",
       featured: true,
       aiGenerated: false,
-      totalBettors: 12 + Math.floor(Math.random() * 40),
+      totalBettors: 0,
     },
     {
       id: `flash-wld-${now.getMinutes()}`,
@@ -41,12 +42,12 @@ function getLiveFlashFallback(): VerdexMarket[] {
       closesAt: add(55),
       resolvesAt: add(60),
       outcome: null,
-      yesPool: 220 + Math.floor(Math.random() * 200),
-      noPool: 190 + Math.floor(Math.random() * 180),
+      yesPool: 0,
+      noPool: 0,
       status: "open",
       featured: false,
       aiGenerated: false,
-      totalBettors: 8 + Math.floor(Math.random() * 30),
+      totalBettors: 0,
     },
     {
       id: `flash-eth-${now.getHours()}`,
@@ -56,18 +57,30 @@ function getLiveFlashFallback(): VerdexMarket[] {
       closesAt: add(28),
       resolvesAt: add(30),
       outcome: null,
-      yesPool: 310 + Math.floor(Math.random() * 150),
-      noPool: 260 + Math.floor(Math.random() * 140),
+      yesPool: 0,
+      noPool: 0,
       status: "open",
       featured: false,
       aiGenerated: false,
-      totalBettors: 21 + Math.floor(Math.random() * 35),
+      totalBettors: 0,
     },
   ];
 }
 
 export async function GET(req: NextRequest) {
   if (isRateLimited(req, "verdex-flash", 60)) return rateLimitResponse();
+
+  // Self-trigger the autopilot (resolve due markets, pay winners, refill the
+  // board) whenever users are active. It self-throttles to one run per 5 min.
+  after(async () => {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+    const secret = process.env.CRON_SECRET ?? "";
+    if (!appUrl) return;
+    await fetch(`${appUrl}/api/verdex/auto`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${secret}` },
+    }).catch(() => null);
+  });
 
   const client = db();
   if (!client) {

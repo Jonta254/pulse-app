@@ -1,12 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/verdex/oracle",
-      "schedule": "0 9 * * *"
+      "path": "/api/verdex/auto",
+      "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/verdex/flash-gen",
-      "schedule": "0 21 * * *"
+      "path": "/api/verdex/auto",
+      "schedule": "0 18 * * *"
     }
   ]
 }
