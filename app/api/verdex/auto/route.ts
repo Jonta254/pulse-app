@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { resolveMarket } from "@/lib/verdex/db";
 import { generateDataMarkets, parseDataMarketId, resolveDataMarketOutcome } from "@/lib/verdex/dataOracle";
 import { generateFootballMarkets, parseFootballMarketId, resolveFootballOutcome } from "@/lib/verdex/footballOracle";
+import { generateWeatherMarkets, generateNbaMarkets, generateWikiDuels, resolveExtraOutcome } from "@/lib/verdex/extraOracles";
 import { upsertMarkets } from "@/lib/verdex/db";
 import { processQueuedPayouts, notifyPaidWinners } from "@/lib/verdex/payouts";
 import { isTreasuryPayoutEnabled } from "@/lib/verdex/treasury";
@@ -20,6 +21,9 @@ export const maxDuration = 300;
 const FLASH_TARGET = 6;
 const DAILY_TARGET = 6;
 const SPORTS_TARGET = 9; // ~3 World Cup matches × 3 markets each
+const NBA_TARGET = 4;    // 2 games × (winner + total points)
+const WEATHER_TARGET = 4;
+const WIKI_TARGET = 3;
 
 let lastRunAt = 0; // per-instance throttle for self-triggered calls
 
@@ -47,13 +51,18 @@ async function runAutopilot(force: boolean) {
   let unresolvable = 0;
   for (const m of due ?? []) {
     let outcome: "yes" | "no" | null = null;
-    const fb = parseFootballMarketId(m.id);
-    if (fb) {
-      // Football resolves only after the final whistle — wait for resolves_at
-      outcome = await resolveFootballOutcome(fb);
+    const extra = await resolveExtraOutcome(m.id); // weather / NBA / wiki duels
+    if (extra !== undefined) {
+      outcome = extra;
     } else {
-      const parsed = parseDataMarketId(m.id);
-      if (parsed) outcome = await resolveDataMarketOutcome(parsed);
+      const fb = parseFootballMarketId(m.id);
+      if (fb) {
+        // Football resolves only after the final whistle — wait for resolves_at
+        outcome = await resolveFootballOutcome(fb);
+      } else {
+        const parsed = parseDataMarketId(m.id);
+        if (parsed) outcome = await resolveDataMarketOutcome(parsed);
+      }
     }
     if (!outcome) { unresolvable++; continue; } // data not available yet — retry next run
     const result = await resolveMarket(m.id, outcome);
@@ -69,34 +78,58 @@ async function runAutopilot(force: boolean) {
 
   // 3. Refill the board
   const nowIso = new Date().toISOString();
-  const [{ count: flashOpen }, { count: dailyOpen }, { count: sportsOpen }, { data: fbExisting }] = await Promise.all([
+  const [{ count: flashOpen }, { count: dailyOpen }, { data: allData }] = await Promise.all([
     db.from("verdex_markets").select("id", { count: "exact", head: true })
       .eq("status", "open").eq("category", "micro").gt("closes_at", nowIso),
     db.from("verdex_markets").select("id", { count: "exact", head: true })
       .eq("status", "open").eq("category", "crypto").like("id", "data-v1-%").gt("closes_at", nowIso),
-    db.from("verdex_markets").select("id", { count: "exact", head: true })
-      .eq("status", "open").like("id", "data-v1-fb-%").gt("closes_at", nowIso),
-    // every football market ever created — one market set per match, no repeats
-    db.from("verdex_markets").select("id").like("id", "data-v1-fb-%").limit(1000),
+    // every data market — used for open counts, and as dedupe sets so the
+    // same match / city-day / duel-day is never offered twice
+    db.from("verdex_markets").select("id, status, closes_at")
+      .like("id", "data-v1-%").order("created_at", { ascending: false }).limit(2000),
   ]);
+
+  type Row = { id: string; status: string; closes_at: string };
+  const rows = (allData ?? []) as Row[];
+  const openOf = (prefix: string) =>
+    rows.filter((r) => r.id.startsWith(prefix) && r.status === "open" && r.closes_at > nowIso).length;
+
+  const fbEvents = new Set<string>(); const nbaEvents = new Set<string>();
+  const wxKeys = new Set<string>(); const wikiKeys = new Set<string>();
+  for (const r of rows) {
+    const p = r.id.split("-");
+    if (r.id.startsWith("data-v1-fb-")) fbEvents.add(p[3]);
+    else if (r.id.startsWith("data-v1-nba-")) nbaEvents.add(p[3]);
+    else if (r.id.startsWith("data-v1-wx-")) wxKeys.add(`${p[3]}-${p[4]}-${p[6]}`);
+    else if (r.id.startsWith("data-v1-wiki-")) wikiKeys.add(`${p[3]}-${p[4]}-${p[5]}`);
+  }
 
   const flashNeeded = Math.max(0, FLASH_TARGET - (flashOpen ?? 0));
   const dailyNeeded = Math.max(0, DAILY_TARGET - (dailyOpen ?? 0));
-  const sportsNeeded = Math.max(0, SPORTS_TARGET - (sportsOpen ?? 0));
   let generated = 0;
+  const batch: Awaited<ReturnType<typeof generateDataMarkets>> = [];
 
   if (flashNeeded > 0 || dailyNeeded > 0) {
-    const fresh = await generateDataMarkets({ flash: flashNeeded, daily: dailyNeeded });
-    if (fresh.length > 0 && (await upsertMarkets(fresh))) generated += fresh.length;
+    batch.push(...await generateDataMarkets({ flash: flashNeeded, daily: dailyNeeded }));
+  }
+  const sportsNeeded = Math.max(0, SPORTS_TARGET - openOf("data-v1-fb-"));
+  if (sportsNeeded > 0) {
+    batch.push(...await generateFootballMarkets({ need: sportsNeeded, excludeEventIds: fbEvents }));
+  }
+  const nbaNeeded = Math.max(0, NBA_TARGET - openOf("data-v1-nba-"));
+  if (nbaNeeded > 0) {
+    batch.push(...await generateNbaMarkets({ need: nbaNeeded, excludeEventIds: nbaEvents }));
+  }
+  const wxNeeded = Math.max(0, WEATHER_TARGET - openOf("data-v1-wx-"));
+  if (wxNeeded > 0) {
+    batch.push(...await generateWeatherMarkets({ need: wxNeeded, excludeKeys: wxKeys }));
+  }
+  const wikiNeeded = Math.max(0, WIKI_TARGET - openOf("data-v1-wiki-"));
+  if (wikiNeeded > 0) {
+    batch.push(...generateWikiDuels({ need: wikiNeeded, excludeKeys: wikiKeys }));
   }
 
-  if (sportsNeeded > 0) {
-    const excludeEventIds = new Set<string>(
-      ((fbExisting ?? []) as Array<{ id: string }>).map((r) => r.id.split("-")[3]).filter(Boolean)
-    );
-    const footy = await generateFootballMarkets({ need: sportsNeeded, excludeEventIds });
-    if (footy.length > 0 && (await upsertMarkets(footy))) generated += footy.length;
-  }
+  if (batch.length > 0 && (await upsertMarkets(batch))) generated = batch.length;
 
   return {
     ok: true,
