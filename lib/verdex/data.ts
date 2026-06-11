@@ -32,8 +32,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 4800, noPool: 2100, status: "open",
-    featured: true, aiGenerated: false, totalBettors: 634,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: true, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-f2",
@@ -42,8 +42,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 6200, noPool: 2900, status: "open",
-    featured: true, aiGenerated: false, totalBettors: 891,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: true, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-f3",
@@ -52,8 +52,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 5500, noPool: 2200, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 712,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-f4",
@@ -62,8 +62,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(2),
-    outcome: null, yesPool: 1400, noPool: 5800, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 478,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-f5",
@@ -72,8 +72,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 3900, noPool: 2800, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 523,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-hot-f6",
@@ -82,8 +82,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 1200, noPool: 4800, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 387,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-f7",
@@ -92,8 +92,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 3400, noPool: 2100, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 341,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
 
   // ── NBA / Basketball ───────────────────────────────────────────────────────
@@ -104,8 +104,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 5100, noPool: 3800, status: "open",
-    featured: true, aiGenerated: false, totalBettors: 1024,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: true, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-b2",
@@ -114,8 +114,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(2),
-    outcome: null, yesPool: 4200, noPool: 2900, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 734,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-b3",
@@ -124,8 +124,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(2),
-    outcome: null, yesPool: 5800, noPool: 2100, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 892,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-b4",
@@ -134,8 +134,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(2),
-    outcome: null, yesPool: 2300, noPool: 4100, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 561,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-hot-b5",
@@ -144,8 +144,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 3600, noPool: 2400, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 423,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-b6",
@@ -154,8 +154,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 4100, noPool: 1800, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 312,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
 
   // ── Boxing & MMA ───────────────────────────────────────────────────────────
@@ -166,8 +166,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 4700, noPool: 3200, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 567,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-x2",
@@ -176,8 +176,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 2900, noPool: 3600, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 298,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
 
   // ── Tennis ─────────────────────────────────────────────────────────────────
@@ -188,8 +188,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(2),
-    outcome: null, yesPool: 4900, noPool: 2100, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 445,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-t2",
@@ -198,8 +198,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(2),
-    outcome: null, yesPool: 5600, noPool: 1400, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 334,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
 
   // ── Formula 1 ──────────────────────────────────────────────────────────────
@@ -210,8 +210,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 3800, noPool: 3200, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 589,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-f1r2",
@@ -220,8 +220,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 6100, noPool: 1200, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 712,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -235,8 +235,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "culture",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 2800, noPool: 3900, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 671,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-c2",
@@ -245,8 +245,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "culture",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 4100, noPool: 2700, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 834,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-hot-c3",
@@ -255,8 +255,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "culture",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 1900, noPool: 5200, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 445,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-c4",
@@ -265,8 +265,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "culture",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 3700, noPool: 4800, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 1102,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-c5",
@@ -275,8 +275,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "culture",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(2),
-    outcome: null, yesPool: 2200, noPool: 5100, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 892,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -290,8 +290,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "crypto",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 3840, noPool: 2160, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 284,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-m2",
@@ -300,8 +300,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "crypto",
     closesAt: daysFromNow(22),
     resolvesAt: daysFromNow(23),
-    outcome: null, yesPool: 1240, noPool: 960, status: "open",
-    aiGenerated: true, totalBettors: 118,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-m3",
@@ -310,8 +310,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "crypto",
     closesAt: daysFromNow(55),
     resolvesAt: daysFromNow(56),
-    outcome: null, yesPool: 2100, noPool: 3400, status: "open",
-    totalBettors: 321,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    totalBettors: 0,
   },
   {
     id: "verdex-hot-cr1",
@@ -320,8 +320,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "crypto",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(2),
-    outcome: null, yesPool: 3200, noPool: 5800, status: "open",
-    featured: true, aiGenerated: false, totalBettors: 1241,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: true, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-cr2",
@@ -330,8 +330,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "crypto",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 4100, noPool: 2800, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 678,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-cr3",
@@ -340,8 +340,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "crypto",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 2900, noPool: 3400, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 445,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-hot-cr4",
@@ -350,8 +350,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "crypto",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 3600, noPool: 4200, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 523,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -365,8 +365,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "world",
     closesAt: daysFromNow(25),
     resolvesAt: daysFromNow(26),
-    outcome: null, yesPool: 4400, noPool: 2600, status: "open",
-    aiGenerated: true, totalBettors: 398,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-m11",
@@ -375,8 +375,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "world",
     closesAt: daysFromNow(200),
     resolvesAt: daysFromNow(202),
-    outcome: null, yesPool: 6800, noPool: 2200, status: "open",
-    aiGenerated: false, totalBettors: 782,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-w1",
@@ -385,8 +385,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "world",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 3800, noPool: 2900, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 456,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-hot-w2",
@@ -395,8 +395,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "world",
     closesAt: hoursFromNow(20),
     resolvesAt: hoursFromNow(24),
-    outcome: null, yesPool: 5900, noPool: 1800, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 1034,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-hot-w3",
@@ -405,8 +405,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "world",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 2800, noPool: 3400, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 312,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -420,8 +420,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "culture",
     closesAt: daysFromNow(60),
     resolvesAt: daysFromNow(61),
-    outcome: null, yesPool: 4800, noPool: 2200, status: "open",
-    aiGenerated: false, totalBettors: 876,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-g2",
@@ -430,8 +430,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "culture",
     closesAt: daysFromNow(3),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 5200, noPool: 3100, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 2341,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-g3",
@@ -440,8 +440,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "culture",
     closesAt: daysFromNow(2),
     resolvesAt: daysFromNow(3),
-    outcome: null, yesPool: 2100, noPool: 4800, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 567,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -455,8 +455,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "micro",
     closesAt: minutesFromNow(13),
     resolvesAt: minutesFromNow(15),
-    outcome: null, yesPool: 340, noPool: 410, status: "open",
-    totalBettors: 89,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    totalBettors: 0,
   },
   {
     id: "verdex-m10",
@@ -465,8 +465,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "micro",
     closesAt: hoursFromNow(1),
     resolvesAt: hoursFromNow(1),
-    outcome: null, yesPool: 620, noPool: 480, status: "open",
-    totalBettors: 143,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    totalBettors: 0,
   },
   {
     id: "verdex-hot-mi1",
@@ -475,8 +475,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "micro",
     closesAt: hoursFromNow(2),
     resolvesAt: hoursFromNow(2),
-    outcome: null, yesPool: 1400, noPool: 1100, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 234,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-hot-mi2",
@@ -485,8 +485,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "micro",
     closesAt: hoursFromNow(4),
     resolvesAt: hoursFromNow(4),
-    outcome: null, yesPool: 800, noPool: 1900, status: "open",
-    featured: false, aiGenerated: true, totalBettors: 178,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-hot-mi3",
@@ -495,8 +495,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "micro",
     closesAt: hoursFromNow(12),
     resolvesAt: hoursFromNow(13),
-    outcome: null, yesPool: 1100, noPool: 1600, status: "open",
-    featured: false, aiGenerated: false, totalBettors: 312,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    featured: false, aiGenerated: false, totalBettors: 0,
   },
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -510,8 +510,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(18),
     resolvesAt: daysFromNow(19),
-    outcome: null, yesPool: 5600, noPool: 4200, status: "open",
-    totalBettors: 562,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    totalBettors: 0,
   },
   {
     id: "verdex-m12",
@@ -520,8 +520,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "sports",
     closesAt: daysFromNow(210),
     resolvesAt: daysFromNow(212),
-    outcome: null, yesPool: 1900, noPool: 3100, status: "open",
-    totalBettors: 276,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    totalBettors: 0,
   },
   {
     id: "verdex-m5",
@@ -530,8 +530,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "world",
     closesAt: daysFromNow(180),
     resolvesAt: daysFromNow(182),
-    outcome: null, yesPool: 1800, noPool: 5200, status: "open",
-    aiGenerated: true, totalBettors: 447,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    aiGenerated: true, totalBettors: 0,
   },
   {
     id: "verdex-excl-1",
@@ -540,8 +540,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "world",
     closesAt: daysFromNow(24),
     resolvesAt: daysFromNow(25),
-    outcome: null, yesPool: 2400, noPool: 900, status: "open",
-    aiGenerated: false, totalBettors: 347,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-excl-2",
@@ -550,8 +550,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "world",
     closesAt: daysFromNow(24),
     resolvesAt: daysFromNow(25),
-    outcome: null, yesPool: 3600, noPool: 1200, status: "open",
-    aiGenerated: false, totalBettors: 531,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    aiGenerated: false, totalBettors: 0,
   },
   {
     id: "verdex-excl-3",
@@ -560,8 +560,8 @@ export const seedMarkets: VerdexMarket[] = [
     category: "world",
     closesAt: daysFromNow(80),
     resolvesAt: daysFromNow(82),
-    outcome: null, yesPool: 1700, noPool: 2100, status: "open",
-    aiGenerated: true, totalBettors: 224,
+    outcome: null, yesPool: 0, noPool: 0, status: "open",
+    aiGenerated: true, totalBettors: 0,
   },
 ];
 

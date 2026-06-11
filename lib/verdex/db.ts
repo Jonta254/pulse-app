@@ -418,19 +418,12 @@ export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Pr
   // Fetch market
   const { data: market, error: mErr } = await db
     .from("verdex_markets")
-    .select("id, status, yes_pool, no_pool")
+    .select("id, status")
     .eq("id", marketId)
     .single();
 
   if (mErr || !market) return { ok: false, payouts: 0, error: "Market not found." };
   if (market.status === "resolved") return { ok: false, payouts: 0, error: "Market already resolved." };
-
-  const yesPool = Number(market.yes_pool);
-  const noPool = Number(market.no_pool);
-  const winPool = outcome === "yes" ? yesPool : noPool;
-  const losePool = outcome === "yes" ? noPool : yesPool;
-  const platformFee = 0.003;
-  const netLosePool = losePool * (1 - platformFee);
 
   // Fetch all confirmed bets on this market
   const { data: bets, error: bErr } = await db
@@ -441,6 +434,16 @@ export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Pr
     .eq("paid_out", false);
 
   if (bErr) return { ok: false, payouts: 0, error: "Failed to fetch bets." };
+
+  // Pools are computed from REAL confirmed bets only — never from the stored
+  // pool columns, which may include display/seed amounts. This guarantees the
+  // treasury can never owe more than it actually collected.
+  const yesPool = (bets as BetForPayout[]).filter((b) => b.position === "yes").reduce((s, b) => s + Number(b.amount_wld), 0);
+  const noPool = (bets as BetForPayout[]).filter((b) => b.position === "no").reduce((s, b) => s + Number(b.amount_wld), 0);
+  const winPool = outcome === "yes" ? yesPool : noPool;
+  const losePool = outcome === "yes" ? noPool : yesPool;
+  const platformFee = 0.003;
+  const netLosePool = losePool * (1 - platformFee);
 
   const winners = (bets as BetForPayout[]).filter((b) => b.position === outcome);
   let payoutCount = 0;

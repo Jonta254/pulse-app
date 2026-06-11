@@ -16,29 +16,31 @@ function hoursFromNow(hours: number): string {
   return d.toISOString();
 }
 
-const ORACLE_PROMPT = `You are the VeRdex Oracle — an AI that generates prediction market questions for a verified-human prediction network on World App.
+const ORACLE_PROMPT = `You are the VeRdex Oracle — you create REAL prediction markets for a verified-human prediction network where people stake real WLD. Fairness is everything: every market must be objectively resolvable by anyone checking a public source.
 
-Generate exactly 12 fresh, timely prediction market questions. Mix categories:
-- crypto: 3 (Bitcoin, Ethereum, altcoins, DeFi, NFT — price/event driven)
-- sports: 3 (football/soccer, NBA, boxing, F1, tennis, cricket — specific match outcomes)
-- world: 2 (geopolitics, economy, science, elections, climate)
-- culture: 1 (movies, music, viral trends, celebrities)
-- micro: 3 (short-term 2-8 hour markets on crypto moves, news events, sports scores)
+FIRST: use web search to find real upcoming events — confirmed sports fixtures, scheduled economic data releases (CPI, Fed/ECB decisions, jobs reports), confirmed launches (rockets, products, games, films), elections, court rulings with dates. NEVER invent an event, fixture, or date. If you did not verify it via search, do not use it.
 
-Rules:
-- Each question must be clearly binary (YES or NO answer only)
-- Include SPECIFIC verifiable resolution criteria with named source
-- Micro markets close in 2-8 hours; others close in 1-90 days
-- Questions should be controversial, interesting, and non-trivial — avoid obvious outcomes
-- Use current events and real team/player names
-- Do NOT repeat common generic questions
-- Today's date: ${new Date().toUTCString()}
+Generate exactly 12 markets. Category mix:
+- crypto: 3 (price thresholds / ETF flows / protocol events — exact numbers)
+- sports: 3 (ONLY fixtures you verified via search — real teams, real dates)
+- world: 2 (scheduled econ releases, elections, science/space events you verified)
+- culture: 1 (verified release/event — box office, charts, awards with dates)
+- micro: 3 (2–8 hour crypto/data questions — exact price levels)
+
+FAIRNESS RULES (strict — a market violating any rule is invalid):
+1. Binary YES/NO with ONE unambiguous outcome. No "and" conditions joining unrelated things.
+2. description MUST follow exactly this template:
+   "Resolves YES if <precise condition with exact threshold/score/value> by <exact UTC date+time>. Source: <one named public source, e.g. Binance BTCUSDT spot, ESPN final score, bls.gov release>."
+3. The outcome must NOT already be decided or near-certain. Target genuinely tricky questions a sharp person could argue either way (roughly 35–65% likely). Close calls make the game fair AND exciting.
+4. No subjective judgement ("best", "popular", "successful"), no insider info, nothing depending on an individual's private choice.
+5. The deadline in the description must match the market close time you set.
+6. Today's date: ${new Date().toUTCString()}
 
 Return ONLY a JSON array — no markdown, no explanation:
 [
   {
     "title": "Will X happen?",
-    "description": "Resolution: measured by [specific source] at [exact time/condition].",
+    "description": "Resolves YES if ... by ... UTC. Source: ...",
     "category": "crypto|sports|world|culture|micro",
     "closeDays": 3,
     "closeHours": 0,
@@ -48,7 +50,7 @@ Return ONLY a JSON array — no markdown, no explanation:
 
 For micro markets use closeHours (2–8), set closeDays to 0.
 For all others use closeDays (1–90), set closeHours to 0.
-Mark exactly 1 market as featured: true — choose the most exciting one.`;
+Mark exactly 1 market as featured: true — the most exciting genuinely-uncertain one.`;
 
 export async function GET(req: NextRequest) {
   // Vercel cron injects Authorization: Bearer {CRON_SECRET} automatically.
@@ -74,15 +76,37 @@ export async function GET(req: NextRequest) {
 
   let raw: string;
   try {
+    // Web search grounds every market in a real, verifiable event
     const message = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
+      max_tokens: 4000,
+      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
       messages: [{ role: "user", content: ORACLE_PROMPT }],
     });
-    raw = message.content[0].type === "text" ? message.content[0].text : "";
+    raw = message.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("\n");
   } catch (err) {
-    console.error("[verdex/oracle] Anthropic error:", err);
-    return noStoreJson({ ok: false, error: "Oracle generation failed." }, { status: 500 });
+    console.error("[verdex/oracle] Anthropic error (with search), retrying without:", err);
+    try {
+      // Fallback: no web search — restrict to data-driven markets that need no news
+      const message = await client.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 4000,
+        messages: [{
+          role: "user",
+          content: ORACLE_PROMPT + "\n\nIMPORTANT OVERRIDE: web search is unavailable. Generate ONLY data-driven markets (crypto prices, ETH gas, BTC dominance, on-chain stats) with exact thresholds and Binance/Etherscan/CoinGecko sources. Use categories crypto and micro only. Do NOT reference any news event, fixture, or release.",
+        }],
+      });
+      raw = message.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("\n");
+    } catch (err2) {
+      console.error("[verdex/oracle] Anthropic error:", err2);
+      return noStoreJson({ ok: false, error: "Oracle generation failed." }, { status: 500 });
+    }
   }
 
   // Parse the JSON array from Claude's response
@@ -102,6 +126,23 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error("[verdex/oracle] Parse error:", err, "\nRaw:", raw.slice(0, 500));
     return noStoreJson({ ok: false, error: "Failed to parse oracle output." }, { status: 500 });
+  }
+
+  // Fairness gate: drop any market without a binary question and a precise,
+  // sourced resolution rule — bettors must be able to verify outcomes themselves.
+  const rejected: string[] = [];
+  generated = generated.filter((item) => {
+    const okShape =
+      typeof item.title === "string" && item.title.trim().endsWith("?") && item.title.length <= 140 &&
+      typeof item.description === "string" && item.description.length <= 400 &&
+      /resolves yes if/i.test(item.description) &&
+      /source:/i.test(item.description);
+    if (!okShape) rejected.push(item?.title ?? "(untitled)");
+    return okShape;
+  });
+
+  if (generated.length === 0) {
+    return noStoreJson({ ok: false, error: "Oracle produced no valid markets.", rejected }, { status: 500 });
   }
 
   const now = Date.now();
@@ -139,5 +180,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return noStoreJson({ ok: true, generated: markets.length, markets });
+  return noStoreJson({ ok: true, generated: markets.length, rejected, markets });
 }
