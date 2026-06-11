@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { resolveMarket } from "@/lib/verdex/db";
 import { generateDataMarkets, parseDataMarketId, resolveDataMarketOutcome } from "@/lib/verdex/dataOracle";
+import { generateFootballMarkets, parseFootballMarketId, resolveFootballOutcome } from "@/lib/verdex/footballOracle";
 import { upsertMarkets } from "@/lib/verdex/db";
 import { processQueuedPayouts, notifyPaidWinners } from "@/lib/verdex/payouts";
 import { isTreasuryPayoutEnabled } from "@/lib/verdex/treasury";
@@ -18,6 +19,7 @@ export const maxDuration = 300;
 
 const FLASH_TARGET = 6;
 const DAILY_TARGET = 6;
+const SPORTS_TARGET = 9; // ~3 World Cup matches × 3 markets each
 
 let lastRunAt = 0; // per-instance throttle for self-triggered calls
 
@@ -44,10 +46,16 @@ async function runAutopilot(force: boolean) {
   let resolved = 0;
   let unresolvable = 0;
   for (const m of due ?? []) {
-    const parsed = parseDataMarketId(m.id);
-    if (!parsed) { unresolvable++; continue; }
-    const outcome = await resolveDataMarketOutcome(parsed);
-    if (!outcome) { unresolvable++; continue; } // candle not available yet — retry next run
+    let outcome: "yes" | "no" | null = null;
+    const fb = parseFootballMarketId(m.id);
+    if (fb) {
+      // Football resolves only after the final whistle — wait for resolves_at
+      outcome = await resolveFootballOutcome(fb);
+    } else {
+      const parsed = parseDataMarketId(m.id);
+      if (parsed) outcome = await resolveDataMarketOutcome(parsed);
+    }
+    if (!outcome) { unresolvable++; continue; } // data not available yet — retry next run
     const result = await resolveMarket(m.id, outcome);
     if (result.ok) resolved++;
   }
@@ -61,19 +69,33 @@ async function runAutopilot(force: boolean) {
 
   // 3. Refill the board
   const nowIso = new Date().toISOString();
-  const [{ count: flashOpen }, { count: dailyOpen }] = await Promise.all([
+  const [{ count: flashOpen }, { count: dailyOpen }, { count: sportsOpen }, { data: fbExisting }] = await Promise.all([
     db.from("verdex_markets").select("id", { count: "exact", head: true })
       .eq("status", "open").eq("category", "micro").gt("closes_at", nowIso),
     db.from("verdex_markets").select("id", { count: "exact", head: true })
       .eq("status", "open").eq("category", "crypto").like("id", "data-v1-%").gt("closes_at", nowIso),
+    db.from("verdex_markets").select("id", { count: "exact", head: true })
+      .eq("status", "open").like("id", "data-v1-fb-%").gt("closes_at", nowIso),
+    // every football market ever created — one market set per match, no repeats
+    db.from("verdex_markets").select("id").like("id", "data-v1-fb-%").limit(1000),
   ]);
 
   const flashNeeded = Math.max(0, FLASH_TARGET - (flashOpen ?? 0));
   const dailyNeeded = Math.max(0, DAILY_TARGET - (dailyOpen ?? 0));
+  const sportsNeeded = Math.max(0, SPORTS_TARGET - (sportsOpen ?? 0));
   let generated = 0;
+
   if (flashNeeded > 0 || dailyNeeded > 0) {
     const fresh = await generateDataMarkets({ flash: flashNeeded, daily: dailyNeeded });
-    if (fresh.length > 0 && (await upsertMarkets(fresh))) generated = fresh.length;
+    if (fresh.length > 0 && (await upsertMarkets(fresh))) generated += fresh.length;
+  }
+
+  if (sportsNeeded > 0) {
+    const excludeEventIds = new Set<string>(
+      ((fbExisting ?? []) as Array<{ id: string }>).map((r) => r.id.split("-")[3]).filter(Boolean)
+    );
+    const footy = await generateFootballMarkets({ need: sportsNeeded, excludeEventIds });
+    if (footy.length > 0 && (await upsertMarkets(footy))) generated += footy.length;
   }
 
   return {
