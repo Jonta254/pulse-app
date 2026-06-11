@@ -38,6 +38,7 @@ import type { HistoryRecord } from "@/types/reputation";
 import type { VerifiedHuman } from "@/types/user";
 import type { VerdexTheme } from "@/lib/verdex/theme";
 import { ProfileSheet, ProfileTrigger } from "./ProfileSheet";
+import { WinningsPanel } from "./WinningsPanel";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -918,6 +919,9 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
             <span>{bets.length} total · {bets.filter(b => !b.settled).length} open · {bets.filter(b => b.settled && (b.payout ?? 0) > b.amountWld).length} won</span>
           </div>
 
+          {/* Real WLD treasury winnings — claim instantly to World App wallet */}
+          <WinningsPanel wallet={humanIdentity?.wallet ?? null} />
+
           {bets.length === 0 ? (
             <div className="verdex-empty" style={{ marginTop: 32 }}>
               <p style={{ fontSize: "2rem" }}>🔮</p>
@@ -990,7 +994,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
 
                     {won && (
                       <div className="verdex-mybet-note won">
-                        🎉 Winning! Payout will be sent to your wallet when treasury distributes.
+                        🎉 Winning! Claim your WLD above or it auto-pays to your wallet at distribution.
                       </div>
                     )}
                     {lost && (

@@ -13,6 +13,8 @@ type NotifyBody = {
   nullifiers?: string[];
   // Clash notification
   clashEvent?: "accepted" | "resolved";
+  // Treasury payout notification
+  payoutEvent?: "paid";
   challengerUsername?: string;
   winnerNullifier?: string;
   // Shared auth
@@ -20,6 +22,13 @@ type NotifyBody = {
 };
 
 function buildNotification(body: NotifyBody): { title: string; message: string; path: string } | null {
+  if (body.payoutEvent === "paid") {
+    return {
+      title: "WLD winnings sent! 🎉",
+      message: "Your VeRdex winnings were just sent to your World App wallet on World Chain. Open My Bets to see the transaction.",
+      path: "/?tab=verdex",
+    };
+  }
   if (body.clashEvent === "accepted") {
     return {
       title: "Clash accepted!",

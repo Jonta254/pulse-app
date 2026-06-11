@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { VerdexMarket, VerdexGoal, VerdexLeaderEntry, VerdexClash } from "@/types/verdex";
+import { queuePayouts, type PayoutQueueEntry } from "./payouts";
 
 // ── Supabase client (server-side only, service role) ─────────────────────────
 
@@ -410,7 +411,7 @@ type BetForPayout = {
   amount_wld: number;
 };
 
-export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Promise<{ ok: boolean; payouts: number; error?: string }> {
+export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Promise<{ ok: boolean; payouts: number; queued?: number; error?: string }> {
   const db = getSupabaseClient();
   if (!db) return { ok: false, payouts: 0, error: "Database not configured." };
 
@@ -443,6 +444,7 @@ export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Pr
 
   const winners = (bets as BetForPayout[]).filter((b) => b.position === outcome);
   let payoutCount = 0;
+  const payoutQueue: PayoutQueueEntry[] = [];
 
   for (const winner of winners) {
     const stake = Number(winner.amount_wld);
@@ -450,6 +452,15 @@ export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Pr
     const payout = Math.round((stake + share) * 10000) / 10000;
 
     await db.from("verdex_bets").update({ payout_wld: payout, paid_out: true, settled: true }).eq("id", winner.id);
+
+    payoutQueue.push({
+      source: "market",
+      sourceId: winner.id,
+      marketId,
+      worldNullifier: winner.world_nullifier,
+      username: winner.username,
+      amountWld: payout,
+    });
 
     // Update player stats
     const { data: stats } = await db.from("verdex_player_stats").select("total_won, win_streak, best_streak").eq("world_nullifier", winner.world_nullifier).single();
@@ -485,10 +496,21 @@ export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Pr
       const stake = Number(clash.stake_wld);
       const payout = Math.round(stake * 2 * 0.9 * 10000) / 10000; // 10% rake
       await db.from("verdex_clashes").update({ status: "resolved", winner_nullifier: winnerNullifier, payout_wld: payout }).eq("id", clash.id);
+
+      payoutQueue.push({
+        source: "clash",
+        sourceId: clash.id,
+        marketId,
+        worldNullifier: winnerNullifier,
+        amountWld: payout,
+      });
     }
   }
 
-  return { ok: true, payouts: payoutCount };
+  // Queue real WLD treasury payouts for every winner (idempotent per bet/clash)
+  const queued = await queuePayouts(payoutQueue);
+
+  return { ok: true, payouts: payoutCount, queued };
 }
 
 // ── Bet wallets for notifications ─────────────────────────────────────────────
