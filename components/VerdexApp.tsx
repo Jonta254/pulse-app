@@ -37,8 +37,36 @@ type AuthState = "idle" | "checking" | "signing" | "done" | "error";
 
 // ── VerdexApp ──────────────────────────────────────────────────────────────────
 
+const SESSION_KEY = "verdex_session_v1";
+
+// Persisted World ID session — once a human signs in, the app opens straight
+// to home on every relaunch. Payments still require fresh World App approval,
+// so a restored session can display identity but never move funds by itself.
+function loadSession(): VerifiedHuman | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const u = JSON.parse(raw) as VerifiedHuman;
+    if (u?.mode !== "world" || !/^0x[a-fA-F0-9]{40}$/.test(u.wallet ?? "")) return null;
+    return u;
+  } catch { return null; }
+}
+
+function saveSession(u: VerifiedHuman | null) {
+  try {
+    if (u && u.mode === "world") localStorage.setItem(SESSION_KEY, JSON.stringify(u));
+    else if (!u) localStorage.removeItem(SESSION_KEY);
+  } catch { /* localStorage unavailable */ }
+}
+
 export function VerdexApp() {
   const [user, setUser]                       = useState<VerifiedHuman | null>(null);
+
+  // Restore the session after mount (not in the initializer — SSR has no localStorage)
+  useEffect(() => {
+    const restored = loadSession();
+    if (restored) setUser((prev) => prev ?? { ...restored, lastSeenAt: new Date().toISOString() });
+  }, []);
   const [authState, setAuthState]             = useState<AuthState>("idle");
   const [authError, setAuthError]             = useState<string | null>(null);
   const [miniKitReady, setMiniKitReady]       = useState(false);
@@ -133,13 +161,15 @@ export function VerdexApp() {
       // and falls back to getUserByAddress() per World Developer docs.
       void hapticSuccess();
       setAuthState("done");
-      setUser({
+      const signedIn: VerifiedHuman = {
         wallet: result.address,
         username: result.username,          // "@realname" from World ID
         profilePictureUrl: result.profilePictureUrl,
         mode: "world",
         lastSeenAt: new Date().toISOString(),
-      });
+      };
+      setUser(signedIn);
+      saveSession(signedIn);
 
       // Referral attribution: ?ref=0x… captured at load is credited on first
       // sign-in. Server enforces new-users-only and one-referrer-forever.
@@ -359,7 +389,7 @@ export function VerdexApp() {
         recordHistory={recordHistory}
         theme={theme}
         onThemeToggle={handleThemeToggle}
-        onSignOut={() => setUser(null)}
+        onSignOut={() => { saveSession(null); setUser(null); }}
       />
 
       {/* Payment confirmation sheet */}
