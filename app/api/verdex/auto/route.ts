@@ -4,7 +4,7 @@ import { resolveMarket } from "@/lib/verdex/db";
 import { generateDataMarkets, parseDataMarketId, resolveDataMarketOutcome } from "@/lib/verdex/dataOracle";
 import { generateFootballMarkets, parseFootballMarketId, resolveFootballOutcome } from "@/lib/verdex/footballOracle";
 import { generateWeatherMarkets, generateNbaMarkets, generateWikiDuels, resolveExtraOutcome } from "@/lib/verdex/extraOracles";
-import { generateRocketMarkets, generateFxMarkets, generateFngMarkets, resolveMacroOutcome } from "@/lib/verdex/macroOracles";
+import { generateRocketMarkets, generateFxMarkets, generateFngMarkets, generatePolymarketMirrors, resolveMacroOutcome } from "@/lib/verdex/macroOracles";
 import { upsertMarkets } from "@/lib/verdex/db";
 import { processQueuedPayouts, notifyPaidWinners } from "@/lib/verdex/payouts";
 import { isTreasuryPayoutEnabled } from "@/lib/verdex/treasury";
@@ -28,6 +28,7 @@ const WIKI_TARGET = 3;
 const ROCKET_TARGET = 2;
 const FX_TARGET = 2;
 const FNG_TARGET = 1;
+const PM_TARGET = 3; // mirrored top-volume Polymarket questions
 
 let lastRunAt = 0; // per-instance throttle for self-triggered calls
 
@@ -102,6 +103,7 @@ async function runAutopilot(force: boolean) {
   const fbEvents = new Set<string>(); const nbaEvents = new Set<string>();
   const wxKeys = new Set<string>(); const wikiKeys = new Set<string>();
   const rktIds = new Set<string>(); const fxKeys = new Set<string>(); const fngDays = new Set<string>();
+  const pmIds = new Set<string>();
   for (const r of rows) {
     const p = r.id.split("-");
     if (r.id.startsWith("data-v1-fb-")) fbEvents.add(p[3]);
@@ -111,6 +113,7 @@ async function runAutopilot(force: boolean) {
     else if (r.id.startsWith("data-v1-rkt-")) rktIds.add(p[3]);
     else if (r.id.startsWith("data-v1-fx-")) fxKeys.add(`${p[3]}-${p[5]}`);
     else if (r.id.startsWith("data-v1-fng-")) fngDays.add(p[4]);
+    else if (r.id.startsWith("data-v1-pm-")) pmIds.add(p[3]);
   }
 
   const flashNeeded = Math.max(0, FLASH_TARGET - (flashOpen ?? 0));
@@ -149,6 +152,10 @@ async function runAutopilot(force: boolean) {
   if (fngNeeded > 0) {
     batch.push(...await generateFngMarkets({ need: fngNeeded, excludeKeys: fngDays }));
   }
+  const pmNeeded = Math.max(0, PM_TARGET - openOf("data-v1-pm-"));
+  if (pmNeeded > 0) {
+    batch.push(...await generatePolymarketMirrors({ need: pmNeeded, excludeIds: pmIds }));
+  }
 
   if (batch.length > 0 && (await upsertMarkets(batch))) generated = batch.length;
 
@@ -162,6 +169,42 @@ async function runAutopilot(force: boolean) {
   };
 }
 
+// Daily "one perfect market" push — the morning cron picks the most exciting
+// upcoming market and nudges every known player. Runs at most once per day.
+async function sendDailyFeatured(secret: string) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  if (!url || !key || !appUrl) return;
+  const db = createClient(url, key, { auth: { persistSession: false } });
+
+  const soon = new Date(Date.now() + 4 * 3_600_000).toISOString();
+  const horizon = new Date(Date.now() + 72 * 3_600_000).toISOString();
+  const { data: pick } = await db
+    .from("verdex_markets")
+    .select("title")
+    .eq("status", "open")
+    .gt("closes_at", soon)
+    .lt("closes_at", horizon)
+    .order("featured", { ascending: false })
+    .order("closes_at", { ascending: true })
+    .limit(1);
+  const title = pick?.[0]?.title;
+  if (!title) return;
+
+  const { data: players } = await db.from("verdex_player_stats").select("world_nullifier").limit(1000);
+  const wallets = ((players ?? []) as Array<{ world_nullifier: string }>)
+    .map((p) => p.world_nullifier)
+    .filter((w) => /^0x[a-fA-F0-9]{40}$/.test(w));
+  if (wallets.length === 0) return;
+
+  await fetch(`${appUrl}/api/verdex/notify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+    body: JSON.stringify({ featuredTitle: title, nullifiers: wallets }),
+  }).catch(() => null);
+}
+
 async function handle(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
@@ -171,13 +214,14 @@ async function handle(req: NextRequest) {
   const force = req.method === "GET";
   const summary = await runAutopilot(force);
 
-  // Morning cron also kicks the AI oracle for event markets (football, world);
-  // harmless no-op while the Anthropic account has no credits.
-  if (force && new Date().getUTCHours() < 12) {
+  // Morning cron extras (once daily): kick the AI oracle (no-op without
+  // Anthropic credits) and send the "one perfect market" push to all players.
+  if (force && new Date().getUTCHours() < 12 && secret) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-    if (appUrl && secret) {
+    if (appUrl) {
       fetch(`${appUrl}/api/verdex/oracle`, { headers: { Authorization: `Bearer ${secret}` } }).catch(() => null);
     }
+    await sendDailyFeatured(secret);
   }
 
   return noStoreJson(summary, { status: summary.ok ? 200 : 503 });

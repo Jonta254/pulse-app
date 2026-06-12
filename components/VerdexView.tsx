@@ -157,8 +157,13 @@ function MarketCard({
               BET NO {calcOdds("no", market.yesPool, market.noPool)}
             </button>
           </div>
-          <button className="verdex-clash-trigger" onClick={() => onClash(market)} type="button">
-            <Swords size={13} /> Challenge a human 1v1
+          <button
+            className={`verdex-clash-trigger${market.category === "sports" ? " hot" : ""}`}
+            onClick={() => onClash(market)}
+            type="button"
+          >
+            <Swords size={13} />
+            {market.category === "sports" ? "Challenge a friend — winner takes 90%" : "Challenge a human 1v1"}
           </button>
         </>
       )}
@@ -278,7 +283,7 @@ function BetSheet({
         </button>
 
         <p className="verdex-sheet-note">
-          Platform takes 0.3% fee. Payout depends on final pool size at close.
+          Platform takes a 2% fee from the losing pool. Payout depends on final pool size at close.
         </p>
       </div>
     </div>

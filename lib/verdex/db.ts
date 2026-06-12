@@ -442,7 +442,7 @@ export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Pr
   const noPool = (bets as BetForPayout[]).filter((b) => b.position === "no").reduce((s, b) => s + Number(b.amount_wld), 0);
   const winPool = outcome === "yes" ? yesPool : noPool;
   const losePool = outcome === "yes" ? noPool : yesPool;
-  const platformFee = 0.003;
+  const platformFee = 0.02; // 2% of the losing pool — disclosed in the bet sheet
   const netLosePool = losePool * (1 - platformFee);
 
   const winners = (bets as BetForPayout[]).filter((b) => b.position === outcome);

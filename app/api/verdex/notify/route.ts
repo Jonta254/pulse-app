@@ -15,6 +15,8 @@ type NotifyBody = {
   clashEvent?: "accepted" | "resolved";
   // Treasury payout notification
   payoutEvent?: "paid" | "refund";
+  // Daily featured market push
+  featuredTitle?: string;
   challengerUsername?: string;
   winnerNullifier?: string;
   // Shared auth
@@ -26,6 +28,13 @@ function buildNotification(body: NotifyBody): { title: string; message: string; 
     return {
       title: "WLD winnings sent! 🎉",
       message: "Your VeRdex winnings were just sent to your World App wallet on World Chain. Open My Bets to see the transaction.",
+      path: "/?tab=verdex",
+    };
+  }
+  if (body.featuredTitle) {
+    return {
+      title: "Today's market 🔮",
+      message: `${body.featuredTitle.slice(0, 120)} — call it before it closes. Verified humans only, real WLD payouts.`,
       path: "/?tab=verdex",
     };
   }

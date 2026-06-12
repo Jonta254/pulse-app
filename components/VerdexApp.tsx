@@ -374,7 +374,7 @@ export function VerdexApp() {
               </div>
               <div className="verdex-payout-row">
                 <span>Fee</span>
-                <strong>0.3%</strong>
+                <strong>2% of losing pool</strong>
               </div>
             </div>
             <button

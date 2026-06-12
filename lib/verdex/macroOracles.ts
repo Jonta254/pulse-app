@@ -166,6 +166,78 @@ export async function generateFngMarkets(opts: { need: number; excludeKeys: Set<
   }];
 }
 
+// ══ POLYMARKET MIRROR (gamma-api, free) ══════════════════════════════════════
+// Mirrors the highest-volume binary Polymarket questions — live discovery of
+// real-world events (elections, geopolitics, sports outrights, culture) with
+// resolution delegated to Polymarket's official on-chain resolution.
+//   id: data-v1-pm-<gammaId>-<closeSec>-<rand>
+
+type GammaMarket = {
+  id: string;
+  question?: string;
+  endDate?: string;
+  closed?: boolean;
+  outcomes?: string;       // JSON string '["Yes","No"]'
+  outcomePrices?: string;  // JSON string '["1","0"]' once resolved
+};
+
+function isBinaryYesNo(m: GammaMarket): boolean {
+  try {
+    const o = JSON.parse(m.outcomes ?? "[]") as string[];
+    return o.length === 2 && o[0] === "Yes" && o[1] === "No";
+  } catch { return false; }
+}
+
+export async function generatePolymarketMirrors(opts: { need: number; excludeIds: Set<string> }): Promise<VerdexMarket[]> {
+  if (opts.need <= 0) return [];
+  try {
+    const res = await fetch("https://gamma-api.polymarket.com/markets?closed=false&order=volumeNum&ascending=false&limit=30", {
+      cache: "no-store", signal: AbortSignal.timeout(12_000),
+    });
+    const list = await res.json() as GammaMarket[];
+    const now = Date.now();
+    const markets: VerdexMarket[] = [];
+
+    for (const m of list) {
+      if (markets.length >= opts.need) break;
+      if (!m.id || opts.excludeIds.has(m.id) || !m.question || !m.endDate) continue;
+      if (!isBinaryYesNo(m)) continue;
+      const end = new Date(m.endDate).getTime();
+      // 12h–45d out, question must read as a clean binary
+      if (end - now < 12 * 3_600_000 || end - now > 45 * 86_400_000) continue;
+      if (!m.question.trim().endsWith("?") || m.question.length > 130) continue;
+
+      const closes = new Date(end - 3_600_000);
+      markets.push({
+        ...baseRow,
+        id: `data-v1-pm-${m.id}-${Math.floor(closes.getTime() / 1000)}-${rid()}`,
+        title: m.question.trim(),
+        description: `Resolves YES exactly as Polymarket officially resolves this question (market #${m.id}), expected by ${m.endDate.slice(0, 10)}. Source: Polymarket official resolution (gamma-api.polymarket.com).`,
+        category: "world",
+        closesAt: closes.toISOString(),
+        resolvesAt: new Date(end + 3_600_000).toISOString(),
+      });
+    }
+    return markets;
+  } catch { return []; }
+}
+
+async function resolvePolymarket(gammaId: string): Promise<"yes" | "no" | null> {
+  try {
+    const res = await fetch(`https://gamma-api.polymarket.com/markets/${gammaId}`, {
+      cache: "no-store", signal: AbortSignal.timeout(12_000),
+    });
+    const m = await res.json() as GammaMarket;
+    if (!m.closed) return null;
+    const prices = JSON.parse(m.outcomePrices ?? "[]") as string[];
+    if (prices.length !== 2) return null;
+    const yes = Number(prices[0]);
+    if (yes > 0.99) return "yes";
+    if (yes < 0.01) return "no";
+    return null; // not conclusively resolved yet
+  } catch { return null; }
+}
+
 // ══ RESOLUTION DISPATCH ═══════════════════════════════════════════════════════
 
 export async function resolveMacroOutcome(id: string): Promise<"yes" | "no" | null | undefined> {
@@ -173,6 +245,10 @@ export async function resolveMacroOutcome(id: string): Promise<"yes" | "no" | nu
 
   if (id.startsWith("data-v1-rkt-") && parts.length === 6) {
     return resolveRocket(parts[3]);
+  }
+
+  if (id.startsWith("data-v1-pm-") && parts.length === 6) {
+    return resolvePolymarket(parts[3]);
   }
 
   if (id.startsWith("data-v1-fx-") && parts.length === 8) {

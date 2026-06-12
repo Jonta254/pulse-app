@@ -69,7 +69,7 @@ export function calcPotentialPayout(
 ): number {
   const winPool = position === "yes" ? yesPool : noPool;
   const losePool = position === "yes" ? noPool : yesPool;
-  const platformFee = 0.003; // 0.3%
+  const platformFee = 0.02; // 2% — must match resolveMarket in db.ts
   const net = losePool * (1 - platformFee);
   const payout = betAmount + (betAmount / (winPool + betAmount)) * net;
   return Math.round(payout * 100) / 100;

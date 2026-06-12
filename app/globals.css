@@ -924,6 +924,14 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-spin { animation: verdex-spin-anim 0.9s linear infinite; }
 @keyframes verdex-spin-anim { to { transform: rotate(360deg); } }
 
+/* High-emphasis clash CTA on sports markets — the 10% rake product */
+.verdex-clash-trigger.hot {
+  background: linear-gradient(135deg, rgba(255,193,7,0.18), rgba(255,140,0,0.12));
+  border: 1px solid rgba(255,193,7,0.45);
+  color: #ffc107;
+  font-weight: 800;
+}
+
 /* Fund flow explainer */
 .verdex-mybets-explainer {
   margin-top: 20px; padding: 16px;
