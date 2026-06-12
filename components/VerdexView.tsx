@@ -39,6 +39,7 @@ import type { VerifiedHuman } from "@/types/user";
 import type { VerdexTheme } from "@/lib/verdex/theme";
 import { ProfileSheet, ProfileTrigger } from "./ProfileSheet";
 import { WinningsPanel } from "./WinningsPanel";
+import { VERDEX_APP_ID } from "@/lib/worldConfig";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -528,6 +529,47 @@ function StatsBar({ stats }: { stats: ReturnType<typeof calcPlayerStats> }) {
   );
 }
 
+// ── Live payouts ticker ───────────────────────────────────────────────────────
+// Recent real on-chain payouts with WorldScan receipts. No other betting app
+// can show this strip, because no other app pays instantly on-chain.
+
+function LivePayoutsTicker() {
+  const [wins, setWins] = useState<Array<{ name: string; amountWld: number; source: string; txHash: string | null }>>([]);
+
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      fetch("/api/verdex/pulse", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((j: { ok: boolean; wins?: typeof wins }) => { if (alive && j.ok && j.wins) setWins(j.wins); })
+        .catch(() => null);
+    void load();
+    const t = setInterval(load, 60_000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  if (wins.length === 0) return null;
+
+  return (
+    <div className="verdex-pulse-ticker" aria-label="Recent real payouts">
+      <span className="verdex-pulse-ticker-label">💸 PAID OUT</span>
+      <div className="verdex-pulse-ticker-scroll">
+        {wins.map((w, i) => (
+          <a
+            key={i}
+            className="verdex-pulse-ticker-chip"
+            href={w.txHash ? `https://worldscan.org/tx/${w.txHash}` : undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <strong>{w.name}</strong> {w.source === "referral" ? "earned" : "won"} {w.amountWld.toFixed(2)} WLD ✓
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main view ─────────────────────────────────────────────────────────────────
 
 export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHistory, theme, onThemeToggle, onSignOut }: VerdexViewProps) {
@@ -899,6 +941,9 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
       {/* ── MARKETS TAB ── */}
       {verdexTab === "markets" && (
         <div className="verdex-content">
+          {/* Live on-chain payouts — public proof VeRdex pays */}
+          <LivePayoutsTicker />
+
           {/* Category filter */}
           <div className="verdex-cat-scroll">
             {(["all", "micro", "crypto", "sports", "world", "culture"] as VerdexCategory[]).map((cat) => (
@@ -1043,9 +1088,25 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                     )}
 
                     {won && (
-                      <div className="verdex-mybet-note won">
-                        🎉 Winning! Claim your WLD above or it auto-pays to your wallet at distribution.
-                      </div>
+                      <>
+                        <div className="verdex-mybet-note won">
+                          🎉 Winning! Claim your WLD above or it auto-pays to your wallet at distribution.
+                        </div>
+                        <button
+                          className="verdex-winshare-btn"
+                          type="button"
+                          onClick={async () => {
+                            const { shareWithWorld } = await import("@/lib/world");
+                            await shareWithWorld({
+                              title: "I just won on VeRdex 🔮",
+                              text: `I predicted "${bet.marketTitle}" and won ${(bet.payout ?? 0).toFixed(2)} WLD — paid instantly to my wallet, on-chain. Think you read the world better? Prove it:`,
+                              url: `https://worldcoin.org/mini-app?app_id=${VERDEX_APP_ID}&path=${encodeURIComponent(`/?ref=${humanIdentity?.wallet ?? ""}`)}`,
+                            });
+                          }}
+                        >
+                          📣 Share this win — earn 0.2 WLD per friend who joins
+                        </button>
+                      </>
                     )}
                     {refunded && (
                       <div className="verdex-mybet-note won">

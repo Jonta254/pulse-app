@@ -924,6 +924,37 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-spin { animation: verdex-spin-anim 0.9s linear infinite; }
 @keyframes verdex-spin-anim { to { transform: rotate(360deg); } }
 
+/* Live payouts ticker — public on-chain proof strip */
+.verdex-pulse-ticker {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px; padding: 8px 10px;
+  border: 1px solid rgba(0,232,135,0.25); border-radius: 12px;
+  background: rgba(0,232,135,0.05);
+  overflow: hidden;
+}
+.verdex-pulse-ticker-label {
+  flex-shrink: 0; font-size: 0.62rem; font-weight: 900; letter-spacing: 0.06em;
+  color: var(--verdex-yes);
+}
+.verdex-pulse-ticker-scroll {
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.verdex-pulse-ticker-scroll::-webkit-scrollbar { display: none; }
+.verdex-pulse-ticker-chip {
+  flex-shrink: 0; padding: 4px 10px; border-radius: 999px;
+  font-size: 0.68rem; color: var(--verdex-text); text-decoration: none;
+  background: var(--verdex-surface-2); border: 1px solid var(--verdex-border);
+}
+.verdex-pulse-ticker-chip strong { color: var(--verdex-yes); }
+
+/* Share-your-win viral button */
+.verdex-winshare-btn {
+  width: 100%; margin-top: 6px; padding: 9px 10px;
+  border-radius: 10px; border: 1px solid rgba(255,193,7,0.4);
+  background: rgba(255,193,7,0.1); color: #ffc107;
+  font-size: 0.74rem; font-weight: 800; cursor: pointer;
+}
+
 /* Invite & Earn referral card */
 .verdex-invite-card {
   padding: 14px;

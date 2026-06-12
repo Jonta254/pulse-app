@@ -178,7 +178,7 @@ export function ProfileSheet({
   const won    = totalWldWon(bets);
   const streak = currentStreak(bets);
   const rank   = getUserRank(user.username, leaderboard);
-  const { multiplier, label: streakLabel } = getStreakMultiplier(streak);
+  const { label: streakLabel } = getStreakMultiplier(streak);
 
   const recentBets = [...bets].slice(-5).reverse();
 
@@ -265,7 +265,7 @@ export function ProfileSheet({
         {streak >= 5 && (
           <div className="verdex-profile-streak-banner">
             <Zap size={14} />
-            <span>{streakLabel} — {multiplier}× payout multiplier active</span>
+            <span>{streakLabel} — {streak} wins in a row. Keep the heat alive! 🔥</span>
           </div>
         )}
 
