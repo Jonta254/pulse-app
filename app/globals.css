@@ -924,6 +924,20 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-spin { animation: verdex-spin-anim 0.9s linear infinite; }
 @keyframes verdex-spin-anim { to { transform: rotate(360deg); } }
 
+/* Resolution rules + provable-fairness chip on market cards */
+.verdex-market-rules {
+  margin: 0 0 8px; font-size: 0.72rem; line-height: 1.45;
+  color: var(--verdex-muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.verdex-fair-chip {
+  display: inline-block; margin-bottom: 8px;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 0.66rem; font-weight: 700;
+  color: var(--verdex-yes); background: rgba(0,232,135,0.09);
+  border: 1px solid rgba(0,232,135,0.3);
+}
+
 /* High-emphasis clash CTA on sports markets — the 10% rake product */
 .verdex-clash-trigger.hot {
   background: linear-gradient(135deg, rgba(255,193,7,0.18), rgba(255,140,0,0.12));

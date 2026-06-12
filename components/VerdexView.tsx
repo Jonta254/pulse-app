@@ -134,6 +134,11 @@ function MarketCard({
 
       <h3 className="verdex-market-title">{market.title}</h3>
 
+      {market.description && <p className="verdex-market-rules">{market.description}</p>}
+      {market.id.startsWith("data-v1-") && (
+        <div className="verdex-fair-chip">⚖️ Provably fair — auto-resolves from public data</div>
+      )}
+
       <PoolBar yesPool={market.yesPool} noPool={market.noPool} />
 
       <div className="verdex-market-meta">

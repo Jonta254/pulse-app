@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { resolveMarket } from "@/lib/verdex/db";
+import { resolveMarket, voidMarket } from "@/lib/verdex/db";
 import { generateDataMarkets, parseDataMarketId, resolveDataMarketOutcome } from "@/lib/verdex/dataOracle";
 import { generateFootballMarkets, parseFootballMarketId, resolveFootballOutcome } from "@/lib/verdex/footballOracle";
 import { generateWeatherMarkets, generateNbaMarkets, generateWikiDuels, resolveExtraOutcome } from "@/lib/verdex/extraOracles";
@@ -75,9 +75,31 @@ async function runAutopilot(force: boolean) {
     if (result.ok) resolved++;
   }
 
-  // 2. Pay winners
+  // 1b. Board hygiene: void + refund anything that can never resolve.
+  //   - non-data markets (seed/AI) 48h past their deadline (no resolver exists)
+  //   - data markets 7 days past their deadline (source never produced a result,
+  //     e.g. a postponed match) — players get their stakes back instead of limbo
+  let voided = 0;
+  const staleNonData = await db
+    .from("verdex_markets").select("id")
+    .in("status", ["open", "closed"])
+    .not("id", "like", "data-v1-%")
+    .lt("resolves_at", new Date(Date.now() - 48 * 3_600_000).toISOString())
+    .limit(10);
+  const staleData = await db
+    .from("verdex_markets").select("id")
+    .in("status", ["open", "closed"])
+    .like("id", "data-v1-%")
+    .lt("resolves_at", new Date(Date.now() - 7 * 86_400_000).toISOString())
+    .limit(10);
+  for (const m of [...(staleNonData.data ?? []), ...(staleData.data ?? [])]) {
+    const r = await voidMarket(m.id, "No resolution source produced a result before the deadline");
+    if (r.ok) voided++;
+  }
+
+  // 2. Pay winners (and refunds)
   let payoutRun = null;
-  if (resolved > 0 && isTreasuryPayoutEnabled()) {
+  if ((resolved > 0 || voided > 0) && isTreasuryPayoutEnabled()) {
     payoutRun = await processQueuedPayouts({ limit: 25 });
     if (payoutRun.paidWallets.length > 0) await notifyPaidWinners(payoutRun.paidWallets);
   }
@@ -163,6 +185,7 @@ async function runAutopilot(force: boolean) {
     ok: true,
     skipped: false as const,
     resolved,
+    voided,
     unresolvable,
     generated,
     payouts: payoutRun ? { paid: payoutRun.paid, failed: payoutRun.failed } : null,

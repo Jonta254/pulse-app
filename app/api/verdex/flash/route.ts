@@ -88,11 +88,14 @@ export async function GET(req: NextRequest) {
   }
 
   const now = new Date().toISOString();
+  // Machine-resolvable data markets only — every flash market must settle
+  // itself; stale seed/AI micro markets are excluded
   const { data, error } = await client
     .from("verdex_markets")
     .select("*")
     .eq("status", "open")
     .eq("category", "micro")
+    .like("id", "data-v1-%")
     .gt("closes_at", now)
     .order("closes_at", { ascending: true })
     .limit(6);
