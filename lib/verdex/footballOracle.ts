@@ -139,10 +139,21 @@ export function parseFootballMarketId(id: string): ParsedFootballMarket | null {
   return { eventId: parts[3], day: parts[4], type };
 }
 
+function shiftDay(yyyymmdd: string, delta: number): string {
+  const d = new Date(`${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return dateKey(d);
+}
+
 // Returns outcome, or null while the match isn't finished / data unavailable
 export async function resolveFootballOutcome(parsed: ParsedFootballMarket): Promise<"yes" | "no" | null> {
-  const events = await fetchScoreboard(parsed.day);
-  const ev = events.find((e) => e.id === parsed.eventId);
+  // ESPN's dates param is US Eastern — a 02:00 UTC kickoff lists under the
+  // previous ESPN date, so search the stored day and both neighbours
+  let ev: EspnEvent | undefined;
+  for (const day of [parsed.day, shiftDay(parsed.day, -1), shiftDay(parsed.day, 1)]) {
+    ev = (await fetchScoreboard(day)).find((e) => e.id === parsed.eventId);
+    if (ev) break;
+  }
   const comp = ev?.competitions?.[0];
   if (!comp?.status?.type?.completed) return null;
 

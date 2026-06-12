@@ -261,8 +261,15 @@ export async function resolveExtraOutcome(id: string): Promise<"yes" | "no" | nu
 
   if (id.startsWith("data-v1-nba-") && parts.length === 9) {
     const eventId = parts[3], day = parts[4], type = parts[5], param = Number(parts[6]);
-    const events = await fetchNba(day);
-    const comp = events.find((e) => e.id === eventId)?.competitions?.[0];
+    // ESPN's dates param is US Eastern — search the stored day and neighbours
+    let comp: NonNullable<EspnEvent["competitions"]>[0] | undefined;
+    for (const delta of [0, -1, 1]) {
+      const d = new Date(`${day.slice(0, 4)}-${day.slice(4, 6)}-${day.slice(6, 8)}T12:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + delta);
+      const events = await fetchNba(dayKey(d));
+      comp = events.find((e) => e.id === eventId)?.competitions?.[0];
+      if (comp) break;
+    }
     if (!comp?.status?.type?.completed) return null;
     const comps = comp.competitors ?? [];
     const home = comps.find((c) => c.homeAway === "home");
