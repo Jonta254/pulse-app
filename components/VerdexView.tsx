@@ -40,6 +40,7 @@ import type { VerdexTheme } from "@/lib/verdex/theme";
 import { ProfileSheet, ProfileTrigger } from "./ProfileSheet";
 import { WinningsPanel } from "./WinningsPanel";
 import { VERDEX_APP_ID } from "@/lib/worldConfig";
+import { VerdexMark } from "./VerdexMark";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -895,7 +896,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
         <div className="verdex-header-top">
           {/* Brand mark */}
           <div className="verdex-brand">
-            <div className="verdex-brand-icon"><Zap size={22} /></div>
+            <div className="verdex-brand-icon"><VerdexMark size={36} /></div>
             <div>
               <strong>VeRdex</strong>
               <span>Human Prediction Network</span>

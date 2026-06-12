@@ -220,8 +220,9 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   width: 72px; height: 72px;
   display: grid; place-items: center;
   border-radius: 22px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  box-shadow: 0 12px 32px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.18);
+  background: #0b0e22;
+  border: 1px solid rgba(139,92,246,0.45);
+  box-shadow: 0 12px 32px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .verdex-gate-bolt { font-size: 2.2rem; line-height: 1; }
@@ -388,9 +389,9 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-brand-icon {
   width: 44px; height: 44px; display: grid; place-items: center;
   border-radius: 14px; color: #fff;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), transparent 60%),
-    linear-gradient(135deg, #6366f1, #8b5cf6);
-  box-shadow: 0 8px 24px rgba(99,102,241,0.42), inset 0 1px 0 rgba(255,255,255,0.18);
+  background: #0b0e22;
+  border: 1px solid rgba(139,92,246,0.45);
+  box-shadow: 0 8px 24px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .verdex-brand > div:last-child { display: grid; gap: 2px; }

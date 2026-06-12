@@ -27,6 +27,7 @@ import {
 } from "@/lib/world";
 import { applyTheme, getStoredTheme, saveTheme, toggleTheme, type VerdexTheme } from "@/lib/verdex/theme";
 import { VerdexView } from "./VerdexView";
+import { VerdexMark } from "./VerdexMark";
 import type { HistoryRecord } from "@/types/reputation";
 import type { VerifiedHuman } from "@/types/user";
 import type { PaymentRequest, Toast } from "@/types/ui";
@@ -276,7 +277,7 @@ export function VerdexApp() {
 
           {/* Logo + brand */}
           <div className="verdex-gate-logo">
-            <span className="verdex-gate-bolt">⚡</span>
+            <VerdexMark size={62} />
           </div>
           <h1 className="verdex-gate-title">VeRdex</h1>
           <p className="verdex-gate-sub">Human Prediction Network</p>
