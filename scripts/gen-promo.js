@@ -31,10 +31,45 @@ const defs = `
     </linearGradient>
   </defs>`;
 
+// VeRdex mark — twin blades V (violet + gold), teal candlesticks, neon ring
 function bolt(cx, cy, scale) {
-  return `<g transform="translate(${cx - 50 * scale},${cy - 61 * scale}) scale(${scale * 1.22})">
-    <polygon points="50,0 0,60 28,60 10,100 80,30 50,30 70,0" fill="url(#lg)"/>
-    <polygon points="10,100 16,80 28,92" fill="${YES}"/>
+  const k = scale * 1.5;
+  return `<g transform="translate(${cx - 100 * k},${cy - 100 * k}) scale(${k})">
+    <defs>
+      <linearGradient id="bladeL" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#a78bfa"/><stop offset="45%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#3b1a8c"/>
+      </linearGradient>
+      <linearGradient id="bladeR" x1="1" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fde68a"/><stop offset="45%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#8a4d04"/>
+      </linearGradient>
+      <linearGradient id="candle" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%" stop-color="#0d9488"/><stop offset="100%" stop-color="#5eead4"/>
+      </linearGradient>
+      <linearGradient id="ringg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#2dd4bf"/>
+      </linearGradient>
+      <filter id="soft"><feGaussianBlur stdDeviation="1.6"/></filter>
+    </defs>
+    <!-- neon ring -->
+    <circle cx="100" cy="84" r="60" fill="none" stroke="url(#ringg)" stroke-width="5" opacity="0.28" filter="url(#soft)"/>
+    <circle cx="100" cy="84" r="60" fill="none" stroke="url(#ringg)" stroke-width="2.2" opacity="0.85"/>
+    <!-- candlesticks -->
+    <g>
+      <rect x="74" y="96" width="11" height="26" rx="2" fill="url(#candle)"/><rect x="78.5" y="88" width="2.5" height="9" fill="#5eead4"/>
+      <rect x="92" y="80" width="11" height="42" rx="2" fill="url(#candle)"/><rect x="96.5" y="70" width="2.5" height="11" fill="#5eead4"/>
+      <rect x="110" y="62" width="11" height="60" rx="2" fill="url(#candle)"/><rect x="114.5" y="50" width="2.5" height="13" fill="#5eead4"/>
+      <rect x="128" y="44" width="11" height="78" rx="2" fill="url(#candle)"/><rect x="132.5" y="31" width="2.5" height="14" fill="#5eead4"/>
+    </g>
+    <!-- left blade (violet) -->
+    <polygon points="22,34 56,62 104,170 64,116" fill="url(#bladeL)"/>
+    <polygon points="22,34 56,62 82,120 46,82" fill="#c4b5fd" opacity="0.35"/>
+    <!-- right blade (gold) -->
+    <polygon points="178,34 144,62 96,170 136,116" fill="url(#bladeR)"/>
+    <polygon points="178,34 144,62 118,120 154,82" fill="#fef3c7" opacity="0.4"/>
+    <!-- base ripple + pulse -->
+    <ellipse cx="100" cy="178" rx="62" ry="13" fill="none" stroke="#8b5cf6" stroke-width="2.4" opacity="0.55"/>
+    <ellipse cx="100" cy="178" rx="40" ry="8" fill="none" stroke="#2dd4bf" stroke-width="2" opacity="0.7"/>
+    <path d="M84,178 L97,156 L100,148 L103,156 L116,178" fill="none" stroke="#a78bfa" stroke-width="3" stroke-linejoin="round" opacity="0.9"/>
   </g>`;
 }
 
@@ -71,7 +106,7 @@ const frames = [];
 
 // F1 — HOOK
 frames.push(frame(`
-  ${bolt(540, 460, 2.4)}
+  ${bolt(540, 430, 2.0)}
   <text x="540" y="800" font-family="${FONT}" font-size="120" font-weight="900" fill="${TEXT}" text-anchor="middle">VeRdex</text>
   <text x="540" y="880" font-family="${FONT}" font-size="40" font-weight="700" fill="${MUTED}" text-anchor="middle" letter-spacing="6">HUMAN PREDICTION NETWORK</text>
   <text x="540" y="1080" font-family="${FONT}" font-size="64" font-weight="900" fill="${TEXT}" text-anchor="middle">Think you can read</text>
@@ -155,7 +190,7 @@ frames.push(frame(`
 
 // F8 — CTA
 frames.push(frame(`
-  ${bolt(540, 480, 2.2)}
+  ${bolt(540, 450, 1.9)}
   <text x="540" y="820" font-family="${FONT}" font-size="84" font-weight="900" fill="${TEXT}" text-anchor="middle">The world is moving.</text>
   <text x="540" y="930" font-family="${FONT}" font-size="84" font-weight="900" fill="${GOLD}" text-anchor="middle">Call it first.</text>
   <rect x="160" y="1080" width="760" height="140" rx="70" fill="url(#greeng)"/>
@@ -168,7 +203,7 @@ const adSquare = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1
   ${defs}
   <rect width="1080" height="1080" fill="${BG}"/>
   <rect width="1080" height="1080" fill="url(#halo)"/>
-  ${bolt(540, 270, 1.7)}
+  ${bolt(540, 250, 1.4)}
   <text x="540" y="540" font-family="${FONT}" font-size="100" font-weight="900" fill="${TEXT}" text-anchor="middle">VeRdex</text>
   <text x="540" y="610" font-family="${FONT}" font-size="34" font-weight="700" fill="${MUTED}" text-anchor="middle" letter-spacing="5">HUMAN PREDICTION NETWORK</text>
   <text x="540" y="730" font-family="${FONT}" font-size="56" font-weight="900" fill="${TEXT}" text-anchor="middle">Predict the World Cup.</text>
@@ -183,7 +218,7 @@ const adWide = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630
   ${defs}
   <rect width="1200" height="630" fill="${BG}"/>
   <rect width="1200" height="630" fill="url(#halo)"/>
-  ${bolt(210, 315, 1.5)}
+  ${bolt(210, 315, 1.2)}
   <text x="420" y="230" font-family="${FONT}" font-size="84" font-weight="900" fill="${TEXT}">VeRdex</text>
   <text x="420" y="290" font-family="${FONT}" font-size="28" font-weight="700" fill="${MUTED}" letter-spacing="4">HUMAN PREDICTION NETWORK</text>
   <text x="420" y="380" font-family="${FONT}" font-size="44" font-weight="900" fill="${TEXT}">Predict real events. Win real WLD.</text>
