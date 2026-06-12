@@ -924,6 +924,23 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-spin { animation: verdex-spin-anim 0.9s linear infinite; }
 @keyframes verdex-spin-anim { to { transform: rotate(360deg); } }
 
+/* Invite & Earn referral card */
+.verdex-invite-card {
+  padding: 14px;
+  border: 1px solid rgba(255,193,7,0.35); border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255,193,7,0.08), var(--verdex-surface));
+}
+.verdex-invite-pitch { margin: 0 0 12px; font-size: 0.78rem; line-height: 1.5; color: var(--verdex-text); }
+.verdex-invite-pitch strong { color: #ffc107; }
+.verdex-invite-stats { display: flex; gap: 8px; margin-bottom: 12px; }
+.verdex-invite-stats > div {
+  flex: 1; text-align: center; padding: 8px 4px;
+  border-radius: 10px; background: var(--verdex-surface-2);
+}
+.verdex-invite-stats strong { display: block; font-size: 1.05rem; font-weight: 900; color: #ffc107; }
+.verdex-invite-stats span { font-size: 0.64rem; color: var(--verdex-muted); }
+.verdex-invite-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+
 /* Resolution rules + provable-fairness chip on market cards */
 .verdex-market-rules {
   margin: 0 0 8px; font-size: 0.72rem; line-height: 1.45;

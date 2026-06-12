@@ -19,12 +19,14 @@
  * - Sign out
  */
 
-import { useCallback } from "react";
-import { Award, ChevronRight, Copy, LogOut, Moon, Settings, Shield, Star, Sun, TrendingUp, X, Zap } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Award, ChevronRight, Copy, Gift, LogOut, Moon, Settings, Shield, Star, Sun, TrendingUp, X, Zap } from "lucide-react";
 import type { VerifiedHuman } from "@/types/user";
 import type { VerdexBet, VerdexCopyFollow, VerdexLeaderEntry } from "@/types/verdex";
 import type { VerdexTheme } from "@/lib/verdex/theme";
 import { getStreakMultiplier } from "@/lib/verdex/data";
+import { shareWithWorld, hapticSuccess } from "@/lib/world";
+import { VERDEX_APP_ID } from "@/lib/worldConfig";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -79,28 +81,89 @@ function getUserRank(username: string, leaderboard: VerdexLeaderEntry[]): number
 }
 
 function getInitials(username: string): string {
-  const clean = username.replace(/^@/, "");
-  return clean.slice(0, 2).toUpperCase();
+  const clean = username.replace(/^@/, "").trim();
+  return (clean.charAt(0) || "H").toUpperCase();
 }
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
+// First letter of the username; the profile image is only shown once it has
+// actually loaded, so a broken URL can never render alt-text inside the circle.
 
 function Avatar({ user, size = 72 }: { user: VerifiedHuman; size?: number }) {
-  if (user.profilePictureUrl) {
-    return (
-      <img
-        src={user.profilePictureUrl}
-        alt={user.username}
-        width={size}
-        height={size}
-        className="verdex-profile-avatar-img"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
+  const [imgOk, setImgOk] = useState(false);
+
   return (
-    <div className="verdex-profile-avatar" style={{ width: size, height: size, fontSize: size * 0.36 }}>
+    <div className="verdex-profile-avatar" style={{ width: size, height: size, fontSize: size * 0.42, position: "relative" }}>
       {getInitials(user.username)}
+      {user.profilePictureUrl && (
+        <img
+          src={user.profilePictureUrl}
+          alt=""
+          width={size}
+          height={size}
+          className="verdex-profile-avatar-img"
+          style={{ width: size, height: size, position: "absolute", inset: 0, borderRadius: "50%", objectFit: "cover", display: imgOk ? "block" : "none" }}
+          onLoad={() => setImgOk(true)}
+          onError={() => setImgOk(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Invite & Earn ─────────────────────────────────────────────────────────────
+// Referral engine: every verified human you bring in earns you real WLD the
+// moment they place their first bet. The share link deep-links into World App.
+
+function InviteEarnCard({ user }: { user: VerifiedHuman }) {
+  const [stats, setStats] = useState<{ invited: number; rewarded: number; earnedWld: number } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const isRealWallet = /^0x[a-fA-F0-9]{40}$/.test(user.wallet);
+  const inviteUrl = `https://worldcoin.org/mini-app?app_id=${VERDEX_APP_ID}&path=${encodeURIComponent(`/?ref=${user.wallet}`)}`;
+
+  useEffect(() => {
+    if (!isRealWallet) return;
+    fetch(`/api/verdex/referral?nullifier=${user.wallet}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j: { ok: boolean; invited?: number; rewarded?: number; earnedWld?: number }) => {
+        if (j.ok) setStats({ invited: j.invited ?? 0, rewarded: j.rewarded ?? 0, earnedWld: j.earnedWld ?? 0 });
+      })
+      .catch(() => null);
+  }, [user.wallet, isRealWallet]);
+
+  if (!isRealWallet) return null;
+
+  async function handleShare() {
+    void hapticSuccess();
+    await shareWithWorld({
+      title: "Join me on VeRdex 🔮",
+      text: `I'm predicting real-world events for real WLD on VeRdex — verified humans only, provably fair, instant payouts. Join with my link and let's see who reads the world better:`,
+      url: inviteUrl,
+    });
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
+
+  return (
+    <div className="verdex-profile-section">
+      <div className="verdex-profile-section-header">
+        <Gift size={14} />
+        <span>Invite &amp; Earn</span>
+      </div>
+      <div className="verdex-invite-card">
+        <p className="verdex-invite-pitch">
+          Earn <strong>0.2 WLD</strong> for every verified human who joins with your link and places their first bet — paid straight to your wallet.
+        </p>
+        <div className="verdex-invite-stats">
+          <div><strong>{stats?.invited ?? 0}</strong><span>invited</span></div>
+          <div><strong>{stats?.rewarded ?? 0}</strong><span>now betting</span></div>
+          <div><strong>{(stats?.earnedWld ?? 0).toFixed(1)}</strong><span>WLD earned</span></div>
+        </div>
+        <button className="verdex-cta-btn verdex-invite-btn" onClick={() => void handleShare()} type="button">
+          <Gift size={15} /> {copied ? "Link shared! 🎉" : "Share my invite link"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -269,6 +332,9 @@ export function ProfileSheet({
           </div>
         )}
 
+        {/* ── Invite & Earn ────────────────────────────────────────────────── */}
+        <InviteEarnCard user={user} />
+
         {/* ── Settings ─────────────────────────────────────────────────────── */}
         <div className="verdex-profile-section">
           <div className="verdex-profile-section-header">
@@ -341,12 +407,9 @@ export function ProfileTrigger({ user, bets, onClick }: ProfileTriggerProps) {
       type="button"
       aria-label="Open your profile"
     >
-      {/* Mini avatar */}
+      {/* Mini avatar — first letter, image only overlays once loaded */}
       <div className="verdex-profile-trigger-avatar">
-        {user.profilePictureUrl
-          ? <img src={user.profilePictureUrl} alt="" width={32} height={32} />
-          : <span>{getInitials(user.username)}</span>
-        }
+        <Avatar user={user} size={32} />
         {/* World ID green dot */}
         {user.mode === "world" && <div className="verdex-profile-trigger-dot" />}
       </div>

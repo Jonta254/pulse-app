@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
+import { after } from "next/server";
 import { placeBet, isVerdexDbReady } from "@/lib/verdex/db";
+import { maybeRewardReferral } from "@/lib/verdex/referrals";
 import { isRateLimited, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
 
 type BetBody = {
@@ -54,6 +56,9 @@ export async function POST(req: NextRequest) {
   if (!result.ok) {
     return noStoreJson({ ok: false, error: result.error }, { status: 409 });
   }
+
+  // First confirmed bet from an invited human pays their referrer (once)
+  after(() => maybeRewardReferral(worldNullifier));
 
   return noStoreJson({ ok: true });
 }

@@ -85,6 +85,16 @@ export function VerdexApp() {
     return () => clearInterval(t);
   }, []);
 
+  // ── Referral capture: ?ref=0x… from invite deep links ────────────────────
+  useEffect(() => {
+    try {
+      const ref = new URLSearchParams(window.location.search).get("ref");
+      if (ref && /^0x[a-fA-F0-9]{40}$/.test(ref) && !localStorage.getItem("verdex_ref_v1")) {
+        localStorage.setItem("verdex_ref_v1", ref);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   // ── Safe area CSS vars ───────────────────────────────────────────────────
   useEffect(() => {
     const root = document.documentElement;
@@ -130,6 +140,19 @@ export function VerdexApp() {
         mode: "world",
         lastSeenAt: new Date().toISOString(),
       });
+
+      // Referral attribution: ?ref=0x… captured at load is credited on first
+      // sign-in. Server enforces new-users-only and one-referrer-forever.
+      try {
+        const ref = localStorage.getItem("verdex_ref_v1");
+        if (ref && /^0x[a-fA-F0-9]{40}$/.test(ref) && ref.toLowerCase() !== result.address.toLowerCase()) {
+          fetch("/api/verdex/referral", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ referrer: ref, referee: result.address }),
+          }).then(() => localStorage.removeItem("verdex_ref_v1")).catch(() => null);
+        }
+      } catch { /* localStorage unavailable */ }
 
       // Request notification permission once, after first login
       // (docs: behaviour-triggered notifications have 2-3x better open rates)

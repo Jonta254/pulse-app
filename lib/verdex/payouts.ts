@@ -19,7 +19,7 @@ function isWallet(addr: string) {
 }
 
 export type PayoutQueueEntry = {
-  source: "market" | "clash" | "goal";
+  source: "market" | "clash" | "goal" | "referral";
   sourceId: string;
   marketId?: string;
   worldNullifier: string;
