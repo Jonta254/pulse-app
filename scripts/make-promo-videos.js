@@ -55,6 +55,9 @@ function render({ prefix, outName, hold, fade, transitions }) {
     filters.join(";") + (hasBeat ? `;[${frames.length}:a]atrim=0:${duration},afade=t=out:st=${(duration - 1.2).toFixed(2)}:d=1.2[aout]` : ""),
     "-map", "[vout]",
     ...(hasBeat ? ["-map", "[aout]"] : []),
+    // xfade negotiates yuv444p, which phones/WhatsApp can't decode —
+    // force the universally playable 4:2:0 High profile
+    "-pix_fmt", "yuv420p", "-profile:v", "high", "-level", "4.0",
     "-c:v", "libx264", "-preset", "medium", "-crf", "20",
     ...(hasBeat ? ["-c:a", "aac", "-b:a", "160k"] : []),
     "-movflags", "+faststart",
