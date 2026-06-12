@@ -188,14 +188,14 @@ export async function processQueuedPayouts(opts: { nullifier?: string; limit?: n
   return base;
 }
 
-// Fire-and-forget "payout sent" push notification via the World API
-export async function notifyPaidWinners(wallets: string[]) {
+// Fire-and-forget "payout sent" / "stake refunded" push notification
+export async function notifyPaidWinners(wallets: string[], event: "paid" | "refund" = "paid") {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   const secret = process.env.CRON_SECRET ?? "";
   if (!appUrl || wallets.length === 0) return;
   fetch(`${appUrl}/api/verdex/notify`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
-    body: JSON.stringify({ payoutEvent: "paid", nullifiers: wallets }),
+    body: JSON.stringify({ payoutEvent: event, nullifiers: wallets }),
   }).catch(() => null);
 }

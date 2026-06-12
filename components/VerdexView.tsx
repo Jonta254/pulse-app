@@ -534,7 +534,8 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   const [goalSheet, setGoalSheet] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [localMarkets, setLocalMarkets] = useState<VerdexMarket[]>(() => applyLocalPools(seedMarkets));
-  const [leaderboard, setLeaderboard] = useState(seedLeaderboard);
+  // Real players only — starts empty until the DB returns actual rankings
+  const [leaderboard, setLeaderboard] = useState<typeof seedLeaderboard>([]);
   const stats = calcPlayerStats(bets);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -599,10 +600,43 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
     fetch("/api/verdex/leaderboard", { cache: "no-store" })
       .then((r) => r.json())
       .then((payload: { ok: boolean; leaderboard?: typeof seedLeaderboard }) => {
-        if (payload.ok && payload.leaderboard?.length) setLeaderboard(payload.leaderboard);
+        if (payload.ok && Array.isArray(payload.leaderboard)) setLeaderboard(payload.leaderboard);
       })
       .catch(() => null);
   }, [verdexTab]);
+
+  // ── Sync My Bets with server truth: settled, payout, refunds ───────────────
+  useEffect(() => {
+    if (verdexTab !== "mybets") return;
+    const wallet = humanIdentity?.wallet ?? "";
+    if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) return;
+
+    type ServerBet = { id: string; marketId: string; marketTitle: string; position: "yes" | "no"; amountWld: number; payout?: number; settled: boolean; placedAt: string };
+    fetch(`/api/verdex/bets?nullifier=${wallet}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((payload: { ok: boolean; bets?: ServerBet[] }) => {
+        if (!payload.ok || !payload.bets) return;
+        setBets((prev) => {
+          const byId = new Map(prev.map((b) => [b.id, b]));
+          for (const sb of payload.bets ?? []) {
+            const existing = byId.get(sb.id);
+            byId.set(sb.id, {
+              id: sb.id,
+              marketId: sb.marketId,
+              marketTitle: sb.marketTitle || existing?.marketTitle || "Market",
+              position: sb.position,
+              amountWld: sb.amountWld,
+              placedAt: existing?.placedAt ?? sb.placedAt,
+              confirmed: true,
+              payout: sb.payout ?? existing?.payout,
+              settled: sb.settled || existing?.settled,
+            });
+          }
+          return [...byId.values()].sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
+        });
+      })
+      .catch(() => null);
+  }, [verdexTab, humanIdentity]);
 
   // ── Filter markets ──────────────────────────────────────────────────────────
   const filtered = category === "all" ? localMarkets : localMarkets.filter((m) => m.category === category);
@@ -933,8 +967,9 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
           ) : (
             <div className="verdex-mybets-list">
               {[...bets].reverse().map((bet) => {
-                const won  = bet.settled && (bet.payout ?? 0) > bet.amountWld;
-                const lost = bet.settled && !won;
+                const refunded = Boolean(bet.settled && bet.payout != null && Math.abs(bet.payout - bet.amountWld) < 1e-9);
+                const won  = bet.settled && !refunded && (bet.payout ?? 0) > bet.amountWld;
+                const lost = bet.settled && !refunded && !won;
                 const open = !bet.settled;
                 const profit = won ? +((bet.payout ?? 0) - bet.amountWld).toFixed(4) : 0;
                 // Find the market in current list
@@ -945,8 +980,8 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                     <div className="verdex-mybet-stripe" />
 
                     <div className="verdex-mybet-top">
-                      <span className={`verdex-mybet-status ${won ? "won" : lost ? "lost" : "open"}`}>
-                        {won ? "✓ Won" : lost ? "✗ Lost" : "⏳ Open"}
+                      <span className={`verdex-mybet-status ${won ? "won" : refunded ? "open" : lost ? "lost" : "open"}`}>
+                        {won ? "✓ Won" : refunded ? "↩ Refunded" : lost ? "✗ Lost" : "⏳ Open"}
                       </span>
                       <span className="verdex-mybet-pos">{bet.position.toUpperCase()}</span>
                     </div>
@@ -962,6 +997,11 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                         <div className="verdex-mybet-payout won">
                           <span>Payout</span>
                           <strong>+{bet.payout?.toFixed(4)} WLD</strong>
+                        </div>
+                      ) : refunded ? (
+                        <div className="verdex-mybet-payout potential">
+                          <span>Refunded</span>
+                          <strong>↩ {bet.amountWld} WLD</strong>
                         </div>
                       ) : lost ? (
                         <div className="verdex-mybet-payout lost">
@@ -995,6 +1035,11 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                     {won && (
                       <div className="verdex-mybet-note won">
                         🎉 Winning! Claim your WLD above or it auto-pays to your wallet at distribution.
+                      </div>
+                    )}
+                    {refunded && (
+                      <div className="verdex-mybet-note won">
+                        ↩ Market voided — your full stake was returned to your wallet.
                       </div>
                     )}
                     {lost && (
@@ -1178,6 +1223,13 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+
+          {leaderboard.length === 0 && (
+            <div className="verdex-empty" style={{ marginTop: 24 }}>
+              <p style={{ fontSize: "2rem" }}>🏆</p>
+              <p>No ranked forecasters yet. Win a market and your name opens the board.</p>
             </div>
           )}
 

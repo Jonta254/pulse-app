@@ -516,6 +516,69 @@ export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Pr
   return { ok: true, payouts: payoutCount, queued };
 }
 
+// ── Void market: cancel + refund every stake ──────────────────────────────────
+// For postponed matches or permanently unresolvable markets. Every confirmed
+// bet (and active clash stake) is refunded in full through the treasury rail.
+
+export async function voidMarket(marketId: string, reason: string): Promise<{ ok: boolean; refunds: number; error?: string }> {
+  const db = getSupabaseClient();
+  if (!db) return { ok: false, refunds: 0, error: "Database not configured." };
+
+  const { data: market, error: mErr } = await db
+    .from("verdex_markets")
+    .select("id, status, description")
+    .eq("id", marketId)
+    .single();
+
+  if (mErr || !market) return { ok: false, refunds: 0, error: "Market not found." };
+  if (market.status === "resolved") return { ok: false, refunds: 0, error: "Market already resolved — cannot void." };
+  if (market.status === "cancelled") return { ok: false, refunds: 0, error: "Market already voided." };
+
+  const { data: bets, error: bErr } = await db
+    .from("verdex_bets")
+    .select("id, world_nullifier, username, amount_wld")
+    .eq("market_id", marketId)
+    .eq("confirmed", true)
+    .eq("paid_out", false);
+  if (bErr) return { ok: false, refunds: 0, error: "Failed to fetch bets." };
+
+  const refunds: PayoutQueueEntry[] = [];
+  for (const bet of (bets ?? []) as Array<{ id: string; world_nullifier: string; username: string | null; amount_wld: number }>) {
+    // payout == stake marks this bet as refunded, not won or lost
+    await db.from("verdex_bets").update({ payout_wld: bet.amount_wld, paid_out: true, settled: true }).eq("id", bet.id);
+    refunds.push({
+      source: "market",
+      sourceId: bet.id,
+      marketId,
+      worldNullifier: bet.world_nullifier,
+      username: bet.username,
+      amountWld: Number(bet.amount_wld),
+    });
+  }
+
+  // Refund both sides of any clash riding on this market
+  const { data: clashes } = await db
+    .from("verdex_clashes")
+    .select("id, creator_nullifier, challenger_nullifier, stake_wld")
+    .eq("market_id", marketId)
+    .in("status", ["pending", "active"]);
+  for (const clash of (clashes ?? []) as Array<{ id: string; creator_nullifier: string; challenger_nullifier: string | null; stake_wld: number }>) {
+    await db.from("verdex_clashes").update({ status: "expired" }).eq("id", clash.id);
+    refunds.push({ source: "clash", sourceId: `${clash.id}:refund-creator`, marketId, worldNullifier: clash.creator_nullifier, amountWld: Number(clash.stake_wld) });
+    if (clash.challenger_nullifier) {
+      refunds.push({ source: "clash", sourceId: `${clash.id}:refund-challenger`, marketId, worldNullifier: clash.challenger_nullifier, amountWld: Number(clash.stake_wld) });
+    }
+  }
+
+  await db.from("verdex_markets").update({
+    status: "cancelled",
+    description: `${market.description ?? ""} — VOIDED: ${reason.slice(0, 200)}. All stakes refunded in full.`.trim(),
+  }).eq("id", marketId);
+
+  const queued = await queuePayouts(refunds);
+  return { ok: true, refunds: queued };
+}
+
 // ── Bet wallets for notifications ─────────────────────────────────────────────
 
 export async function getBetNullifiers(marketId: string): Promise<string[]> {

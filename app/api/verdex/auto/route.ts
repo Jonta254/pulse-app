@@ -4,6 +4,7 @@ import { resolveMarket } from "@/lib/verdex/db";
 import { generateDataMarkets, parseDataMarketId, resolveDataMarketOutcome } from "@/lib/verdex/dataOracle";
 import { generateFootballMarkets, parseFootballMarketId, resolveFootballOutcome } from "@/lib/verdex/footballOracle";
 import { generateWeatherMarkets, generateNbaMarkets, generateWikiDuels, resolveExtraOutcome } from "@/lib/verdex/extraOracles";
+import { generateRocketMarkets, generateFxMarkets, generateFngMarkets, resolveMacroOutcome } from "@/lib/verdex/macroOracles";
 import { upsertMarkets } from "@/lib/verdex/db";
 import { processQueuedPayouts, notifyPaidWinners } from "@/lib/verdex/payouts";
 import { isTreasuryPayoutEnabled } from "@/lib/verdex/treasury";
@@ -24,6 +25,9 @@ const SPORTS_TARGET = 9; // ~3 World Cup matches × 3 markets each
 const NBA_TARGET = 4;    // 2 games × (winner + total points)
 const WEATHER_TARGET = 4;
 const WIKI_TARGET = 3;
+const ROCKET_TARGET = 2;
+const FX_TARGET = 2;
+const FNG_TARGET = 1;
 
 let lastRunAt = 0; // per-instance throttle for self-triggered calls
 
@@ -51,9 +55,10 @@ async function runAutopilot(force: boolean) {
   let unresolvable = 0;
   for (const m of due ?? []) {
     let outcome: "yes" | "no" | null = null;
-    const extra = await resolveExtraOutcome(m.id); // weather / NBA / wiki duels
-    if (extra !== undefined) {
-      outcome = extra;
+    const macro = await resolveMacroOutcome(m.id); // rockets / FX / fear-greed
+    const extra = macro !== undefined ? macro : await resolveExtraOutcome(m.id); // weather / NBA / wiki
+    if (macro !== undefined || extra !== undefined) {
+      outcome = macro !== undefined ? macro : (extra as "yes" | "no" | null);
     } else {
       const fb = parseFootballMarketId(m.id);
       if (fb) {
@@ -96,12 +101,16 @@ async function runAutopilot(force: boolean) {
 
   const fbEvents = new Set<string>(); const nbaEvents = new Set<string>();
   const wxKeys = new Set<string>(); const wikiKeys = new Set<string>();
+  const rktIds = new Set<string>(); const fxKeys = new Set<string>(); const fngDays = new Set<string>();
   for (const r of rows) {
     const p = r.id.split("-");
     if (r.id.startsWith("data-v1-fb-")) fbEvents.add(p[3]);
     else if (r.id.startsWith("data-v1-nba-")) nbaEvents.add(p[3]);
     else if (r.id.startsWith("data-v1-wx-")) wxKeys.add(`${p[3]}-${p[4]}-${p[6]}`);
     else if (r.id.startsWith("data-v1-wiki-")) wikiKeys.add(`${p[3]}-${p[4]}-${p[5]}`);
+    else if (r.id.startsWith("data-v1-rkt-")) rktIds.add(p[3]);
+    else if (r.id.startsWith("data-v1-fx-")) fxKeys.add(`${p[3]}-${p[5]}`);
+    else if (r.id.startsWith("data-v1-fng-")) fngDays.add(p[4]);
   }
 
   const flashNeeded = Math.max(0, FLASH_TARGET - (flashOpen ?? 0));
@@ -127,6 +136,18 @@ async function runAutopilot(force: boolean) {
   const wikiNeeded = Math.max(0, WIKI_TARGET - openOf("data-v1-wiki-"));
   if (wikiNeeded > 0) {
     batch.push(...generateWikiDuels({ need: wikiNeeded, excludeKeys: wikiKeys }));
+  }
+  const rktNeeded = Math.max(0, ROCKET_TARGET - openOf("data-v1-rkt-"));
+  if (rktNeeded > 0) {
+    batch.push(...await generateRocketMarkets({ need: rktNeeded, excludeLaunchIds: rktIds }));
+  }
+  const fxNeeded = Math.max(0, FX_TARGET - openOf("data-v1-fx-"));
+  if (fxNeeded > 0) {
+    batch.push(...await generateFxMarkets({ need: fxNeeded, excludeKeys: fxKeys }));
+  }
+  const fngNeeded = Math.max(0, FNG_TARGET - openOf("data-v1-fng-"));
+  if (fngNeeded > 0) {
+    batch.push(...await generateFngMarkets({ need: fngNeeded, excludeKeys: fngDays }));
   }
 
   if (batch.length > 0 && (await upsertMarkets(batch))) generated = batch.length;

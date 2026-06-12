@@ -14,7 +14,7 @@ type NotifyBody = {
   // Clash notification
   clashEvent?: "accepted" | "resolved";
   // Treasury payout notification
-  payoutEvent?: "paid";
+  payoutEvent?: "paid" | "refund";
   challengerUsername?: string;
   winnerNullifier?: string;
   // Shared auth
@@ -26,6 +26,13 @@ function buildNotification(body: NotifyBody): { title: string; message: string; 
     return {
       title: "WLD winnings sent! 🎉",
       message: "Your VeRdex winnings were just sent to your World App wallet on World Chain. Open My Bets to see the transaction.",
+      path: "/?tab=verdex",
+    };
+  }
+  if (body.payoutEvent === "refund") {
+    return {
+      title: "Stake refunded ↩",
+      message: "A VeRdex market was voided, so your full stake was sent back to your World App wallet. Fair is fair.",
       path: "/?tab=verdex",
     };
   }
