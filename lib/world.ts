@@ -113,7 +113,11 @@ export async function authenticateWithWorld(): Promise<WorldAuthResult> {
   return { ok: true, address, username: displayUsername, profilePictureUrl };
 }
 
-const CONFIRM_DELAYS = [0, 2000, 4000, 6000, 9000, 13000, 18000, 25000];
+// Fast confirmation budget. MiniKit success already means the user approved and
+// the tx was broadcast on World Chain (funds have left the wallet), so we only
+// poll the dev-portal indexer briefly (~6s) for an on-chain "mined" before falling
+// back to optimistic success. Keeps the bet button from hanging on indexer lag.
+const CONFIRM_DELAYS = [0, 1200, 2400, 3600];
 
 export async function payWithWorld({ amount, description, feature = "tip-verdex" }: { amount: number; description: string; feature?: string }) {
   const treasury = getVerdexTreasury();
@@ -137,21 +141,27 @@ export async function payWithWorld({ amount, description, feature = "tip-verdex"
   if (payment.executedWith === "error") return { ok: false, error: (payment as { error: string }).error };
   if (payment.executedWith === "fallback") return { ok: false, pendingWorldApp: true, message: "Complete payment inside World App." };
 
+  const data = (payment as { data: PayResult }).data;
   let last: Record<string, unknown> | null = null;
   for (const delay of CONFIRM_DELAYS) {
     if (delay > 0) await new Promise((r) => setTimeout(r, delay));
     try {
       const c = await fetch("/api/world/confirm-payment", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: (payment as { data: PayResult }).data, reference, feature, amount, token: "WLD" }),
+        body: JSON.stringify({ payload: data, reference, feature, amount, token: "WLD" }),
       });
       const conf = await c.json() as Record<string, unknown>;
       last = conf;
+      // Only abort on a genuine fraud/validation mismatch — never on transient
+      // lookup/indexer errors (those return { pending: true } and we retry).
       if (!c.ok) return { ok: false, error: String(conf.error ?? "Payment confirmation failed.") };
       if (conf.pendingSetup) return { ok: false, pendingSetup: true };
       if (conf.ok) return { ok: true, reference };
     } catch { /* retry */ }
   }
+  // Not yet mined after the fast budget. The World App payment already succeeded
+  // (funds left the wallet), so record the bet optimistically instead of blocking.
+  if (data?.transactionId) return { ok: true, reference, optimistic: true };
   return { ok: false, error: String(last?.error ?? "Payment still pending.") };
 }
 

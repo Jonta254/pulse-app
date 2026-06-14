@@ -30,9 +30,12 @@ export async function POST(req: NextRequest) {
 
   const tx = await res.json() as Record<string, unknown>;
 
-  if (res.status >= 400 && res.status < 500) {
-    return noStoreJson({ ok: false, error: "World payment lookup failed.", tx }, { status: 502 });
+  // Auth/config problems (bad/missing API key) are real failures worth surfacing.
+  if (res.status === 401 || res.status === 403) {
+    return noStoreJson({ ok: false, error: "World payment lookup unauthorized.", tx }, { status: 502 });
   }
+  // Anything else non-OK (e.g. 404 — tx not indexed yet) is transient: tell the
+  // client to retry rather than hard-failing and dropping a paid bet.
   if (!res.ok) return noStoreJson({ ok: false, pending: true });
 
   const isMined = tx.transaction_status === "mined" || tx.status === "mined" || tx.transaction_status === "confirmed" || tx.status === "confirmed";
