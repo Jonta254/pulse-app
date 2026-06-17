@@ -15,6 +15,14 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+
+const PAYMENT_STEPS = [
+  { label: "Opening World App…",       sub: "Check your World App for the payment prompt" },
+  { label: "Awaiting your approval…",  sub: "Please approve the payment in World App" },
+  { label: "Sending on World Chain…",  sub: "Transaction submitted — this takes a few seconds" },
+  { label: "Confirming on-chain…",     sub: "Almost there — please be patient ⏳" },
+  { label: "Verifying payment…",       sub: "Just a moment — securing your bet" },
+];
 import {
   authenticateWithWorld,
   hapticError,
@@ -74,6 +82,8 @@ export function VerdexApp() {
   const [toast, setToast]                     = useState<Toast | null>(null);
   const [paymentPrompt, setPaymentPrompt]     = useState<PaymentRequest | null>(null);
   const [paymentBusy, setPaymentBusy]         = useState(false);
+  const [paymentStepIdx, setPaymentStepIdx]   = useState(0);
+  const paymentStepTimer                      = useRef<ReturnType<typeof setInterval> | null>(null);
   const [theme, setTheme]                     = useState<VerdexTheme>("night");
   const notifRequested                        = useRef(false);
 
@@ -139,6 +149,20 @@ export function VerdexApp() {
     const t = setTimeout(() => setToast(null), 4000);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // ── Cycle payment patience messages ──────────────────────────────────────
+  useEffect(() => {
+    if (paymentBusy) {
+      setPaymentStepIdx(0);
+      paymentStepTimer.current = setInterval(() => {
+        setPaymentStepIdx((prev) => Math.min(prev + 1, PAYMENT_STEPS.length - 1));
+      }, 2800);
+    } else {
+      setPaymentStepIdx(0);
+      if (paymentStepTimer.current) clearInterval(paymentStepTimer.current);
+    }
+    return () => { if (paymentStepTimer.current) clearInterval(paymentStepTimer.current); };
+  }, [paymentBusy]);
 
   // ── World ID login (walletAuth = SIWE) ───────────────────────────────────
   const handleLogin = useCallback(async () => {
@@ -431,22 +455,39 @@ export function VerdexApp() {
                 <strong>2% of losing pool</strong>
               </div>
             </div>
-            <button
-              className="verdex-confirm-btn yes"
-              disabled={paymentBusy}
-              onClick={confirmPayment}
-              type="button"
-            >
-              {paymentBusy ? "Confirming…" : `Pay ${paymentPrompt.amount} WLD`}
-            </button>
+            {paymentBusy ? (
+              <div className="verdex-payment-progress">
+                <div className="verdex-payment-progress-spinner" aria-hidden="true" />
+                <div className="verdex-payment-progress-text">
+                  <strong>{PAYMENT_STEPS[paymentStepIdx].label}</strong>
+                  <span>{PAYMENT_STEPS[paymentStepIdx].sub}</span>
+                </div>
+                <div className="verdex-payment-progress-dots">
+                  {PAYMENT_STEPS.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`verdex-payment-dot${i <= paymentStepIdx ? " active" : ""}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <button
+                className="verdex-confirm-btn yes"
+                onClick={confirmPayment}
+                type="button"
+              >
+                Pay {paymentPrompt.amount} WLD
+              </button>
+            )}
             <button
               className="verdex-goal-cancel-btn"
               disabled={paymentBusy}
-              onClick={() => setPaymentPrompt(null)}
-              style={{ width: "100%", marginTop: 8 }}
+              onClick={() => !paymentBusy && setPaymentPrompt(null)}
+              style={{ width: "100%", marginTop: 8, opacity: paymentBusy ? 0.4 : 1 }}
               type="button"
             >
-              Cancel
+              {paymentBusy ? "Please wait…" : "Cancel"}
             </button>
           </div>
         </div>

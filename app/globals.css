@@ -450,9 +450,23 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-hero-inner strong { font-size: 1.42rem; font-weight: 950; color: #fff; line-height: 1.08; }
 .verdex-hero-inner p { margin: 0; color: rgba(232,234,246,0.72); font-size: 0.86rem; line-height: 1.42; }
 
-.verdex-market-list { display: grid; gap: 12px; }
-.verdex-market-card { position: relative; display: grid; gap: 10px; padding: 14px; border: 1px solid var(--verdex-border); border-radius: 20px; background: var(--verdex-surface); }
-.verdex-market-card.featured { border-color: var(--verdex-border-bright); background: radial-gradient(circle at 90% 8%, rgba(245,158,11,0.12), transparent 10rem), var(--verdex-surface); box-shadow: 0 12px 32px rgba(0,0,0,0.28), 0 0 0 1px rgba(99,102,241,0.18); }
+.verdex-market-list { display: grid; gap: 14px; }
+.verdex-market-card {
+  position: relative; display: grid; gap: 10px;
+  padding: 16px 14px 14px;
+  border: 1px solid var(--verdex-border); border-radius: 20px;
+  background: var(--verdex-surface);
+  overflow: hidden;
+  transition: box-shadow 0.18s, border-color 0.18s;
+}
+.verdex-market-card:active { box-shadow: 0 4px 16px rgba(0,0,0,0.22); }
+.verdex-market-card.featured {
+  border-color: var(--verdex-border-bright);
+  background: radial-gradient(circle at 90% 8%, rgba(245,158,11,0.10), transparent 10rem),
+    radial-gradient(circle at 10% 90%, rgba(99,102,241,0.08), transparent 12rem),
+    var(--verdex-surface);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.22), 0 0 0 1px rgba(99,102,241,0.18);
+}
 .verdex-featured-tag { position: absolute; top: -1px; right: 14px; padding: 3px 9px; border-radius: 0 0 10px 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 0.65rem; font-weight: 950; }
 .verdex-market-card-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .verdex-cat-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid; border-radius: 999px; font-size: 0.64rem; font-weight: 950; }
@@ -473,10 +487,15 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 
 .verdex-market-meta { display: flex; gap: 12px; font-size: 0.72rem; font-weight: 850; color: var(--verdex-muted); }
 .verdex-bet-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.verdex-bet-yes,.verdex-bet-no { min-height: 42px; border: 0; border-radius: 12px; font-size: 0.8rem; font-weight: 950; transition: opacity 0.14s, transform 0.14s; }
+.verdex-bet-yes,.verdex-bet-no {
+  min-height: 52px; border: 0; border-radius: 14px;
+  font-size: 0.84rem; font-weight: 950;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  transition: opacity 0.14s, transform 0.14s;
+}
 .verdex-bet-yes:active,.verdex-bet-no:active { transform: scale(0.97); }
-.verdex-bet-yes { color: #001f12; background: linear-gradient(135deg, var(--verdex-yes), #00c97a); box-shadow: 0 6px 18px rgba(0,232,135,0.26); }
-.verdex-bet-no { color: #fff; background: linear-gradient(135deg, #ff4d6d, #c9284a); box-shadow: 0 6px 18px rgba(255,77,109,0.24); }
+.verdex-bet-yes { color: #001f12; background: linear-gradient(135deg, var(--verdex-yes), #00c97a); box-shadow: 0 6px 20px rgba(0,232,135,0.28); }
+.verdex-bet-no  { color: #fff;    background: linear-gradient(135deg, #ff4d6d, #c9284a);   box-shadow: 0 6px 20px rgba(255,77,109,0.26); }
 .verdex-my-bet-badge { display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 900; }
 .verdex-my-bet-badge.yes { border: 1px solid rgba(0,232,135,0.24); color: var(--verdex-yes); background: rgba(0,232,135,0.1); }
 .verdex-my-bet-badge.no { border: 1px solid rgba(255,77,109,0.24); color: var(--verdex-no); background: rgba(255,77,109,0.1); }
@@ -1013,3 +1032,117 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-flow-step strong { display: block; font-size: 0.82rem; font-weight: 800; color: var(--verdex-text); }
 .verdex-flow-step span { font-size: 0.72rem; color: var(--verdex-muted); }
 .verdex-flow-arrow { text-align: center; color: var(--verdex-muted); font-size: 0.8rem; padding: 2px 0; }
+
+/* ── Payment patience progress panel ──────────────────────────────────────── */
+
+.verdex-payment-progress {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 18px 14px;
+  border: 1px solid var(--verdex-border-bright); border-radius: 16px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.14), transparent 12rem), var(--verdex-surface);
+  text-align: center;
+  animation: payment-fade-in 0.3s ease;
+}
+
+@keyframes payment-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.verdex-payment-progress-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(99,102,241,0.2);
+  border-top-color: var(--verdex-accent);
+  border-radius: 50%;
+  animation: verdex-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes verdex-spin { to { transform: rotate(360deg); } }
+
+.verdex-payment-progress-text {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.verdex-payment-progress-text strong {
+  font-size: 0.92rem; font-weight: 900; color: var(--verdex-text);
+  transition: opacity 0.3s;
+}
+.verdex-payment-progress-text span {
+  font-size: 0.76rem; color: var(--verdex-muted); line-height: 1.4;
+}
+
+.verdex-payment-progress-dots {
+  display: flex; gap: 5px; align-items: center;
+}
+.verdex-payment-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--verdex-border);
+  transition: background 0.4s, transform 0.4s;
+}
+.verdex-payment-dot.active {
+  background: var(--verdex-accent);
+  transform: scale(1.25);
+}
+
+/* ── Market card — redesigned attractive version ──────────────────────────── */
+
+.verdex-card-accent {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; border-radius: 20px 20px 0 0;
+  opacity: 0.7;
+}
+
+/* Hot badge */
+.verdex-hot-tag {
+  padding: 3px 7px; border-radius: 999px;
+  font-size: 0.62rem; font-weight: 950;
+  color: #ff9f43; background: rgba(255,159,67,0.15);
+  border: 1px solid rgba(255,159,67,0.3);
+}
+
+/* Odds pills row */
+.verdex-odds-row {
+  display: flex; align-items: stretch; gap: 0;
+  border: 1px solid var(--verdex-border); border-radius: 14px;
+  overflow: hidden; background: var(--verdex-surface-2);
+}
+
+.verdex-odds-pill {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 10px 8px;
+  transition: background 0.15s;
+}
+.verdex-odds-pill.yes { background: rgba(0,232,135,0.07); }
+.verdex-odds-pill.no  { background: rgba(255,77,109,0.07); }
+
+.verdex-odds-divider {
+  width: 1px; background: var(--verdex-border); flex-shrink: 0;
+}
+
+.verdex-odds-label {
+  font-size: 0.62rem; font-weight: 950; letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.verdex-odds-pill.yes .verdex-odds-label { color: var(--verdex-yes); }
+.verdex-odds-pill.no  .verdex-odds-label { color: var(--verdex-no); }
+
+.verdex-odds-val {
+  font-size: 1.08rem; font-weight: 950; line-height: 1;
+}
+.verdex-odds-pill.yes .verdex-odds-val { color: var(--verdex-yes); }
+.verdex-odds-pill.no  .verdex-odds-val { color: var(--verdex-no); }
+
+.verdex-odds-pct {
+  font-size: 0.68rem; font-weight: 850; color: var(--verdex-muted);
+}
+
+/* Better YES/NO bet buttons */
+.verdex-bet-yes, .verdex-bet-no {
+  flex-direction: column; gap: 2px;
+}
+.verdex-bet-dir {
+  font-size: 0.84rem; font-weight: 950; letter-spacing: 0.04em;
+}
+.verdex-bet-odds {
+  font-size: 0.72rem; font-weight: 800; opacity: 0.82;
+}

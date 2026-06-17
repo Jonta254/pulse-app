@@ -122,15 +122,24 @@ function MarketCard({
   const { expired } = formatCountdown(market.closesAt);
   const meta = categoryMeta[market.category];
   const total = market.yesPool + market.noPool;
+  const yesPct = calcYesPct(market.yesPool, market.noPool);
+  const yesOdds = calcOdds("yes", market.yesPool, market.noPool);
+  const noOdds  = calcOdds("no",  market.yesPool, market.noPool);
+  const hot = total > 5; // show hot badge for busy markets
 
   return (
-    <article className={`verdex-market-card${market.featured ? " featured" : ""}`}>
+    <article className={`verdex-market-card${market.featured ? " featured" : ""}`} style={{ "--cat-color": meta.color } as React.CSSProperties}>
+      {/* Category accent bar */}
+      <div className="verdex-card-accent" style={{ background: meta.color }} />
+
       {market.featured && <div className="verdex-featured-tag">⭐ Featured</div>}
+
       <div className="verdex-market-card-top">
         <span className="verdex-cat-tag" style={{ color: meta.color, borderColor: `${meta.color}44`, background: `${meta.color}18` }}>
           {meta.emoji} {meta.label.toUpperCase()}
         </span>
         <CountdownChip closesAt={market.closesAt} />
+        {hot && !market.featured && <span className="verdex-hot-tag">🔥 Hot</span>}
         {market.aiGenerated && <span className="verdex-ai-tag">🤖 AI</span>}
       </div>
 
@@ -141,27 +150,44 @@ function MarketCard({
         <div className="verdex-fair-chip">⚖️ Provably fair — auto-resolves from public data</div>
       )}
 
+      {/* Odds pills above pool bar */}
+      <div className="verdex-odds-row">
+        <div className="verdex-odds-pill yes">
+          <span className="verdex-odds-label">YES</span>
+          <strong className="verdex-odds-val">{yesOdds}</strong>
+          <span className="verdex-odds-pct">{yesPct}%</span>
+        </div>
+        <div className="verdex-odds-divider" />
+        <div className="verdex-odds-pill no">
+          <span className="verdex-odds-label">NO</span>
+          <strong className="verdex-odds-val">{noOdds}</strong>
+          <span className="verdex-odds-pct">{100 - yesPct}%</span>
+        </div>
+      </div>
+
       <PoolBar yesPool={market.yesPool} noPool={market.noPool} />
 
       <div className="verdex-market-meta">
-        <span>🏦 {formatPoolSize(total)}</span>
-        <span>👥 {market.totalBettors?.toLocaleString() ?? "—"} humans</span>
+        <span>🏦 {formatPoolSize(total)} pool</span>
+        <span>👥 {market.totalBettors?.toLocaleString() ?? "—"} forecasters</span>
       </div>
 
       {myBet ? (
         <div className={`verdex-my-bet-badge ${myBet.position}`}>
-          ✓ You bet {myBet.amountWld} WLD on <strong>{myBet.position.toUpperCase()}</strong>
+          ✓ You predicted {myBet.position.toUpperCase()} · {myBet.amountWld} WLD staked
         </div>
       ) : expired ? (
-        <div className="verdex-market-closed-note">Market closed — awaiting resolution</div>
+        <div className="verdex-market-closed-note">🔒 Market closed — awaiting resolution</div>
       ) : (
         <>
           <div className="verdex-bet-row">
             <button className="verdex-bet-yes" onClick={() => onBet(market, "yes")} type="button">
-              BET YES {calcOdds("yes", market.yesPool, market.noPool)}
+              <span className="verdex-bet-dir">YES</span>
+              <span className="verdex-bet-odds">{yesOdds}</span>
             </button>
             <button className="verdex-bet-no" onClick={() => onBet(market, "no")} type="button">
-              BET NO {calcOdds("no", market.yesPool, market.noPool)}
+              <span className="verdex-bet-dir">NO</span>
+              <span className="verdex-bet-odds">{noOdds}</span>
             </button>
           </div>
           <button
@@ -170,7 +196,7 @@ function MarketCard({
             type="button"
           >
             <Swords size={13} />
-            {market.category === "sports" ? "Challenge a friend — winner takes 90%" : "Challenge a human 1v1"}
+            {market.category === "sports" ? "⚔️ Challenge — winner takes 90%" : "Challenge a human 1v1"}
           </button>
         </>
       )}
