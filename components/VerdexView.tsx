@@ -268,17 +268,25 @@ function BetSheet({
   onConfirm: (position: "yes" | "no", amount: number) => void;
 }) {
   const [position, setPosition] = useState<"yes" | "no">(initialPosition);
-  const [amount, setAmount] = useState(1);
-  const [custom, setCustom] = useState("");
+  const [amount, setAmount]     = useState(1);
+  const [custom, setCustom]     = useState("");
+
   const finalAmount = custom ? parseFloat(custom) || 0 : amount;
-  const payout = calcPotentialPayout(finalAmount, position, market.yesPool, market.noPool);
-  const profit = Math.round((payout - finalAmount) * 100) / 100;
+  const valid       = finalAmount > 0 && finalAmount <= 100;
+
+  // Live recalculate as stake / position changes
+  const payout      = calcPotentialPayout(finalAmount, position, market.yesPool, market.noPool);
+  const profit      = Math.round((payout - finalAmount) * 10000) / 10000;
+  const multiplier  = finalAmount > 0 ? (payout / finalAmount).toFixed(2) : "—";
+  const isYes       = position === "yes";
+  const winColor    = isYes ? "var(--verdex-yes)" : "var(--verdex-no)";
 
   return (
     <div className="verdex-sheet-backdrop" onClick={onClose} role="presentation">
       <div className="verdex-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Place bet">
         <div className="verdex-sheet-handle" />
 
+        {/* Header */}
         <div className="verdex-sheet-header">
           <div>
             <span className="verdex-sheet-kicker">Place your forecast</span>
@@ -309,8 +317,23 @@ function BetSheet({
           </button>
         </div>
 
-        {/* Amount chips */}
-        <div className="verdex-amount-label">Stake amount (WLD)</div>
+        {/* ── WIN HERO ── the number they're playing for ─────────────────── */}
+        <div className="bs-win-hero" style={{ borderColor: `${winColor}30`, background: `color-mix(in srgb, ${winColor} 9%, var(--verdex-surface))` }}>
+          <span className="bs-win-label">🏆 You receive if correct</span>
+          <strong className="bs-win-amount" style={{ color: winColor }}>
+            {valid ? `${payout.toFixed(4)} WLD` : "— WLD"}
+          </strong>
+          <div className="bs-win-breakdown">
+            <span>Stake <b>{valid ? `${finalAmount} WLD` : "—"}</b></span>
+            <span className="bs-win-arrow">→</span>
+            <span>Profit <b style={{ color: winColor }}>{valid ? `+${profit.toFixed(4)} WLD` : "—"}</b></span>
+            <span className="bs-win-arrow">·</span>
+            <span>Multiplier <b style={{ color: winColor }}>{valid ? `${multiplier}×` : "—"}</b></span>
+          </div>
+        </div>
+
+        {/* Stake chips */}
+        <div className="verdex-amount-label">Your stake (WLD)</div>
         <div className="verdex-amount-chips">
           {BET_CHIPS.map((chip) => (
             <button
@@ -335,36 +358,41 @@ function BetSheet({
           />
         </div>
 
-        {/* Payout estimate */}
+        {/* Summary row */}
         <div className="verdex-payout-box">
           <div className="verdex-payout-row">
             <span>Your stake</span>
-            <strong>{finalAmount > 0 ? `${finalAmount} WLD` : "—"}</strong>
+            <strong>{valid ? `${finalAmount} WLD` : "—"}</strong>
           </div>
           <div className="verdex-payout-row">
-            <span>Potential payout</span>
-            <strong className="verdex-payout-highlight">{finalAmount > 0 ? `${payout} WLD` : "—"}</strong>
+            <span>Total return if correct</span>
+            <strong className="verdex-payout-highlight">{valid ? `${payout.toFixed(4)} WLD` : "—"}</strong>
           </div>
           <div className="verdex-payout-row">
-            <span>Potential profit</span>
-            <strong className={profit > 0 ? "verdex-profit-pos" : "verdex-profit-neg"}>
-              {finalAmount > 0 ? `+${profit} WLD` : "—"}
-            </strong>
+            <span>Net profit if correct</span>
+            <strong className="verdex-profit-pos">{valid ? `+${profit.toFixed(4)} WLD` : "—"}</strong>
+          </div>
+          <div className="verdex-payout-row">
+            <span>Odds multiplier</span>
+            <strong style={{ color: "var(--verdex-accent)" }}>{valid ? `${multiplier}×` : "—"}</strong>
           </div>
         </div>
 
+        {/* Confirm — stake → win framing */}
         <button
           className={`verdex-confirm-btn ${position}`}
-          disabled={finalAmount <= 0 || finalAmount > 100}
+          disabled={!valid}
           onClick={() => onConfirm(position, finalAmount)}
           type="button"
         >
           <Zap size={16} />
-          Place {finalAmount > 0 ? `${finalAmount} WLD` : ""} on {position.toUpperCase()}
+          {valid
+            ? `Stake ${finalAmount} WLD · Win up to ${payout.toFixed(2)} WLD`
+            : "Enter a stake amount"}
         </button>
 
         <p className="verdex-sheet-note">
-          Platform takes a 2% fee from the losing pool. Payout depends on final pool size at close.
+          Payout is an estimate based on current pool. Final amount depends on the pool at market close. Platform fee: 2% of losing pool.
         </p>
       </div>
     </div>
@@ -777,6 +805,9 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   function handleBetConfirm(position: "yes" | "no", amount: number) {
     if (!betSheet) return;
     const market = betSheet.market;
+    // Snapshot projected payout at bet time (pool will change after)
+    const projectedPayout = calcPotentialPayout(amount, position, market.yesPool, market.noPool);
+    const projectedProfit  = Math.round((projectedPayout - amount) * 10000) / 10000;
     setBetSheet(null);
 
     openPayment({
@@ -785,7 +816,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
       detail: `VeRdex bet: "${market.title}"`,
       feature: "tip-verdex",
       allowCustomAmount: false,
-      success: `${amount} WLD bet placed on ${position.toUpperCase()}! Awaiting resolution.`,
+      success: `Bet placed! If ${position.toUpperCase()} wins → you receive ${projectedPayout.toFixed(2)} WLD (profit: +${projectedProfit.toFixed(2)} WLD)`,
       onConfirmed: async (_amount, txReference) => {
         const betId = `verdex-bet-${Date.now()}`;
         const newBet: VerdexBet = {
@@ -794,6 +825,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
           marketTitle: market.title,
           position,
           amountWld: amount,
+          projectedPayout,
           placedAt: new Date().toISOString(),
           confirmed: true,
         };
@@ -1101,9 +1133,19 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                 const won  = bet.settled && !refunded && (bet.payout ?? 0) > bet.amountWld;
                 const lost = bet.settled && !refunded && !won;
                 const open = !bet.settled;
-                const profit = won ? +((bet.payout ?? 0) - bet.amountWld).toFixed(4) : 0;
-                // Find the market in current list
+
+                // For open bets: use stored snapshot first, fall back to live market
                 const market = localMarkets.find(m => m.id === bet.marketId);
+                const livePayout = market
+                  ? calcPotentialPayout(bet.amountWld, bet.position, market.yesPool, market.noPool)
+                  : null;
+                const displayPayout = livePayout ?? bet.projectedPayout ?? null;
+                const displayProfit = displayPayout != null
+                  ? Math.round((displayPayout - bet.amountWld) * 10000) / 10000
+                  : null;
+
+                const actualProfit = won ? +((bet.payout ?? 0) - bet.amountWld).toFixed(4) : 0;
+
                 return (
                   <div key={bet.id} className={`verdex-mybet-card ${won ? "won" : lost ? "lost" : "open"}`}>
                     {/* Status stripe */}
@@ -1118,6 +1160,24 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
 
                     <p className="verdex-mybet-title">{bet.marketTitle}</p>
 
+                    {/* Win projection hero — shown for open bets */}
+                    {open && displayPayout != null && (
+                      <div className="verdex-mybet-win-hero">
+                        <span className="verdex-mybet-win-label">🏆 If {bet.position.toUpperCase()} wins</span>
+                        <div className="verdex-mybet-win-row">
+                          <strong className="verdex-mybet-win-amount">
+                            {displayPayout.toFixed(4)} WLD
+                          </strong>
+                          <span className="verdex-mybet-win-profit">
+                            +{displayProfit?.toFixed(4)} profit
+                          </span>
+                        </div>
+                        <span className="verdex-mybet-win-note">
+                          Estimated · updates as more humans bet
+                        </span>
+                      </div>
+                    )}
+
                     <div className="verdex-mybet-amounts">
                       <div className="verdex-mybet-staked">
                         <span>Staked</span>
@@ -1125,7 +1185,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                       </div>
                       {won ? (
                         <div className="verdex-mybet-payout won">
-                          <span>Payout</span>
+                          <span>You received</span>
                           <strong>+{bet.payout?.toFixed(4)} WLD</strong>
                         </div>
                       ) : refunded ? (
@@ -1137,11 +1197,6 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                         <div className="verdex-mybet-payout lost">
                           <span>Result</span>
                           <strong>−{bet.amountWld} WLD</strong>
-                        </div>
-                      ) : market ? (
-                        <div className="verdex-mybet-payout potential">
-                          <span>If correct</span>
-                          <strong>≈{calcPotentialPayout(bet.amountWld, bet.position, market.yesPool, market.noPool).toFixed(4)} WLD</strong>
                         </div>
                       ) : null}
                     </div>

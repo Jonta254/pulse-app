@@ -24,8 +24,11 @@ export type VerdexBet = {
   marketTitle: string;
   position: "yes" | "no";
   amountWld: number;
+  /** Projected payout at the moment the bet was placed (pool snapshot). */
+  projectedPayout?: number;
   placedAt: string;
   confirmed: boolean;
+  /** Actual payout after market settles (from server). */
   payout?: number;
   settled?: boolean;
 };
