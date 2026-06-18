@@ -150,22 +150,23 @@ function MarketCard({
     !isLive         ? "vmc--dimmed"   : "",
   ].filter(Boolean).join(" ");
 
-  return (
-    <article className={cardClass}>
+  const borderColor = market.featured ? "rgba(245,158,11,0.55)" : `${meta.color}30`;
 
-      {/* ── Category header band ─────────────────────────────────────────── */}
+  return (
+    <article
+      className={cardClass}
+      style={{ borderColor }}
+    >
+      {/* ── Category header ──────────────────────────────────────────────── */}
       <div
         className="vmc-header"
         style={{
-          background: `linear-gradient(135deg, ${meta.color}28, ${meta.color}0c)`,
-          borderBottomColor: `${meta.color}28`,
+          background: `linear-gradient(135deg, ${meta.color}18, ${meta.color}06)`,
+          borderBottomColor: `${meta.color}20`,
         }}
       >
         <div className="vmc-header-left">
-          <span
-            className="vmc-cat-badge"
-            style={{ background: `${meta.color}20`, color: meta.color, borderColor: `${meta.color}44` }}
-          >
+          <span className="vmc-cat-badge" style={{ background: `${meta.color}18`, color: meta.color, borderColor: `${meta.color}40` }}>
             {meta.emoji} {meta.label.toUpperCase()}
           </span>
           {market.featured && <span className="vmc-featured-badge">⭐ FEATURED</span>}
@@ -179,18 +180,13 @@ function MarketCard({
         </div>
       </div>
 
-      {/* ── Question ─────────────────────────────────────────────────────── */}
-      <div className="vmc-body">
-        <h3 className="vmc-title">{market.title}</h3>
-        {market.description && (
-          <p className="vmc-desc">{market.description}</p>
-        )}
-        {market.id.startsWith("data-v1-") && (
-          <span className="vmc-fair-badge">⚖️ Provably fair · auto-resolves from public data</span>
-        )}
-      </div>
+      {/* ── Title ────────────────────────────────────────────────────────── */}
+      <h3 className="vmc-title">{market.title}</h3>
+      {market.id.startsWith("data-v1-") && (
+        <span className="vmc-fair-badge">⚖️ Provably fair · auto-resolves from public data</span>
+      )}
 
-      {/* ── My bet ───────────────────────────────────────────────────────── */}
+      {/* ── My bet banner ────────────────────────────────────────────────── */}
       {myBet && (
         <div className={`vmc-mybet vmc-mybet--${myBet.position}`}>
           <span className="vmc-mybet-icon">{myBet.position === "yes" ? "✓" : "✗"}</span>
@@ -201,99 +197,90 @@ function MarketCard({
         </div>
       )}
 
-      {/* ── ODDS SPLIT — the visual hero ─────────────────────────────────── */}
-      {isLive && !myBet && (
-        <div className="vmc-odds-split">
-          {/* YES side */}
-          <button className="vmc-side vmc-side--yes" onClick={() => onBet(market, "yes")} type="button">
-            <span className="vmc-side-dir">YES</span>
-            <strong className="vmc-side-odds">{yesOdds}</strong>
-            <span className="vmc-side-crowd">{yesPct}% backing</span>
-            {crowdOnNo && <span className="vmc-side-tip">Underdog 🎯</span>}
+      {/* ── ARENA — proportional YES/NO duel ─────────────────────────────── */}
+      <div className={`vmc-arena${!isLive ? " vmc-arena--closed" : ""}`}>
+        {isLive && !myBet ? (
+          <button
+            className="vmc-arena-yes"
+            style={{ flex: yesPct }}
+            onClick={() => onBet(market, "yes")}
+            type="button"
+          >
+            <span className="vmc-arena-dir vmc-arena-dir--yes">YES</span>
+            <strong className="vmc-arena-odds vmc-arena-odds--yes">{yesOdds}</strong>
+            <span className="vmc-arena-pct vmc-arena-pct--yes">{yesPct}%</span>
+            {crowdOnNo && <span className="vmc-underdog">🎯 Underdog</span>}
           </button>
-
-          {/* VS divider */}
-          <div className="vmc-vs">
-            <span>VS</span>
+        ) : (
+          <div className="vmc-arena-yes" style={{ flex: yesPct }}>
+            <span className="vmc-arena-dir vmc-arena-dir--yes">YES</span>
+            <strong className="vmc-arena-odds vmc-arena-odds--yes">{yesOdds}</strong>
+            <span className="vmc-arena-pct vmc-arena-pct--yes">{yesPct}%</span>
           </div>
+        )}
 
-          {/* NO side */}
-          <button className="vmc-side vmc-side--no" onClick={() => onBet(market, "no")} type="button">
-            <span className="vmc-side-dir">NO</span>
-            <strong className="vmc-side-odds">{noOdds}</strong>
-            <span className="vmc-side-crowd">{100 - yesPct}% backing</span>
-            {crowdOnYes && <span className="vmc-side-tip">Underdog 🎯</span>}
+        <div className="vmc-vs-orb"><span>VS</span></div>
+
+        {isLive && !myBet ? (
+          <button
+            className="vmc-arena-no"
+            style={{ flex: 100 - yesPct }}
+            onClick={() => onBet(market, "no")}
+            type="button"
+          >
+            <span className="vmc-arena-dir vmc-arena-dir--no">NO</span>
+            <strong className="vmc-arena-odds vmc-arena-odds--no">{noOdds}</strong>
+            <span className="vmc-arena-pct vmc-arena-pct--no">{100 - yesPct}%</span>
+            {crowdOnYes && <span className="vmc-underdog">🎯 Underdog</span>}
           </button>
-        </div>
-      )}
-
-      {/* ── Closed placeholder ───────────────────────────────────────────── */}
-      {!isLive && !myBet && (
-        <div className="vmc-closed-notice">🔒 Betting closed — resolution pending</div>
-      )}
-
-      {/* ── Sentiment bar ────────────────────────────────────────────────── */}
-      <div className="vmc-sentiment">
-        <div className="vmc-sbar">
-          <div className="vmc-sbar-fill" style={{ width: `${yesPct}%` }} />
-        </div>
-        <div className="vmc-slabels">
-          <span className="vmc-sl-yes">YES {yesPct}%</span>
-          <span className="vmc-sl-meta">
-            {total > 0
-              ? `${market.totalBettors ?? "—"} humans · ${formatPoolSize(total)}`
-              : "Be the first to bet"}
-          </span>
-          <span className="vmc-sl-no">{100 - yesPct}% NO</span>
-        </div>
+        ) : (
+          <div className="vmc-arena-no" style={{ flex: 100 - yesPct }}>
+            <span className="vmc-arena-dir vmc-arena-dir--no">NO</span>
+            <strong className="vmc-arena-odds vmc-arena-odds--no">{noOdds}</strong>
+            <span className="vmc-arena-pct vmc-arena-pct--no">{100 - yesPct}%</span>
+          </div>
+        )}
       </div>
 
-      {/* ── Action row: Clash + Add to Combo ────────────────────────────── */}
+      {/* ── Split bar ────────────────────────────────────────────────────── */}
+      <div className="vmc-split-bar">
+        <div className="vmc-split-bar-yes" style={{ width: `${yesPct}%` }} />
+        <div className="vmc-split-bar-no" style={{ width: `${100 - yesPct}%` }} />
+      </div>
+
+      {/* ── Pool meta row ────────────────────────────────────────────────── */}
+      <div className="vmc-pool-meta">
+        <span className="vmc-pool-yes">YES {yesPct}%</span>
+        <span className="vmc-pool-center">
+          {total > 0
+            ? `${market.totalBettors ?? "—"} humans · ${formatPoolSize(total)}`
+            : "Be the first to bet"}
+        </span>
+        <span className="vmc-pool-no">{100 - yesPct}% NO</span>
+      </div>
+
+      {/* ── Action footer ────────────────────────────────────────────────── */}
       {isLive && !myBet && (
         <div className="vmc-actions">
+          {comboPick ? (
+            <button className="vmc-combo-btn vmc-combo-btn--added" onClick={() => onRemoveCombo(market.id)} type="button">
+              <span>✓ In Combo</span>
+              <span className="vmc-combo-odds">{comboPick.oddsLabel}</span>
+            </button>
+          ) : (
+            <div className="vmc-combo-add-wrap">
+              <button className="vmc-combo-btn vmc-combo-btn--yes" onClick={() => onAddCombo(market, "yes")} type="button">+ YES</button>
+              <button className="vmc-combo-btn vmc-combo-btn--no" onClick={() => onAddCombo(market, "no")} type="button">+ NO</button>
+            </div>
+          )}
           <button
             className={`vmc-clash${market.category === "sports" ? " vmc-clash--hot" : ""}`}
             onClick={() => onClash(market)}
             type="button"
           >
             <Swords size={12} />
-            <span>
-              {market.category === "sports"
-                ? "Challenge 1v1 — 90% to winner"
-                : "⚔️ 1v1 Clash"}
-            </span>
+            <span>⚔️ 1v1</span>
           </button>
-
-          {comboPick ? (
-            <button
-              className="vmc-combo-btn vmc-combo-btn--added"
-              onClick={() => onRemoveCombo(market.id)}
-              type="button"
-              title="Remove from combo"
-            >
-              <span>✓ In Combo</span>
-              <span className="vmc-combo-odds">{comboPick.oddsLabel}</span>
-            </button>
-          ) : (
-            <div className="vmc-combo-add-wrap">
-              <button
-                className="vmc-combo-btn vmc-combo-btn--yes"
-                onClick={() => onAddCombo(market, "yes")}
-                type="button"
-                title="Add YES to combo"
-              >
-                + YES
-              </button>
-              <button
-                className="vmc-combo-btn vmc-combo-btn--no"
-                onClick={() => onAddCombo(market, "no")}
-                type="button"
-                title="Add NO to combo"
-              >
-                + NO
-              </button>
-            </div>
-          )}
         </div>
       )}
     </article>

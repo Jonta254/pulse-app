@@ -471,8 +471,11 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 }
 
 .vmc--featured {
-  border-color: var(--verdex-border-bright);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.32), 0 0 0 1px rgba(99,102,241,0.14);
+  animation: vmc-feat-glow 2.8s ease-in-out infinite;
+}
+@keyframes vmc-feat-glow {
+  0%,100% { box-shadow: 0 4px 20px rgba(245,158,11,0.12); }
+  50%      { box-shadow: 0 4px 32px rgba(245,158,11,0.28); }
 }
 
 /* Urgency pulse — subtle glow on cards closing within 4h */
@@ -552,92 +555,24 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-chip-time.expired { border-color: var(--verdex-border); color: var(--verdex-muted); opacity: 0.7; }
 @keyframes verdex-urgency { 0%,100%{opacity:1}50%{opacity:0.6} }
 
-/* ── Question body ──────────────────────────────────────────────────────── */
-.vmc-body {
-  padding: 12px 13px 6px;
-  display: flex; flex-direction: column; gap: 5px;
-}
-
+/* ── Title ──────────────────────────────────────────────────────────────── */
 .vmc-title {
   margin: 0;
-  font-size: 1.02rem; font-weight: 900; line-height: 1.28;
+  font-size: 0.95rem; font-weight: 900; line-height: 1.3;
   color: var(--verdex-text);
-}
-
-.vmc-desc {
-  margin: 0;
-  font-size: 0.72rem; line-height: 1.4; color: var(--verdex-muted);
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  padding: 10px 13px 6px;
 }
 
 .vmc-fair-badge {
-  font-size: 0.62rem; font-weight: 750;
-  color: var(--verdex-yes); opacity: 0.82;
-}
-
-/* ── ODDS SPLIT PANEL — visual hero ─────────────────────────────────────── */
-.vmc-odds-split {
-  display: grid;
-  grid-template-columns: 1fr 30px 1fr;
-  margin: 6px 13px 0;
-  border: 1px solid var(--verdex-border);
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-/* Tap target = the entire side panel */
-.vmc-side {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 14px 8px;
-  border: 0; cursor: pointer;
-  transition: filter 0.12s, transform 0.1s;
-  -webkit-tap-highlight-color: transparent;
-}
-.vmc-side:active { transform: scale(0.96); filter: brightness(0.88); }
-
-.vmc-side--yes { background: linear-gradient(155deg, rgba(0,232,135,0.15), rgba(0,232,135,0.06)); }
-.vmc-side--no  { background: linear-gradient(155deg, rgba(255,77,109,0.15), rgba(255,77,109,0.06)); }
-
-.vmc-vs {
-  display: flex; align-items: center; justify-content: center;
-  background: var(--verdex-surface-2);
-  border-left: 1px solid var(--verdex-border);
-  border-right: 1px solid var(--verdex-border);
-}
-.vmc-vs span {
-  font-size: 0.58rem; font-weight: 950; letter-spacing: 0.06em;
-  color: var(--verdex-muted); writing-mode: vertical-rl;
-}
-
-.vmc-side-dir {
-  font-size: 0.7rem; font-weight: 950; letter-spacing: 0.08em;
-}
-.vmc-side--yes .vmc-side-dir { color: var(--verdex-yes); }
-.vmc-side--no  .vmc-side-dir { color: var(--verdex-no); }
-
-/* The number — biggest element on the card, hooks the eye */
-.vmc-side-odds {
-  font-size: 1.96rem; font-weight: 950; line-height: 1; letter-spacing: -0.02em;
-}
-.vmc-side--yes .vmc-side-odds { color: var(--verdex-yes); }
-.vmc-side--no  .vmc-side-odds { color: var(--verdex-no); }
-
-.vmc-side-crowd {
-  font-size: 0.64rem; font-weight: 800; color: var(--verdex-muted);
-}
-
-/* Underdog tag — contrarian psychology ("everyone thinks YES, maybe NO?") */
-.vmc-side-tip {
-  font-size: 0.58rem; font-weight: 950;
-  padding: 2px 6px; border-radius: 999px;
-  background: rgba(245,158,11,0.15); color: var(--verdex-gold);
-  border: 1px solid rgba(245,158,11,0.3);
-  margin-top: 2px;
+  display: block;
+  font-size: 0.6rem; font-weight: 750;
+  color: var(--verdex-yes); opacity: 0.75;
+  padding: 0 13px 6px;
 }
 
 /* ── My bet badge ───────────────────────────────────────────────────────── */
 .vmc-mybet {
-  margin: 8px 13px 0;
+  margin: 0 13px 6px;
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px; border-radius: 12px;
 }
@@ -647,54 +582,118 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .vmc-mybet strong { display: block; font-size: 0.84rem; font-weight: 900; color: var(--verdex-text); }
 .vmc-mybet span   { font-size: 0.7rem; color: var(--verdex-muted); }
 
-/* ── Closed notice ──────────────────────────────────────────────────────── */
-.vmc-closed-notice {
-  margin: 8px 13px 0;
-  padding: 10px;
-  border-radius: 10px;
-  background: var(--verdex-surface-2);
-  border: 1px solid var(--verdex-border);
-  font-size: 0.78rem; font-weight: 900; color: var(--verdex-muted); text-align: center;
+/* ── ARENA — proportional YES/NO duel ───────────────────────────────────── */
+.vmc-arena {
+  display: flex;
+  position: relative;
+  height: 96px;
+  overflow: hidden;
 }
 
-/* ── Sentiment bar ──────────────────────────────────────────────────────── */
-.vmc-sentiment {
-  padding: 10px 13px 0;
-  display: flex; flex-direction: column; gap: 5px;
+/* Closed: dims the whole arena */
+.vmc-arena--closed { opacity: 0.5; pointer-events: none; }
+
+/* Each side is a flex child whose flex value = crowd % */
+.vmc-arena-yes,
+.vmc-arena-no {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  border: 0; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.12s;
+  position: relative; overflow: hidden;
+}
+.vmc-arena-yes:active,
+.vmc-arena-no:active { filter: brightness(1.18); }
+
+.vmc-arena-yes {
+  background: rgba(0,232,135,0.09);
+  border-top: 2px solid rgba(0,232,135,0.45);
+}
+.vmc-arena-no {
+  background: rgba(255,77,109,0.08);
+  border-top: 2px solid rgba(255,77,109,0.38);
 }
 
-.vmc-sbar {
-  height: 10px; border-radius: 999px;
-  background: rgba(255,77,109,0.22); overflow: hidden;
+/* Direction label */
+.vmc-arena-dir {
+  font-size: 0.65rem; font-weight: 950; letter-spacing: 0.1em;
+  position: relative; z-index: 1;
 }
-.vmc-sbar-fill {
-  height: 100%; border-radius: 999px;
-  background: linear-gradient(90deg, var(--verdex-yes), #00d87a);
-  transition: width 0.7s cubic-bezier(0.34,1.56,0.64,1);
+.vmc-arena-dir--yes { color: rgba(0,232,135,0.75); }
+.vmc-arena-dir--no  { color: rgba(255,77,109,0.7); }
+
+/* BIG odds number — the star of the show */
+.vmc-arena-odds {
+  font-size: 1.9rem; font-weight: 950; line-height: 1; letter-spacing: -0.03em;
+  position: relative; z-index: 1;
+}
+.vmc-arena-odds--yes { color: var(--verdex-yes); }
+.vmc-arena-odds--no  { color: var(--verdex-no); }
+
+/* Crowd percentage */
+.vmc-arena-pct {
+  font-size: 0.68rem; font-weight: 800;
+  position: relative; z-index: 1;
+}
+.vmc-arena-pct--yes { color: rgba(0,232,135,0.55); }
+.vmc-arena-pct--no  { color: rgba(255,77,109,0.5); }
+
+/* Underdog badge */
+.vmc-underdog {
+  display: inline-block;
+  font-size: 0.56rem; font-weight: 950; letter-spacing: 0.04em;
+  background: rgba(251,191,36,0.12); color: #fbbf24;
+  border: 1px solid rgba(251,191,36,0.28); border-radius: 5px;
+  padding: 2px 6px; margin-top: 2px;
+  position: relative; z-index: 1;
 }
 
-.vmc-slabels {
+/* VS orb — floats exactly at the boundary between YES and NO */
+.vmc-vs-orb {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--verdex-surface);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+}
+.vmc-vs-orb span {
+  font-size: 0.54rem; font-weight: 950; letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.3);
+}
+
+/* ── Split bar (2px YES|NO color bar under arena) ──────────────────────── */
+.vmc-split-bar {
+  display: flex; height: 3px;
+}
+.vmc-split-bar-yes { background: rgba(0,232,135,0.55); }
+.vmc-split-bar-no  { background: rgba(255,77,109,0.45); }
+
+/* ── Pool meta row ──────────────────────────────────────────────────────── */
+.vmc-pool-meta {
   display: flex; align-items: center; justify-content: space-between;
-  font-size: 0.66rem; font-weight: 850;
+  padding: 6px 13px;
+  font-size: 0.66rem; font-weight: 800;
 }
-.vmc-sl-yes  { color: var(--verdex-yes); }
-.vmc-sl-no   { color: var(--verdex-no); }
-.vmc-sl-meta { color: var(--verdex-muted); font-size: 0.6rem; text-align: center; }
+.vmc-pool-yes    { color: rgba(0,232,135,0.6); }
+.vmc-pool-no     { color: rgba(255,77,109,0.55); }
+.vmc-pool-center { color: var(--verdex-muted); font-size: 0.62rem; text-align: center; }
 
 /* ── Clash CTA ──────────────────────────────────────────────────────────── */
 .vmc-clash {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  margin: 8px 13px 14px;
-  min-height: 36px;
-  border: 1px dashed rgba(245,158,11,0.3); border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 7px 10px; border-radius: 8px;
+  border: 1px solid rgba(245,158,11,0.25);
   background: rgba(245,158,11,0.06); color: var(--verdex-gold);
-  font-size: 0.74rem; font-weight: 950;
-  transition: background 0.15s, border-color 0.15s;
+  font-size: 0.72rem; font-weight: 900;
+  transition: background 0.15s;
+  flex-shrink: 0;
 }
 .vmc-clash--hot {
-  border: 1px solid rgba(245,158,11,0.5);
-  background: linear-gradient(135deg, rgba(255,193,7,0.14), rgba(255,140,0,0.08));
-  color: #ffc107;
+  border-color: rgba(245,158,11,0.45);
+  background: rgba(245,158,11,0.1);
 }
 .vmc-clash:active { background: rgba(245,158,11,0.14); }
 
