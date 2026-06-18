@@ -119,86 +119,134 @@ function MarketCard({
   onBet: (market: VerdexMarket, position: "yes" | "no") => void;
   onClash: (market: VerdexMarket) => void;
 }) {
-  const { expired } = formatCountdown(market.closesAt);
-  const meta = categoryMeta[market.category];
-  const total = market.yesPool + market.noPool;
+  const { expired, urgent } = formatCountdown(market.closesAt);
+  const meta   = categoryMeta[market.category];
+  const total  = market.yesPool + market.noPool;
   const yesPct = calcYesPct(market.yesPool, market.noPool);
   const yesOdds = calcOdds("yes", market.yesPool, market.noPool);
   const noOdds  = calcOdds("no",  market.yesPool, market.noPool);
-  const hot = total > 5; // show hot badge for busy markets
+
+  // Psychology: flag "underdog" side when crowd piles > 68% one way
+  const crowdOnYes = yesPct >= 68;
+  const crowdOnNo  = yesPct <= 32;
+
+  const cardClass = [
+    "vmc",
+    market.featured ? "vmc--featured" : "",
+    urgent          ? "vmc--urgent"   : "",
+    expired         ? "vmc--closed"   : "",
+  ].filter(Boolean).join(" ");
 
   return (
-    <article className={`verdex-market-card${market.featured ? " featured" : ""}`} style={{ "--cat-color": meta.color } as React.CSSProperties}>
-      {/* Category accent bar */}
-      <div className="verdex-card-accent" style={{ background: meta.color }} />
+    <article className={cardClass}>
 
-      {market.featured && <div className="verdex-featured-tag">⭐ Featured</div>}
-
-      <div className="verdex-market-card-top">
-        <span className="verdex-cat-tag" style={{ color: meta.color, borderColor: `${meta.color}44`, background: `${meta.color}18` }}>
-          {meta.emoji} {meta.label.toUpperCase()}
-        </span>
-        <CountdownChip closesAt={market.closesAt} />
-        {hot && !market.featured && <span className="verdex-hot-tag">🔥 Hot</span>}
-        {market.aiGenerated && <span className="verdex-ai-tag">🤖 AI</span>}
+      {/* ── Category header band ─────────────────────────────────────────── */}
+      <div
+        className="vmc-header"
+        style={{
+          background: `linear-gradient(135deg, ${meta.color}28, ${meta.color}0c)`,
+          borderBottomColor: `${meta.color}28`,
+        }}
+      >
+        <div className="vmc-header-left">
+          <span
+            className="vmc-cat-badge"
+            style={{ background: `${meta.color}20`, color: meta.color, borderColor: `${meta.color}44` }}
+          >
+            {meta.emoji} {meta.label.toUpperCase()}
+          </span>
+          {market.featured && <span className="vmc-featured-badge">⭐ FEATURED</span>}
+          {market.aiGenerated && <span className="vmc-ai-badge">AI</span>}
+        </div>
+        <div className="vmc-header-right">
+          {!expired && total > 0 && <span className="vmc-live-dot" aria-label="Live" />}
+          <CountdownChip closesAt={market.closesAt} />
+        </div>
       </div>
 
-      <h3 className="verdex-market-title">{market.title}</h3>
+      {/* ── Question ─────────────────────────────────────────────────────── */}
+      <div className="vmc-body">
+        <h3 className="vmc-title">{market.title}</h3>
+        {market.description && (
+          <p className="vmc-desc">{market.description}</p>
+        )}
+        {market.id.startsWith("data-v1-") && (
+          <span className="vmc-fair-badge">⚖️ Provably fair · auto-resolves from public data</span>
+        )}
+      </div>
 
-      {market.description && <p className="verdex-market-rules">{market.description}</p>}
-      {market.id.startsWith("data-v1-") && (
-        <div className="verdex-fair-chip">⚖️ Provably fair — auto-resolves from public data</div>
+      {/* ── My bet ───────────────────────────────────────────────────────── */}
+      {myBet && (
+        <div className={`vmc-mybet vmc-mybet--${myBet.position}`}>
+          <span className="vmc-mybet-icon">{myBet.position === "yes" ? "✓" : "✗"}</span>
+          <div>
+            <strong>You staked {myBet.amountWld} WLD on {myBet.position.toUpperCase()}</strong>
+            <span>Awaiting resolution</span>
+          </div>
+        </div>
       )}
 
-      {/* Odds pills above pool bar */}
-      <div className="verdex-odds-row">
-        <div className="verdex-odds-pill yes">
-          <span className="verdex-odds-label">YES</span>
-          <strong className="verdex-odds-val">{yesOdds}</strong>
-          <span className="verdex-odds-pct">{yesPct}%</span>
-        </div>
-        <div className="verdex-odds-divider" />
-        <div className="verdex-odds-pill no">
-          <span className="verdex-odds-label">NO</span>
-          <strong className="verdex-odds-val">{noOdds}</strong>
-          <span className="verdex-odds-pct">{100 - yesPct}%</span>
-        </div>
-      </div>
-
-      <PoolBar yesPool={market.yesPool} noPool={market.noPool} />
-
-      <div className="verdex-market-meta">
-        <span>🏦 {formatPoolSize(total)} pool</span>
-        <span>👥 {market.totalBettors?.toLocaleString() ?? "—"} forecasters</span>
-      </div>
-
-      {myBet ? (
-        <div className={`verdex-my-bet-badge ${myBet.position}`}>
-          ✓ You predicted {myBet.position.toUpperCase()} · {myBet.amountWld} WLD staked
-        </div>
-      ) : expired ? (
-        <div className="verdex-market-closed-note">🔒 Market closed — awaiting resolution</div>
-      ) : (
-        <>
-          <div className="verdex-bet-row">
-            <button className="verdex-bet-yes" onClick={() => onBet(market, "yes")} type="button">
-              <span className="verdex-bet-dir">YES</span>
-              <span className="verdex-bet-odds">{yesOdds}</span>
-            </button>
-            <button className="verdex-bet-no" onClick={() => onBet(market, "no")} type="button">
-              <span className="verdex-bet-dir">NO</span>
-              <span className="verdex-bet-odds">{noOdds}</span>
-            </button>
-          </div>
-          <button
-            className={`verdex-clash-trigger${market.category === "sports" ? " hot" : ""}`}
-            onClick={() => onClash(market)}
-            type="button"
-          >
-            <Swords size={13} />
-            {market.category === "sports" ? "⚔️ Challenge — winner takes 90%" : "Challenge a human 1v1"}
+      {/* ── ODDS SPLIT — the visual hero ─────────────────────────────────── */}
+      {!expired && !myBet && (
+        <div className="vmc-odds-split">
+          {/* YES side */}
+          <button className="vmc-side vmc-side--yes" onClick={() => onBet(market, "yes")} type="button">
+            <span className="vmc-side-dir">YES</span>
+            <strong className="vmc-side-odds">{yesOdds}</strong>
+            <span className="vmc-side-crowd">{yesPct}% backing</span>
+            {crowdOnNo && <span className="vmc-side-tip">Underdog 🎯</span>}
           </button>
-        </>
+
+          {/* VS divider */}
+          <div className="vmc-vs">
+            <span>VS</span>
+          </div>
+
+          {/* NO side */}
+          <button className="vmc-side vmc-side--no" onClick={() => onBet(market, "no")} type="button">
+            <span className="vmc-side-dir">NO</span>
+            <strong className="vmc-side-odds">{noOdds}</strong>
+            <span className="vmc-side-crowd">{100 - yesPct}% backing</span>
+            {crowdOnYes && <span className="vmc-side-tip">Underdog 🎯</span>}
+          </button>
+        </div>
+      )}
+
+      {/* ── Closed placeholder ───────────────────────────────────────────── */}
+      {expired && !myBet && (
+        <div className="vmc-closed-notice">🔒 Betting closed — resolution pending</div>
+      )}
+
+      {/* ── Sentiment bar ────────────────────────────────────────────────── */}
+      <div className="vmc-sentiment">
+        <div className="vmc-sbar">
+          <div className="vmc-sbar-fill" style={{ width: `${yesPct}%` }} />
+        </div>
+        <div className="vmc-slabels">
+          <span className="vmc-sl-yes">YES {yesPct}%</span>
+          <span className="vmc-sl-meta">
+            {total > 0
+              ? `${market.totalBettors ?? "—"} humans · ${formatPoolSize(total)}`
+              : "Be the first to bet"}
+          </span>
+          <span className="vmc-sl-no">{100 - yesPct}% NO</span>
+        </div>
+      </div>
+
+      {/* ── Clash CTA ────────────────────────────────────────────────────── */}
+      {!expired && !myBet && (
+        <button
+          className={`vmc-clash${market.category === "sports" ? " vmc-clash--hot" : ""}`}
+          onClick={() => onClash(market)}
+          type="button"
+        >
+          <Swords size={12} />
+          <span>
+            {market.category === "sports"
+              ? "Challenge a friend — winner takes 90%"
+              : "⚔️ 1v1 Clash — winner takes 90%"}
+          </span>
+        </button>
       )}
     </article>
   );

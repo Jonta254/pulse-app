@@ -450,56 +450,256 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-hero-inner strong { font-size: 1.42rem; font-weight: 950; color: #fff; line-height: 1.08; }
 .verdex-hero-inner p { margin: 0; color: rgba(232,234,246,0.72); font-size: 0.86rem; line-height: 1.42; }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   MARKET CARD v2 — addictive design system
+   Psychology: big odds as visual hero, live dot FOMO, crowd sentiment,
+   underdog framing, urgency pulse, category-specific color bands.
+═══════════════════════════════════════════════════════════════════════════ */
+
 .verdex-market-list { display: grid; gap: 14px; }
-.verdex-market-card {
-  position: relative; display: grid; gap: 10px;
-  padding: 16px 14px 14px;
-  border: 1px solid var(--verdex-border); border-radius: 20px;
+
+/* ── Card shell ─────────────────────────────────────────────────────────── */
+.vmc {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid var(--verdex-border);
   background: var(--verdex-surface);
   overflow: hidden;
-  transition: box-shadow 0.18s, border-color 0.18s;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.18s;
 }
-.verdex-market-card:active { box-shadow: 0 4px 16px rgba(0,0,0,0.22); }
-.verdex-market-card.featured {
+
+.vmc--featured {
   border-color: var(--verdex-border-bright);
-  background: radial-gradient(circle at 90% 8%, rgba(245,158,11,0.10), transparent 10rem),
-    radial-gradient(circle at 10% 90%, rgba(99,102,241,0.08), transparent 12rem),
-    var(--verdex-surface);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.22), 0 0 0 1px rgba(99,102,241,0.18);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.32), 0 0 0 1px rgba(99,102,241,0.14);
 }
-.verdex-featured-tag { position: absolute; top: -1px; right: 14px; padding: 3px 9px; border-radius: 0 0 10px 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 0.65rem; font-weight: 950; }
-.verdex-market-card-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.verdex-cat-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid; border-radius: 999px; font-size: 0.64rem; font-weight: 950; }
-.verdex-ai-tag { padding: 3px 7px; border: 1px solid rgba(139,92,246,0.28); border-radius: 999px; color: #a78bfa; background: rgba(139,92,246,0.12); font-size: 0.62rem; font-weight: 950; }
+
+/* Urgency pulse — subtle glow on cards closing within 4h */
+.vmc--urgent {
+  animation: vmc-urgency-pulse 2.6s ease-in-out infinite;
+}
+@keyframes vmc-urgency-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,109,0); }
+  50%       { box-shadow: 0 0 0 4px rgba(255,77,109,0.14); }
+}
+
+/* ── Category header band ───────────────────────────────────────────────── */
+.vmc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 13px;
+  border-bottom: 1px solid transparent;
+}
+
+.vmc-header-left  { display: flex; align-items: center; gap: 6px; }
+.vmc-header-right { display: flex; align-items: center; gap: 6px; }
+
+.vmc-cat-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px;
+  border: 1px solid; border-radius: 999px;
+  font-size: 0.63rem; font-weight: 950; letter-spacing: 0.04em;
+}
+
+.vmc-featured-badge {
+  font-size: 0.58rem; font-weight: 950; letter-spacing: 0.04em;
+  color: var(--verdex-gold);
+}
+
+.vmc-ai-badge {
+  padding: 2px 6px; border-radius: 6px;
+  font-size: 0.56rem; font-weight: 950; letter-spacing: 0.04em;
+  background: rgba(139,92,246,0.2); color: #a78bfa;
+  border: 1px solid rgba(139,92,246,0.3);
+}
+
+/* Live pulse dot — animated green indicator */
+.vmc-live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--verdex-yes);
+  flex-shrink: 0;
+  animation: vmc-live-pulse 1.8s ease-in-out infinite;
+}
+@keyframes vmc-live-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(0,232,135,0.7); }
+  60%  { box-shadow: 0 0 0 5px rgba(0,232,135,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(0,232,135,0);   }
+}
+
+/* Chip re-use (countdown) */
 .verdex-chip { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px; font-size: 0.66rem; font-weight: 900; }
 .verdex-chip-time { border: 1px solid var(--verdex-border); color: var(--verdex-muted); background: var(--verdex-surface-2); }
-.verdex-chip-time.urgent { border-color: rgba(255,77,109,0.36); color: #ff7a93; background: rgba(255,77,109,0.12); animation: verdex-urgency 1s ease-in-out infinite; }
+.verdex-chip-time.urgent { border-color: rgba(255,77,109,0.4); color: #ff7a93; background: rgba(255,77,109,0.12); animation: verdex-urgency 1s ease-in-out infinite; }
 .verdex-chip-time.expired { border-color: var(--verdex-border); color: var(--verdex-muted); opacity: 0.7; }
 @keyframes verdex-urgency { 0%,100%{opacity:1}50%{opacity:0.6} }
-.verdex-market-title { margin: 0; font-size: 0.98rem; font-weight: 900; line-height: 1.28; color: var(--verdex-text); }
 
+/* ── Question body ──────────────────────────────────────────────────────── */
+.vmc-body {
+  padding: 12px 13px 6px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+
+.vmc-title {
+  margin: 0;
+  font-size: 1.02rem; font-weight: 900; line-height: 1.28;
+  color: var(--verdex-text);
+}
+
+.vmc-desc {
+  margin: 0;
+  font-size: 0.72rem; line-height: 1.4; color: var(--verdex-muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.vmc-fair-badge {
+  font-size: 0.62rem; font-weight: 750;
+  color: var(--verdex-yes); opacity: 0.82;
+}
+
+/* ── ODDS SPLIT PANEL — visual hero ─────────────────────────────────────── */
+.vmc-odds-split {
+  display: grid;
+  grid-template-columns: 1fr 30px 1fr;
+  margin: 6px 13px 0;
+  border: 1px solid var(--verdex-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Tap target = the entire side panel */
+.vmc-side {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 14px 8px;
+  border: 0; cursor: pointer;
+  transition: filter 0.12s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.vmc-side:active { transform: scale(0.96); filter: brightness(0.88); }
+
+.vmc-side--yes { background: linear-gradient(155deg, rgba(0,232,135,0.15), rgba(0,232,135,0.06)); }
+.vmc-side--no  { background: linear-gradient(155deg, rgba(255,77,109,0.15), rgba(255,77,109,0.06)); }
+
+.vmc-vs {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--verdex-surface-2);
+  border-left: 1px solid var(--verdex-border);
+  border-right: 1px solid var(--verdex-border);
+}
+.vmc-vs span {
+  font-size: 0.58rem; font-weight: 950; letter-spacing: 0.06em;
+  color: var(--verdex-muted); writing-mode: vertical-rl;
+}
+
+.vmc-side-dir {
+  font-size: 0.7rem; font-weight: 950; letter-spacing: 0.08em;
+}
+.vmc-side--yes .vmc-side-dir { color: var(--verdex-yes); }
+.vmc-side--no  .vmc-side-dir { color: var(--verdex-no); }
+
+/* The number — biggest element on the card, hooks the eye */
+.vmc-side-odds {
+  font-size: 1.96rem; font-weight: 950; line-height: 1; letter-spacing: -0.02em;
+}
+.vmc-side--yes .vmc-side-odds { color: var(--verdex-yes); }
+.vmc-side--no  .vmc-side-odds { color: var(--verdex-no); }
+
+.vmc-side-crowd {
+  font-size: 0.64rem; font-weight: 800; color: var(--verdex-muted);
+}
+
+/* Underdog tag — contrarian psychology ("everyone thinks YES, maybe NO?") */
+.vmc-side-tip {
+  font-size: 0.58rem; font-weight: 950;
+  padding: 2px 6px; border-radius: 999px;
+  background: rgba(245,158,11,0.15); color: var(--verdex-gold);
+  border: 1px solid rgba(245,158,11,0.3);
+  margin-top: 2px;
+}
+
+/* ── My bet badge ───────────────────────────────────────────────────────── */
+.vmc-mybet {
+  margin: 8px 13px 0;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 12px;
+}
+.vmc-mybet--yes { background: rgba(0,232,135,0.1);  border: 1px solid rgba(0,232,135,0.28); }
+.vmc-mybet--no  { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.28); }
+.vmc-mybet-icon { font-size: 1.1rem; flex-shrink: 0; }
+.vmc-mybet strong { display: block; font-size: 0.84rem; font-weight: 900; color: var(--verdex-text); }
+.vmc-mybet span   { font-size: 0.7rem; color: var(--verdex-muted); }
+
+/* ── Closed notice ──────────────────────────────────────────────────────── */
+.vmc-closed-notice {
+  margin: 8px 13px 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--verdex-surface-2);
+  border: 1px solid var(--verdex-border);
+  font-size: 0.78rem; font-weight: 900; color: var(--verdex-muted); text-align: center;
+}
+
+/* ── Sentiment bar ──────────────────────────────────────────────────────── */
+.vmc-sentiment {
+  padding: 10px 13px 0;
+  display: flex; flex-direction: column; gap: 5px;
+}
+
+.vmc-sbar {
+  height: 10px; border-radius: 999px;
+  background: rgba(255,77,109,0.22); overflow: hidden;
+}
+.vmc-sbar-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--verdex-yes), #00d87a);
+  transition: width 0.7s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.vmc-slabels {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.66rem; font-weight: 850;
+}
+.vmc-sl-yes  { color: var(--verdex-yes); }
+.vmc-sl-no   { color: var(--verdex-no); }
+.vmc-sl-meta { color: var(--verdex-muted); font-size: 0.6rem; text-align: center; }
+
+/* ── Clash CTA ──────────────────────────────────────────────────────────── */
+.vmc-clash {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  margin: 8px 13px 14px;
+  min-height: 36px;
+  border: 1px dashed rgba(245,158,11,0.3); border-radius: 10px;
+  background: rgba(245,158,11,0.06); color: var(--verdex-gold);
+  font-size: 0.74rem; font-weight: 950;
+  transition: background 0.15s, border-color 0.15s;
+}
+.vmc-clash--hot {
+  border: 1px solid rgba(245,158,11,0.5);
+  background: linear-gradient(135deg, rgba(255,193,7,0.14), rgba(255,140,0,0.08));
+  color: #ffc107;
+}
+.vmc-clash:active { background: rgba(245,158,11,0.14); }
+
+/* ── Legacy aliases kept for other parts of the app ────────────────────── */
 .verdex-pool-bar-wrap { display: grid; gap: 5px; }
 .verdex-pool-bar { height: 8px; border-radius: 999px; background: rgba(255,77,109,0.32); overflow: hidden; }
 .verdex-pool-bar-yes { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--verdex-yes), #00c97a); transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1); }
 .verdex-pool-labels { display: flex; justify-content: space-between; }
 .verdex-yes-label { font-size: 0.68rem; font-weight: 950; color: var(--verdex-yes); }
-.verdex-no-label { font-size: 0.68rem; font-weight: 950; color: var(--verdex-no); }
-
+.verdex-no-label  { font-size: 0.68rem; font-weight: 950; color: var(--verdex-no); }
 .verdex-market-meta { display: flex; gap: 12px; font-size: 0.72rem; font-weight: 850; color: var(--verdex-muted); }
 .verdex-bet-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.verdex-bet-yes,.verdex-bet-no {
-  min-height: 52px; border: 0; border-radius: 14px;
-  font-size: 0.84rem; font-weight: 950;
-  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  transition: opacity 0.14s, transform 0.14s;
-}
+.verdex-bet-yes,.verdex-bet-no { min-height: 52px; border: 0; border-radius: 14px; font-size: 0.84rem; font-weight: 950; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; transition: opacity 0.14s, transform 0.14s; }
 .verdex-bet-yes:active,.verdex-bet-no:active { transform: scale(0.97); }
 .verdex-bet-yes { color: #001f12; background: linear-gradient(135deg, var(--verdex-yes), #00c97a); box-shadow: 0 6px 20px rgba(0,232,135,0.28); }
 .verdex-bet-no  { color: #fff;    background: linear-gradient(135deg, #ff4d6d, #c9284a);   box-shadow: 0 6px 20px rgba(255,77,109,0.26); }
 .verdex-my-bet-badge { display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 900; }
 .verdex-my-bet-badge.yes { border: 1px solid rgba(0,232,135,0.24); color: var(--verdex-yes); background: rgba(0,232,135,0.1); }
-.verdex-my-bet-badge.no { border: 1px solid rgba(255,77,109,0.24); color: var(--verdex-no); background: rgba(255,77,109,0.1); }
+.verdex-my-bet-badge.no  { border: 1px solid rgba(255,77,109,0.24); color: var(--verdex-no);  background: rgba(255,77,109,0.1); }
 .verdex-market-closed-note { font-size: 0.76rem; font-weight: 850; color: var(--verdex-muted); text-align: center; padding: 8px; }
+.verdex-market-title { margin: 0; font-size: 0.98rem; font-weight: 900; line-height: 1.28; color: var(--verdex-text); }
 .verdex-clash-trigger { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; border: 1px dashed rgba(245,158,11,0.3); border-radius: 10px; padding: 0 12px; color: var(--verdex-gold); background: rgba(245,158,11,0.07); font-size: 0.76rem; font-weight: 950; width: 100%; justify-content: center; }
 
 .verdex-sheet-backdrop { position: fixed; inset: 0; z-index: 20; background: rgba(7,9,26,0.72); backdrop-filter: blur(6px); display: flex; align-items: flex-end; justify-content: center; }
@@ -1084,65 +1284,4 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   transform: scale(1.25);
 }
 
-/* ── Market card — redesigned attractive version ──────────────────────────── */
-
-.verdex-card-accent {
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 3px; border-radius: 20px 20px 0 0;
-  opacity: 0.7;
-}
-
-/* Hot badge */
-.verdex-hot-tag {
-  padding: 3px 7px; border-radius: 999px;
-  font-size: 0.62rem; font-weight: 950;
-  color: #ff9f43; background: rgba(255,159,67,0.15);
-  border: 1px solid rgba(255,159,67,0.3);
-}
-
-/* Odds pills row */
-.verdex-odds-row {
-  display: flex; align-items: stretch; gap: 0;
-  border: 1px solid var(--verdex-border); border-radius: 14px;
-  overflow: hidden; background: var(--verdex-surface-2);
-}
-
-.verdex-odds-pill {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 10px 8px;
-  transition: background 0.15s;
-}
-.verdex-odds-pill.yes { background: rgba(0,232,135,0.07); }
-.verdex-odds-pill.no  { background: rgba(255,77,109,0.07); }
-
-.verdex-odds-divider {
-  width: 1px; background: var(--verdex-border); flex-shrink: 0;
-}
-
-.verdex-odds-label {
-  font-size: 0.62rem; font-weight: 950; letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.verdex-odds-pill.yes .verdex-odds-label { color: var(--verdex-yes); }
-.verdex-odds-pill.no  .verdex-odds-label { color: var(--verdex-no); }
-
-.verdex-odds-val {
-  font-size: 1.08rem; font-weight: 950; line-height: 1;
-}
-.verdex-odds-pill.yes .verdex-odds-val { color: var(--verdex-yes); }
-.verdex-odds-pill.no  .verdex-odds-val { color: var(--verdex-no); }
-
-.verdex-odds-pct {
-  font-size: 0.68rem; font-weight: 850; color: var(--verdex-muted);
-}
-
-/* Better YES/NO bet buttons */
-.verdex-bet-yes, .verdex-bet-no {
-  flex-direction: column; gap: 2px;
-}
-.verdex-bet-dir {
-  font-size: 0.84rem; font-weight: 950; letter-spacing: 0.04em;
-}
-.verdex-bet-odds {
-  font-size: 0.72rem; font-weight: 800; opacity: 0.82;
-}
+/* vmc-* classes above replace the old card atom styles — no duplicates needed */
