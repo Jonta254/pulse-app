@@ -137,12 +137,17 @@ function MarketCard({
   // Psychology: flag "underdog" side when crowd piles > 68% one way
   const crowdOnYes = yesPct >= 68;
   const crowdOnNo  = yesPct <= 32;
+  // HOT badge: pool > 50 WLD or 10+ bettors
+  const isHot = total >= 50 || (market.totalBettors ?? 0) >= 10;
+  // Treat status=open AND not expired as truly live
+  const isLive = market.status === "open" && !expired;
 
   const cardClass = [
     "vmc",
     market.featured ? "vmc--featured" : "",
     urgent          ? "vmc--urgent"   : "",
     expired         ? "vmc--closed"   : "",
+    !isLive         ? "vmc--dimmed"   : "",
   ].filter(Boolean).join(" ");
 
   return (
@@ -164,10 +169,12 @@ function MarketCard({
             {meta.emoji} {meta.label.toUpperCase()}
           </span>
           {market.featured && <span className="vmc-featured-badge">⭐ FEATURED</span>}
+          {isHot && isLive && !market.featured && <span className="vmc-hot-badge">🔥 HOT</span>}
           {market.aiGenerated && <span className="vmc-ai-badge">AI</span>}
         </div>
         <div className="vmc-header-right">
-          {!expired && total > 0 && <span className="vmc-live-dot" aria-label="Live" />}
+          {isLive && total > 0 && <span className="vmc-live-dot" aria-label="Live" />}
+          {!isLive && <span className="vmc-closed-tag">CLOSED</span>}
           <CountdownChip closesAt={market.closesAt} />
         </div>
       </div>
@@ -195,7 +202,7 @@ function MarketCard({
       )}
 
       {/* ── ODDS SPLIT — the visual hero ─────────────────────────────────── */}
-      {!expired && !myBet && (
+      {isLive && !myBet && (
         <div className="vmc-odds-split">
           {/* YES side */}
           <button className="vmc-side vmc-side--yes" onClick={() => onBet(market, "yes")} type="button">
@@ -221,7 +228,7 @@ function MarketCard({
       )}
 
       {/* ── Closed placeholder ───────────────────────────────────────────── */}
-      {expired && !myBet && (
+      {!isLive && !myBet && (
         <div className="vmc-closed-notice">🔒 Betting closed — resolution pending</div>
       )}
 
@@ -242,7 +249,7 @@ function MarketCard({
       </div>
 
       {/* ── Action row: Clash + Add to Combo ────────────────────────────── */}
-      {!expired && !myBet && (
+      {isLive && !myBet && (
         <div className="vmc-actions">
           <button
             className={`vmc-clash${market.category === "sports" ? " vmc-clash--hot" : ""}`}
@@ -995,10 +1002,27 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   // ── Filter markets ──────────────────────────────────────────────────────────
   const filtered = category === "all" ? localMarkets : localMarkets.filter((m) => m.category === category);
 
-  // Micro markets first if selected
-  const sorted = category === "micro"
-    ? [...filtered].sort((a, b) => new Date(a.closesAt).getTime() - new Date(b.closesAt).getTime())
-    : [...filtered].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+  // Open markets first; within open: featured → pool size; then closed at bottom
+  const sorted = (() => {
+    const now = Date.now();
+    const isOpen = (m: VerdexMarket) => m.status === "open" && new Date(m.closesAt).getTime() > now;
+    const open   = filtered.filter(isOpen);
+    const closed = filtered.filter((m) => !isOpen(m));
+
+    if (category === "micro") {
+      // Micro: soonest-closing open first, then closed
+      open.sort((a, b) => new Date(a.closesAt).getTime() - new Date(b.closesAt).getTime());
+    } else {
+      // Featured first, then by pool size (bigger = more social proof)
+      open.sort((a, b) => {
+        if (b.featured !== a.featured) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+        return (b.yesPool + b.noPool) - (a.yesPool + a.noPool);
+      });
+    }
+    // Closed sorted by closesAt desc (most recently closed first)
+    closed.sort((a, b) => new Date(b.closesAt).getTime() - new Date(a.closesAt).getTime());
+    return [...open, ...closed];
+  })();
 
   // ── Combo handlers ───────────────────────────────────────────────────────────
   function handleAddCombo(market: VerdexMarket, position: "yes" | "no") {
@@ -1376,8 +1400,8 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
             ))}
           </div>
 
-          {/* ── Combo tray — sticky at bottom when picks exist ── */}
-          {comboPicks.length > 0 && (
+          {/* ── Combo tray — hidden when the sheet is open (it covers the button) ── */}
+          {comboPicks.length > 0 && !comboOpen && (
             <div className="combo-tray" role="status">
               <div className="combo-tray-left">
                 <span className="combo-tray-icon">🔮</span>

@@ -515,6 +515,22 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   border: 1px solid rgba(139,92,246,0.3);
 }
 
+.vmc-hot-badge {
+  font-size: 0.58rem; font-weight: 950; letter-spacing: 0.04em;
+  color: #fb923c;
+}
+
+.vmc-closed-tag {
+  font-size: 0.58rem; font-weight: 900; letter-spacing: 0.06em;
+  color: var(--verdex-muted); opacity: 0.7;
+}
+
+/* Closed/expired markets visually recede */
+.vmc--dimmed {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
 /* Live pulse dot — animated green indicator */
 .vmc-live-dot {
   width: 7px; height: 7px;
