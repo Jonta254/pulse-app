@@ -1,8 +1,9 @@
 import { loadJsonFromStorage, saveJsonToStorage } from "@/lib/storage";
-import type { VerdexBet, VerdexGoal, VerdexMarket, VerdexPlayerStats } from "@/types/verdex";
+import type { VerdexBet, VerdexCombo, VerdexGoal, VerdexMarket, VerdexPlayerStats } from "@/types/verdex";
 
-const STORAGE_BETS = "verdex_bets_v1";
-const STORAGE_GOALS = "verdex_goals_v1";
+const STORAGE_BETS   = "verdex_bets_v1";
+const STORAGE_GOALS  = "verdex_goals_v1";
+const STORAGE_COMBOS = "verdex_combos_v1";
 const STORAGE_LOCAL_POOLS = "verdex_local_pools_v1";
 
 // ── Storage ──────────────────────────────────────────────────────────────────
@@ -127,6 +128,15 @@ export function calcPlayerStats(bets: VerdexBet[]): VerdexPlayerStats {
     currentStreak: streak,
     bestStreak: streak,
   };
+}
+
+// ── Combo storage ────────────────────────────────────────────────────────────
+
+export function loadVerdexCombos(): VerdexCombo[] {
+  return loadJsonFromStorage<VerdexCombo[]>(STORAGE_COMBOS, []);
+}
+export function saveVerdexCombos(combos: VerdexCombo[]) {
+  saveJsonToStorage(STORAGE_COMBOS, combos.slice(0, 100));
 }
 
 // ── Category display ──────────────────────────────────────────────────────────

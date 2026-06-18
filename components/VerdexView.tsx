@@ -16,8 +16,10 @@ import {
   formatCountdown,
   formatPoolSize,
   loadVerdexBets,
+  loadVerdexCombos,
   loadVerdexGoals,
   saveVerdexBets,
+  saveVerdexCombos,
   saveVerdexGoals,
 } from "@/lib/verdex/utils";
 import {
@@ -32,7 +34,7 @@ import {
   toggleFollow,
   upsertLocalClash,
 } from "@/lib/verdex/clash";
-import type { VerdexBet, VerdexCategory, VerdexClash, VerdexCopyFollow, VerdexGoal, VerdexMarket, VerdexTab } from "@/types/verdex";
+import type { VerdexBet, VerdexCategory, VerdexClash, VerdexCombo, VerdexComboPick, VerdexCopyFollow, VerdexGoal, VerdexMarket, VerdexTab } from "@/types/verdex";
 import type { EarnPoints, OpenPayment } from "@/types/ui";
 import type { HistoryRecord } from "@/types/reputation";
 import type { VerifiedHuman } from "@/types/user";
@@ -111,13 +113,19 @@ function CategoryPill({
 function MarketCard({
   market,
   myBet,
+  comboPick,
   onBet,
   onClash,
+  onAddCombo,
+  onRemoveCombo,
 }: {
   market: VerdexMarket;
   myBet: VerdexBet | undefined;
+  comboPick: VerdexComboPick | undefined;
   onBet: (market: VerdexMarket, position: "yes" | "no") => void;
   onClash: (market: VerdexMarket) => void;
+  onAddCombo: (market: VerdexMarket, position: "yes" | "no") => void;
+  onRemoveCombo: (marketId: string) => void;
 }) {
   const { expired, urgent } = formatCountdown(market.closesAt);
   const meta   = categoryMeta[market.category];
@@ -233,20 +241,53 @@ function MarketCard({
         </div>
       </div>
 
-      {/* ── Clash CTA ────────────────────────────────────────────────────── */}
+      {/* ── Action row: Clash + Add to Combo ────────────────────────────── */}
       {!expired && !myBet && (
-        <button
-          className={`vmc-clash${market.category === "sports" ? " vmc-clash--hot" : ""}`}
-          onClick={() => onClash(market)}
-          type="button"
-        >
-          <Swords size={12} />
-          <span>
-            {market.category === "sports"
-              ? "Challenge a friend — winner takes 90%"
-              : "⚔️ 1v1 Clash — winner takes 90%"}
-          </span>
-        </button>
+        <div className="vmc-actions">
+          <button
+            className={`vmc-clash${market.category === "sports" ? " vmc-clash--hot" : ""}`}
+            onClick={() => onClash(market)}
+            type="button"
+          >
+            <Swords size={12} />
+            <span>
+              {market.category === "sports"
+                ? "Challenge 1v1 — 90% to winner"
+                : "⚔️ 1v1 Clash"}
+            </span>
+          </button>
+
+          {comboPick ? (
+            <button
+              className="vmc-combo-btn vmc-combo-btn--added"
+              onClick={() => onRemoveCombo(market.id)}
+              type="button"
+              title="Remove from combo"
+            >
+              <span>✓ In Combo</span>
+              <span className="vmc-combo-odds">{comboPick.oddsLabel}</span>
+            </button>
+          ) : (
+            <div className="vmc-combo-add-wrap">
+              <button
+                className="vmc-combo-btn vmc-combo-btn--yes"
+                onClick={() => onAddCombo(market, "yes")}
+                type="button"
+                title="Add YES to combo"
+              >
+                + YES
+              </button>
+              <button
+                className="vmc-combo-btn vmc-combo-btn--no"
+                onClick={() => onAddCombo(market, "no")}
+                type="button"
+                title="Add NO to combo"
+              >
+                + NO
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </article>
   );
@@ -607,6 +648,160 @@ function GoalSheet({ onClose, onSave }: { onClose: () => void; onSave: (g: Omit<
   );
 }
 
+// ── Combo Sheet ───────────────────────────────────────────────────────────────
+
+const COMBO_CHIPS = [0.5, 1, 2, 5];
+const MAX_PICKS   = 5;
+
+function ComboSheet({
+  picks,
+  onClose,
+  onRemove,
+  onConfirm,
+}: {
+  picks: VerdexComboPick[];
+  onClose: () => void;
+  onRemove: (marketId: string) => void;
+  onConfirm: (stake: number) => void;
+}) {
+  const [stake, setStake]   = useState(1);
+  const [custom, setCustom] = useState("");
+  const finalStake  = custom ? parseFloat(custom) || 0 : stake;
+  const totalOdds   = picks.reduce((acc, p) => acc * p.oddsNum, 1);
+  const totalOddsR  = Math.round(totalOdds * 100) / 100;
+  const payout      = Math.round(finalStake * totalOddsR * 100) / 100;
+  const profit      = Math.round((payout - finalStake) * 100) / 100;
+  const valid       = finalStake > 0 && finalStake <= 100 && picks.length >= 2;
+
+  return (
+    <div className="verdex-sheet-backdrop" onClick={onClose} role="presentation">
+      <div className="verdex-sheet combo-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Combo bet">
+        <div className="verdex-sheet-handle" />
+
+        {/* Header */}
+        <div className="combo-sheet-header">
+          <div>
+            <span className="combo-sheet-kicker">🔮 COMBO PICK · {picks.length} LEGS</span>
+            <strong className="combo-sheet-title">All picks must win · Odds multiply</strong>
+          </div>
+          <button className="verdex-sheet-close" onClick={onClose} type="button" aria-label="Close"><X size={18} /></button>
+        </div>
+
+        {/* Win hero */}
+        <div className="combo-win-hero">
+          <span className="combo-win-label">🏆 If all {picks.length} correct, you receive</span>
+          <strong className="combo-win-amount">{valid ? `${payout.toFixed(2)} WLD` : "— WLD"}</strong>
+          <div className="combo-win-row">
+            <span>Stake <b>{valid ? `${finalStake} WLD` : "—"}</b></span>
+            <span className="combo-win-sep">·</span>
+            <span>Combined odds <b style={{ color: "#a78bfa" }}>{totalOddsR.toFixed(2)}×</b></span>
+            <span className="combo-win-sep">·</span>
+            <span>Profit <b style={{ color: "var(--verdex-yes)" }}>{valid ? `+${profit.toFixed(2)} WLD` : "—"}</b></span>
+          </div>
+        </div>
+
+        {/* Picks list */}
+        <div className="combo-picks-list">
+          {picks.map((pick) => (
+            <div key={pick.marketId} className={`combo-pick-row combo-pick--${pick.position}`}>
+              <div className="combo-pick-left">
+                <span className={`combo-pick-pos combo-pick-pos--${pick.position}`}>
+                  {pick.position.toUpperCase()}
+                </span>
+                <span className="combo-pick-title">{pick.marketTitle}</span>
+              </div>
+              <div className="combo-pick-right">
+                <strong className="combo-pick-odds">{pick.oddsLabel}</strong>
+                <button
+                  className="combo-pick-remove"
+                  onClick={() => onRemove(pick.marketId)}
+                  type="button"
+                  aria-label="Remove pick"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {picks.length < 2 && (
+          <div className="combo-need-more">
+            Add {2 - picks.length} more pick{picks.length === 0 ? "s" : ""} to unlock combo betting
+          </div>
+        )}
+
+        {/* Stake chips */}
+        <div className="verdex-amount-label">Your stake (WLD) — multiplied by {totalOddsR.toFixed(2)}×</div>
+        <div className="verdex-amount-chips">
+          {COMBO_CHIPS.map((chip) => (
+            <button
+              key={chip}
+              className={`verdex-amount-chip${stake === chip && !custom ? " active" : ""}`}
+              onClick={() => { setStake(chip); setCustom(""); }}
+              type="button"
+            >
+              {chip}
+            </button>
+          ))}
+          <input
+            className="verdex-amount-custom"
+            inputMode="decimal"
+            max="100" min="0.1" step="0.1"
+            onChange={(e) => setCustom(e.target.value)}
+            placeholder="Custom"
+            type="number"
+            value={custom}
+          />
+        </div>
+
+        {/* Odds breakdown */}
+        <div className="verdex-payout-box">
+          {picks.map((p, i) => (
+            <div key={p.marketId} className="verdex-payout-row">
+              <span>Leg {i + 1}: {p.position.toUpperCase()}</span>
+              <strong style={{ color: p.position === "yes" ? "var(--verdex-yes)" : "var(--verdex-no)" }}>{p.oddsLabel}</strong>
+            </div>
+          ))}
+          <div className="combo-payout-divider" />
+          <div className="verdex-payout-row">
+            <span>Combined odds</span>
+            <strong style={{ color: "#a78bfa" }}>{totalOddsR.toFixed(2)}×</strong>
+          </div>
+          <div className="verdex-payout-row">
+            <span>Your stake</span>
+            <strong>{valid ? `${finalStake} WLD` : "—"}</strong>
+          </div>
+          <div className="verdex-payout-row">
+            <span>Total return if all correct</span>
+            <strong className="verdex-payout-highlight">{valid ? `${payout.toFixed(2)} WLD` : "—"}</strong>
+          </div>
+          <div className="verdex-payout-row">
+            <span>Net profit if all correct</span>
+            <strong className="verdex-profit-pos">{valid ? `+${profit.toFixed(2)} WLD` : "—"}</strong>
+          </div>
+        </div>
+
+        <button
+          className="verdex-confirm-btn yes combo-confirm-btn"
+          disabled={!valid}
+          onClick={() => onConfirm(finalStake)}
+          type="button"
+        >
+          <Zap size={16} />
+          {valid
+            ? `Stake ${finalStake} WLD · Win up to ${payout.toFixed(2)} WLD`
+            : picks.length < 2 ? "Add more picks first" : "Enter a stake amount"}
+        </button>
+
+        <p className="verdex-sheet-note">
+          All {picks.length} picks must resolve correctly. If any market is voided, that leg is removed and odds recalculate. Platform fee 2%.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Stats bar ─────────────────────────────────────────────────────────────────
 
 function StatsBar({ stats }: { stats: ReturnType<typeof calcPlayerStats> }) {
@@ -679,10 +874,13 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   const [verdexTab, setVerdexTab] = useState<VerdexTab>("markets");
   const [category, setCategory] = useState<VerdexCategory>("all");
   const [bets, setBets] = useState<VerdexBet[]>(loadVerdexBets);
+  const [combos, setCombos] = useState<VerdexCombo[]>(loadVerdexCombos);
   const [goals, setGoals] = useState<VerdexGoal[]>(loadVerdexGoals);
   const [clashes, setClashes] = useState<VerdexClash[]>(loadLocalClashes);
   const [copyFollows, setCopyFollows] = useState<VerdexCopyFollow[]>(loadCopyFollows);
   const [betSheet, setBetSheet] = useState<{ market: VerdexMarket; position: "yes" | "no" } | null>(null);
+  const [comboOpen, setComboOpen] = useState(false);
+  const [comboPicks, setComboPicks] = useState<VerdexComboPick[]>([]);
   const [clashSheet, setClashSheet] = useState<VerdexMarket | null>(null);
   const [clashAccept, setClashAccept] = useState<VerdexClash | null>(null);
   const [pendingShareClash, setPendingShareClash] = useState<VerdexClash | null>(null);
@@ -694,8 +892,9 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   const stats = calcPlayerStats(bets);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Persist bets, goals, clashes
+  // Persist bets, goals, clashes, combos
   useEffect(() => { saveVerdexBets(bets); }, [bets]);
+  useEffect(() => { saveVerdexCombos(combos); }, [combos]);
   useEffect(() => { saveVerdexGoals(goals); }, [goals]);
   useEffect(() => { saveLocalClashes(clashes); }, [clashes]);
 
@@ -800,6 +999,75 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   const sorted = category === "micro"
     ? [...filtered].sort((a, b) => new Date(a.closesAt).getTime() - new Date(b.closesAt).getTime())
     : [...filtered].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+
+  // ── Combo handlers ───────────────────────────────────────────────────────────
+  function handleAddCombo(market: VerdexMarket, position: "yes" | "no") {
+    if (comboPicks.length >= MAX_PICKS) return;
+    // Replace if same market already picked (switch position)
+    const oddsNum   = parseFloat(calcOdds(position, market.yesPool, market.noPool));
+    const oddsLabel = calcOdds(position, market.yesPool, market.noPool);
+    const pick: VerdexComboPick = {
+      marketId: market.id, marketTitle: market.title,
+      category: market.category, position, oddsLabel, oddsNum,
+    };
+    setComboPicks((prev) => {
+      const without = prev.filter((p) => p.marketId !== market.id);
+      return [...without, pick];
+    });
+  }
+
+  function handleRemoveCombo(marketId: string) {
+    setComboPicks((prev) => prev.filter((p) => p.marketId !== marketId));
+  }
+
+  function handleComboConfirm(stake: number) {
+    if (comboPicks.length < 2) return;
+    const totalOdds = Math.round(comboPicks.reduce((a, p) => a * p.oddsNum, 1) * 100) / 100;
+    const projectedPayout = Math.round(stake * totalOdds * 100) / 100;
+    const legsLabel = comboPicks.map((p) => `${p.position.toUpperCase()} on "${p.marketTitle.slice(0, 30)}"`).join("; ");
+    setComboOpen(false);
+
+    openPayment({
+      title: `${comboPicks.length}-Pick Combo · ${totalOdds.toFixed(2)}× odds`,
+      amount: stake.toFixed(2),
+      detail: `VeRdex ${comboPicks.length}-pick combo: ${legsLabel}`,
+      feature: "tip-verdex",
+      allowCustomAmount: false,
+      success: `Combo placed! If all ${comboPicks.length} picks win → you receive ${projectedPayout.toFixed(2)} WLD 🔮`,
+      onConfirmed: async (_amt, txReference) => {
+        const combo: VerdexCombo = {
+          id: `combo-${Date.now()}`,
+          picks: comboPicks,
+          stakeWld: stake,
+          totalOdds,
+          projectedPayout,
+          placedAt: new Date().toISOString(),
+          txReference,
+          status: "open",
+        };
+        setCombos((prev) => [combo, ...prev]);
+        setComboPicks([]);
+
+        fetch("/api/verdex/combo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: combo.id,
+            worldNullifier: humanIdentity?.wallet ?? "preview",
+            username: humanIdentity?.username,
+            picks: combo.picks,
+            stakeWld: stake,
+            totalOdds,
+            projectedPayout,
+            txReference,
+          }),
+        }).catch(() => null);
+
+        earnPoints(10, `VeRdex ${comboPicks.length}-pick combo placed`);
+        recordHistory({ title: "VeRdex combo placed", detail: `${comboPicks.length}-pick combo · ${totalOdds.toFixed(2)}× odds · stake ${stake} WLD`, kind: "payment" });
+      },
+    });
+  }
 
   // ── Bet handler ─────────────────────────────────────────────────────────────
   function handleBetConfirm(position: "yes" | "no", amount: number) {
@@ -1099,11 +1367,41 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                 key={market.id}
                 market={market}
                 myBet={bets.find((b) => b.marketId === market.id && b.confirmed)}
+                comboPick={comboPicks.find((p) => p.marketId === market.id)}
                 onBet={(m, pos) => setBetSheet({ market: m, position: pos })}
                 onClash={(m) => setClashSheet(m)}
+                onAddCombo={handleAddCombo}
+                onRemoveCombo={handleRemoveCombo}
               />
             ))}
           </div>
+
+          {/* ── Combo tray — sticky at bottom when picks exist ── */}
+          {comboPicks.length > 0 && (
+            <div className="combo-tray" role="status">
+              <div className="combo-tray-left">
+                <span className="combo-tray-icon">🔮</span>
+                <div>
+                  <strong>{comboPicks.length} pick{comboPicks.length > 1 ? "s" : ""}</strong>
+                  <span>
+                    {Math.round(comboPicks.reduce((a, p) => a * p.oddsNum, 1) * 100) / 100}× combined odds
+                    {comboPicks.length < 2 && " · add 1 more"}
+                  </span>
+                </div>
+              </div>
+              <div className="combo-tray-right">
+                <button className="combo-tray-clear" onClick={() => setComboPicks([])} type="button">✕</button>
+                <button
+                  className="combo-tray-btn"
+                  disabled={comboPicks.length < 2}
+                  onClick={() => setComboOpen(true)}
+                  type="button"
+                >
+                  Place Combo
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1112,7 +1410,72 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
         <div className="verdex-content">
           <div className="verdex-mybets-header">
             <h3>Your Predictions</h3>
-            <span>{bets.length} total · {bets.filter(b => !b.settled).length} open · {bets.filter(b => b.settled && (b.payout ?? 0) > b.amountWld).length} won</span>
+            <span>{bets.length} bets · {combos.length} combos</span>
+          </div>
+
+          {/* ── Combo bets ─────────────────────────────────────────────── */}
+          {combos.length > 0 && (
+            <div className="combo-mybets-section">
+              <div className="combo-mybets-title">
+                <span>🔮</span>
+                <strong>Combo Picks</strong>
+                <span className="combo-mybets-sub">{combos.filter(c => c.status === "open").length} open</span>
+              </div>
+              {combos.map((combo) => {
+                const openLegs = combo.picks.length;
+                const comboProfit = Math.round((combo.projectedPayout - combo.stakeWld) * 100) / 100;
+                return (
+                  <div key={combo.id} className={`combo-mybet-card combo-mybet-card--${combo.status}`}>
+                    <div className="combo-mybet-top">
+                      <span className={`combo-mybet-status combo-mybet-status--${combo.status}`}>
+                        {combo.status === "open" ? "⏳ Open" : combo.status === "won" ? "🏆 Won" : combo.status === "lost" ? "✗ Lost" : "↩ Void"}
+                      </span>
+                      <span className="combo-mybet-odds">{combo.totalOdds.toFixed(2)}× combo</span>
+                    </div>
+
+                    {/* Potential win hero */}
+                    {combo.status === "open" && (
+                      <div className="combo-mybet-win">
+                        <span>All {openLegs} correct → </span>
+                        <strong>{combo.projectedPayout.toFixed(2)} WLD</strong>
+                        <span className="combo-mybet-profit"> (+{comboProfit.toFixed(2)})</span>
+                      </div>
+                    )}
+                    {combo.status === "won" && combo.actualPayout && (
+                      <div className="combo-mybet-win combo-mybet-win--won">
+                        <strong>🏆 Won {combo.actualPayout.toFixed(2)} WLD!</strong>
+                      </div>
+                    )}
+
+                    {/* Legs */}
+                    <div className="combo-mybet-legs">
+                      {combo.picks.map((pick) => (
+                        <div key={pick.marketId} className="combo-mybet-leg">
+                          <span className={`combo-mybet-leg-pos combo-mybet-leg-pos--${pick.position}`}>{pick.position.toUpperCase()}</span>
+                          <span className="combo-mybet-leg-title">{pick.marketTitle.length > 45 ? pick.marketTitle.slice(0, 45) + "…" : pick.marketTitle}</span>
+                          <span className="combo-mybet-leg-odds">{pick.oddsLabel}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="combo-mybet-meta">
+                      <span>Staked: {combo.stakeWld} WLD</span>
+                      <span>{new Date(combo.placedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MY BETS TAB (single bets) ── */}
+      {verdexTab === "mybets" && (
+        <div className="verdex-content" style={{ paddingTop: 0 }}>
+          <div className="verdex-mybets-header" style={{ marginTop: combos.length > 0 ? 8 : 0 }}>
+            <h3>Single Bets</h3>
+            <span>{bets.length} total · {bets.filter(b => !b.settled).length} open</span>
           </div>
 
           {/* Real WLD treasury winnings — claim instantly to World App wallet */}
@@ -1589,6 +1952,16 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
       {/* Goal sheet */}
       {goalSheet && (
         <GoalSheet onClose={() => setGoalSheet(false)} onSave={handleGoalCreate} />
+      )}
+
+      {/* Combo sheet */}
+      {comboOpen && (
+        <ComboSheet
+          picks={comboPicks}
+          onClose={() => setComboOpen(false)}
+          onRemove={handleRemoveCombo}
+          onConfirm={handleComboConfirm}
+        />
       )}
 
       {/* Profile sheet — accessed from header avatar */}

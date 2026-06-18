@@ -1372,3 +1372,209 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 }
 
 /* vmc-* classes above replace the old card atom styles — no duplicates needed */
+
+/* ── Combo / Parlay system ─────────────────────────────────────────────────── */
+
+/* Action row on market card */
+.vmc-actions {
+  display: flex; gap: 8px; align-items: center;
+  padding: 8px 12px 12px;
+}
+.vmc-combo-btn {
+  flex: 1; border: none; border-radius: 8px; cursor: pointer;
+  font-size: 0.75rem; font-weight: 700; padding: 7px 10px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.vmc-combo-btn:active { transform: scale(0.95); }
+.vmc-combo-btn--yes {
+  background: rgba(0, 232, 135, 0.12); color: var(--verdex-yes);
+  border: 1px solid rgba(0, 232, 135, 0.3);
+}
+.vmc-combo-btn--no {
+  background: rgba(255, 77, 109, 0.12); color: var(--verdex-no);
+  border: 1px solid rgba(255, 77, 109, 0.3);
+}
+.vmc-combo-btn--added {
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(99, 102, 241, 0.15); color: var(--verdex-accent);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+}
+.vmc-combo-odds { font-size: 0.72rem; opacity: 0.8; }
+.vmc-combo-add-wrap { display: flex; gap: 5px; flex: 1; }
+.vmc-combo-add-wrap .vmc-combo-btn { flex: 1; }
+
+/* Sticky combo tray */
+.combo-tray {
+  position: sticky; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(135deg, #1a1040, #111930);
+  border: 1px solid rgba(99, 102, 241, 0.5);
+  border-radius: 16px 16px 0 0;
+  padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 -4px 24px rgba(99, 102, 241, 0.25);
+  z-index: 40;
+  margin: 0 -4px;
+}
+.combo-tray-left {
+  display: flex; align-items: center; gap: 12px;
+}
+.combo-tray-icon { font-size: 1.4rem; }
+.combo-tray-left strong {
+  display: block; font-size: 0.88rem; color: var(--verdex-text); font-weight: 800;
+}
+.combo-tray-left span {
+  font-size: 0.73rem; color: var(--verdex-muted);
+}
+.combo-tray-right { display: flex; gap: 8px; align-items: center; }
+.combo-tray-clear {
+  background: none; border: 1px solid rgba(255,255,255,0.15);
+  color: var(--verdex-muted); border-radius: 8px;
+  padding: 6px 10px; cursor: pointer; font-size: 0.78rem;
+}
+.combo-tray-btn {
+  background: var(--verdex-accent); color: #fff;
+  border: none; border-radius: 10px; padding: 9px 16px;
+  font-size: 0.82rem; font-weight: 800; cursor: pointer;
+  box-shadow: 0 0 14px rgba(99,102,241,0.45);
+  transition: opacity 0.15s;
+}
+.combo-tray-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+/* Combo sheet */
+.combo-sheet { max-height: 90dvh; overflow-y: auto; }
+.combo-sheet-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 0 4px 12px;
+}
+.combo-sheet-kicker {
+  display: block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em;
+  color: #a78bfa; text-transform: uppercase; margin-bottom: 3px;
+}
+.combo-sheet-title {
+  display: block; font-size: 0.85rem; color: var(--verdex-muted);
+}
+
+/* Combo win hero */
+.combo-win-hero {
+  background: linear-gradient(135deg, rgba(167,139,250,0.12), rgba(99,102,241,0.07));
+  border: 1px solid rgba(167,139,250,0.3);
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 14px;
+  text-align: center;
+}
+.combo-win-label {
+  display: block; font-size: 0.72rem; color: var(--verdex-muted);
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
+}
+.combo-win-amount {
+  display: block; font-size: 2rem; font-weight: 900;
+  color: #a78bfa; letter-spacing: -0.02em; margin-bottom: 8px;
+}
+.combo-win-row {
+  display: flex; gap: 6px; justify-content: center; align-items: center;
+  flex-wrap: wrap; font-size: 0.73rem; color: var(--verdex-muted);
+}
+.combo-win-sep { color: var(--verdex-border-bright); }
+
+/* Picks list inside combo sheet */
+.combo-picks-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.combo-pick-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 12px; border-radius: 10px;
+}
+.combo-pick--yes { background: rgba(0,232,135,0.07); border: 1px solid rgba(0,232,135,0.2); }
+.combo-pick--no  { background: rgba(255,77,109,0.07); border: 1px solid rgba(255,77,109,0.2); }
+.combo-pick-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.combo-pick-pos {
+  font-size: 0.7rem; font-weight: 900; padding: 3px 7px; border-radius: 6px;
+  flex-shrink: 0;
+}
+.combo-pick-pos--yes { background: rgba(0,232,135,0.2); color: var(--verdex-yes); }
+.combo-pick-pos--no  { background: rgba(255,77,109,0.2); color: var(--verdex-no); }
+.combo-pick-title {
+  font-size: 0.78rem; color: var(--verdex-text); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 170px;
+}
+.combo-pick-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.combo-pick-odds { font-size: 0.82rem; font-weight: 800; color: #a78bfa; }
+.combo-pick-remove {
+  background: none; border: none; padding: 2px; cursor: pointer;
+  color: var(--verdex-muted); display: flex; align-items: center;
+}
+.combo-need-more {
+  font-size: 0.78rem; color: var(--verdex-muted); text-align: center;
+  padding: 10px; border: 1px dashed var(--verdex-border); border-radius: 10px;
+  margin-bottom: 12px;
+}
+.combo-payout-divider {
+  height: 1px; background: var(--verdex-border); margin: 8px 0;
+}
+.combo-confirm-btn { margin-top: 4px; }
+
+/* My bets — combo section */
+.combo-mybets-section {
+  margin-bottom: 8px;
+}
+.combo-mybets-title {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 0 6px;
+  font-size: 0.78rem; color: var(--verdex-muted);
+}
+.combo-mybets-title strong { color: var(--verdex-text); font-weight: 800; }
+.combo-mybets-sub { font-size: 0.7rem; background: rgba(167,139,250,0.15); color: #a78bfa; padding: 2px 7px; border-radius: 20px; }
+
+.combo-mybet-card {
+  background: var(--verdex-card-bg); border-radius: 14px;
+  border: 1px solid var(--verdex-card-border);
+  margin-bottom: 10px; overflow: hidden;
+}
+.combo-mybet-card--open  { border-color: rgba(167,139,250,0.3); }
+.combo-mybet-card--won   { border-color: rgba(0,232,135,0.4); }
+.combo-mybet-card--lost  { border-color: rgba(255,77,109,0.3); }
+
+.combo-mybet-top {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px 6px;
+}
+.combo-mybet-status {
+  font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 20px;
+}
+.combo-mybet-status--open  { background: rgba(167,139,250,0.15); color: #a78bfa; }
+.combo-mybet-status--won   { background: rgba(0,232,135,0.15); color: var(--verdex-yes); }
+.combo-mybet-status--lost  { background: rgba(255,77,109,0.12); color: var(--verdex-no); }
+.combo-mybet-status--void  { background: rgba(255,255,255,0.07); color: var(--verdex-muted); }
+.combo-mybet-odds { font-size: 0.78rem; font-weight: 800; color: #a78bfa; }
+
+.combo-mybet-win {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 6px 12px 4px;
+  font-size: 0.78rem; color: var(--verdex-muted);
+}
+.combo-mybet-win strong { font-size: 1.1rem; font-weight: 900; color: #a78bfa; }
+.combo-mybet-win--won strong { color: var(--verdex-yes); }
+.combo-mybet-profit { color: var(--verdex-yes); font-weight: 700; }
+
+.combo-mybet-legs {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 6px 12px;
+}
+.combo-mybet-leg {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.74rem;
+}
+.combo-mybet-leg-pos {
+  font-size: 0.65rem; font-weight: 900; padding: 2px 6px; border-radius: 5px; flex-shrink: 0;
+}
+.combo-mybet-leg-pos--yes { background: rgba(0,232,135,0.15); color: var(--verdex-yes); }
+.combo-mybet-leg-pos--no  { background: rgba(255,77,109,0.12); color: var(--verdex-no); }
+.combo-mybet-leg-title {
+  flex: 1; color: var(--verdex-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.combo-mybet-leg-odds { color: #a78bfa; font-weight: 700; flex-shrink: 0; }
+
+.combo-mybet-meta {
+  display: flex; justify-content: space-between;
+  padding: 8px 12px 10px;
+  font-size: 0.7rem; color: var(--verdex-muted);
+  border-top: 1px solid var(--verdex-border);
+  margin-top: 6px;
+}

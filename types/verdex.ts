@@ -97,3 +97,28 @@ export type VerdexCopyFollow = {
 };
 
 export type VerdexTab = "markets" | "mybets" | "clash" | "leagues" | "goals";
+
+// ── Combo (parlay) types ──────────────────────────────────────────────────────
+
+export type VerdexComboPick = {
+  marketId: string;
+  marketTitle: string;
+  category: string;
+  position: "yes" | "no";
+  oddsLabel: string;   // "2.40×"
+  oddsNum: number;     // 2.40
+};
+
+export type VerdexComboStatus = "open" | "won" | "lost" | "void";
+
+export type VerdexCombo = {
+  id: string;
+  picks: VerdexComboPick[];
+  stakeWld: number;
+  totalOdds: number;          // product of all oddsNum (rounded 2dp)
+  projectedPayout: number;    // stakeWld × totalOdds
+  placedAt: string;
+  txReference?: string;
+  status: VerdexComboStatus;
+  actualPayout?: number;
+};
