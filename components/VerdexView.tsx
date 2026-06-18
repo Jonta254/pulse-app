@@ -197,47 +197,44 @@ function MarketCard({
         </div>
       )}
 
-      {/* ── ARENA — proportional YES/NO duel ─────────────────────────────── */}
+      {/* ── ARENA — YES vs NO duel ───────────────────────────────────────── */}
       <div className={`vmc-arena${!isLive ? " vmc-arena--closed" : ""}`}>
+        {/* YES side — always 50% wide so odds are always readable */}
         {isLive && !myBet ? (
-          <button
-            className="vmc-arena-yes"
-            style={{ flex: yesPct }}
-            onClick={() => onBet(market, "yes")}
-            type="button"
-          >
+          <button className="vmc-arena-yes" onClick={() => onBet(market, "yes")} type="button">
             <span className="vmc-arena-dir vmc-arena-dir--yes">YES</span>
             <strong className="vmc-arena-odds vmc-arena-odds--yes">{yesOdds}</strong>
-            <span className="vmc-arena-pct vmc-arena-pct--yes">{yesPct}%</span>
+            <span className="vmc-arena-pct vmc-arena-pct--yes">{yesPct}% crowd</span>
             {crowdOnNo && <span className="vmc-underdog">🎯 Underdog</span>}
+            {/* Inner fill shows how dominant this side is */}
+            <div className="vmc-arena-fill vmc-arena-fill--yes" style={{ width: `${yesPct}%` }} />
           </button>
         ) : (
-          <div className="vmc-arena-yes" style={{ flex: yesPct }}>
+          <div className="vmc-arena-yes">
             <span className="vmc-arena-dir vmc-arena-dir--yes">YES</span>
             <strong className="vmc-arena-odds vmc-arena-odds--yes">{yesOdds}</strong>
-            <span className="vmc-arena-pct vmc-arena-pct--yes">{yesPct}%</span>
+            <span className="vmc-arena-pct vmc-arena-pct--yes">{yesPct}% crowd</span>
+            <div className="vmc-arena-fill vmc-arena-fill--yes" style={{ width: `${yesPct}%` }} />
           </div>
         )}
 
         <div className="vmc-vs-orb"><span>VS</span></div>
 
+        {/* NO side — always 50% wide */}
         {isLive && !myBet ? (
-          <button
-            className="vmc-arena-no"
-            style={{ flex: 100 - yesPct }}
-            onClick={() => onBet(market, "no")}
-            type="button"
-          >
+          <button className="vmc-arena-no" onClick={() => onBet(market, "no")} type="button">
             <span className="vmc-arena-dir vmc-arena-dir--no">NO</span>
             <strong className="vmc-arena-odds vmc-arena-odds--no">{noOdds}</strong>
-            <span className="vmc-arena-pct vmc-arena-pct--no">{100 - yesPct}%</span>
+            <span className="vmc-arena-pct vmc-arena-pct--no">{100 - yesPct}% crowd</span>
             {crowdOnYes && <span className="vmc-underdog">🎯 Underdog</span>}
+            <div className="vmc-arena-fill vmc-arena-fill--no" style={{ width: `${100 - yesPct}%` }} />
           </button>
         ) : (
-          <div className="vmc-arena-no" style={{ flex: 100 - yesPct }}>
+          <div className="vmc-arena-no">
             <span className="vmc-arena-dir vmc-arena-dir--no">NO</span>
             <strong className="vmc-arena-odds vmc-arena-odds--no">{noOdds}</strong>
-            <span className="vmc-arena-pct vmc-arena-pct--no">{100 - yesPct}%</span>
+            <span className="vmc-arena-pct vmc-arena-pct--no">{100 - yesPct}% crowd</span>
+            <div className="vmc-arena-fill vmc-arena-fill--no" style={{ width: `${100 - yesPct}%` }} />
           </div>
         )}
       </div>
