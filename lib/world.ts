@@ -140,6 +140,8 @@ export async function payWithWorld({ amount, description, feature = "tip-verdex"
 
   if (payment.executedWith === "error") return { ok: false, error: (payment as { error: string }).error };
   if (payment.executedWith === "fallback") return { ok: false, pendingWorldApp: true, message: "Complete payment inside World App." };
+  // Docs: only trust payment data when SDK confirms execution through minikit
+  if (payment.executedWith !== "minikit") return { ok: false, error: "Payment not completed via World App." };
 
   const data = (payment as { data: PayResult }).data;
   let last: Record<string, unknown> | null = null;

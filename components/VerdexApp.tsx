@@ -438,7 +438,7 @@ export function VerdexApp() {
                 <strong className="verdex-sheet-title">{paymentPrompt.title}</strong>
               </div>
             </div>
-            <p style={{ margin: 0, fontSize: "0.9rem", color: "rgba(232,234,246,0.72)" }}>
+            <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--verdex-muted)" }}>
               {paymentPrompt.detail}
             </p>
             <div className="verdex-payout-box">

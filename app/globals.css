@@ -26,6 +26,9 @@
   --verdex-input-bg:     #111930;
   --verdex-header-bg:    #07091a;
   --verdex-sheet-bg:     linear-gradient(145deg, #131730, #0d0f24);
+  --verdex-screen-bg:    radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.18) 0%, transparent 50%), radial-gradient(ellipse at 80% 10%, rgba(139,92,246,0.14) 0%, transparent 40%), linear-gradient(180deg, #080e1a 0%, #07091a 100%);
+  --verdex-profile-sheet-bg: linear-gradient(180deg, #13102e, #0d0b22);
+  --verdex-hero-banner-bg:   radial-gradient(circle at 85% 15%, rgba(245,158,11,0.22), transparent 10rem), radial-gradient(circle at 10% 90%, rgba(0,232,135,0.14), transparent 12rem), linear-gradient(135deg, #0f133a, #1a1060 60%, #0d0f26);
 
   /* world safe area aliases */
   --world-safe-top:    var(--safe-top);
@@ -54,6 +57,9 @@
   --verdex-input-bg:     #f4f6ff;
   --verdex-header-bg:    #ffffff;
   --verdex-sheet-bg:     linear-gradient(145deg, #ffffff, #f4f6ff);
+  --verdex-screen-bg:    linear-gradient(180deg, #eef0ff 0%, #f0f2ff 100%);
+  --verdex-profile-sheet-bg: linear-gradient(180deg, #ffffff, #f4f6ff);
+  --verdex-hero-banner-bg:   radial-gradient(circle at 85% 15%, rgba(99,102,241,0.14), transparent 10rem), radial-gradient(circle at 10% 90%, rgba(79,70,229,0.08), transparent 12rem), linear-gradient(135deg, #e8eaff, #eef0ff 60%, #f4f6ff);
 }
 
 /* Apply card bg token everywhere cards use explicit hex */
@@ -92,6 +98,30 @@
 
 [data-theme="day"] h1, [data-theme="day"] h2, [data-theme="day"] strong { color: var(--verdex-text); }
 
+/* Day mode — sheet backdrops and cards that still use hardcoded dark colors */
+[data-theme="day"] .verdex-sheet-backdrop { background: rgba(79,70,229,0.18); }
+[data-theme="day"] .verdex-profile-sheet { box-shadow: 0 -24px 64px rgba(99,102,241,0.18); }
+[data-theme="day"] .verdex-tabs { box-shadow: 0 2px 12px rgba(99,102,241,0.12); }
+
+/* Day mode — stats and brand areas */
+[data-theme="day"] .verdex-stat { background: var(--verdex-surface); }
+[data-theme="day"] .verdex-brand-icon { background: var(--verdex-surface-2); border-color: var(--verdex-border-bright); box-shadow: 0 8px 24px rgba(99,102,241,0.18); }
+[data-theme="day"] .verdex-your-score { background: var(--verdex-surface); }
+
+/* Day mode — hero banner text is already using var() now, but ensure contrast */
+[data-theme="day"] .verdex-hero-banner::before { border-color: rgba(99,102,241,0.12); }
+
+/* Day mode — cards and pools */
+[data-theme="day"] .vmc { background: var(--verdex-surface); border-color: var(--verdex-border); }
+[data-theme="day"] .vmc-arena-yes { background: rgba(5,150,105,0.06); border-top-color: rgba(5,150,105,0.4); }
+[data-theme="day"] .vmc-arena-no  { background: rgba(220,38,38,0.06); border-top-color: rgba(220,38,38,0.35); }
+[data-theme="day"] .vmc-vs-orb   { background: var(--verdex-surface); border-color: var(--verdex-border); }
+
+/* Day mode — payment confirm sheet (backdrop inline style overrides) */
+[data-theme="day"] .verdex-payout-box { background: var(--verdex-surface-2); }
+[data-theme="day"] .verdex-mybet-staked,
+[data-theme="day"] .verdex-mybet-payout { background: var(--verdex-surface-2); }
+
 /* Theme toggle button */
 .verdex-theme-toggle {
   width: 40px; height: 40px;
@@ -113,16 +143,17 @@ html, body {
   margin: 0;
   /* Lock the document to viewport — World App mini-app pattern.
      All scrolling happens inside .verdex-screen, NOT the body.
-     This prevents the iOS rubber-band / over-scroll bounce on the body. */
+     position:fixed is the only reliable cross-iOS fix for rubber-band bounce
+     in a WebView — overflow:hidden alone is not enough on Safari/WKWebView. */
+  position: fixed;
   width: 100%; height: 100%; overflow: hidden;
   background: var(--verdex-bg);
   color: var(--verdex-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-  /* Docs: disable iOS bounce at root */
+  /* Belt-and-suspenders: also kill overscroll at root */
   overscroll-behavior: none;
-  /* Docs: do NOT use touch — it re-enables momentum/bounce on iOS */
   -webkit-overflow-scrolling: auto;
-  touch-action: pan-y;
+  /* No touch-action on body — let scrollable children declare their own */
 }
 
 button, input, textarea, select { font: inherit; color: inherit; cursor: pointer; background: none; }
@@ -365,16 +396,13 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   overflow-y: scroll;
   /* Docs: contain scroll within this element — no parent bounce */
   overscroll-behavior-y: contain;
-  /* Docs: no -webkit-overflow-scrolling touch (causes bounce) */
-  -webkit-overflow-scrolling: auto;
+  /* Allow vertical pan — required after parent body has position:fixed */
+  touch-action: pan-y;
   /* Bottom padding = bottom-nav height (56px) + safe area + 12px buffer.
-     World App docs: 12px buffer below drawers/tab bars from system bars. */
+     World App docs: 12px clearance below drawers/tab bars from system bars. */
   padding: 0 0 calc(56px + var(--safe-bottom) + 12px);
   scroll-padding-bottom: calc(56px + var(--safe-bottom) + 12px);
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 10%, rgba(139,92,246,0.14) 0%, transparent 40%),
-    linear-gradient(180deg, #080e1a 0%, #07091a 100%);
+  background: var(--verdex-screen-bg);
   color: var(--verdex-text);
 }
 
@@ -417,7 +445,15 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-tab-btn.active { color: var(--verdex-accent); border-bottom-color: var(--verdex-accent); }
 .verdex-tab-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--verdex-gold); flex-shrink: 0; }
 
-.verdex-content { padding: 14px 14px 0; }
+/* Smooth screen transition — World App docs: "smooth screen transitions required" */
+.verdex-content {
+  padding: 14px 14px 0;
+  animation: verdex-tab-in 0.18s ease-out;
+}
+@keyframes verdex-tab-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 .verdex-cat-scroll {
   display: flex; gap: 7px; overflow-x: auto;
@@ -436,19 +472,19 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 /* ── Flash ticker strip ─────────────────────────────────────────────────── */
 .verdex-flash-strip { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; overflow: hidden; }
 .verdex-flash-label { flex: 0 0 auto; font-size: 0.68rem; font-weight: 900; color: var(--verdex-yes); background: rgba(0,232,135,0.12); border: 1px solid rgba(0,232,135,0.3); border-radius: 6px; padding: 3px 7px; letter-spacing: 1px; }
-.verdex-flash-scroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.verdex-flash-scroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: auto; overscroll-behavior-x: contain; }
 .verdex-flash-scroll::-webkit-scrollbar { display: none; }
 .verdex-flash-chip { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; background: var(--verdex-surface); border: 1px solid rgba(0,232,135,0.25); border-radius: 999px; padding: 5px 12px; font-size: 0.72rem; color: var(--verdex-text); cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background 0.15s; max-width: 240px; }
 .verdex-flash-chip:hover { border-color: var(--verdex-yes); background: rgba(0,232,135,0.08); }
 .verdex-flash-chip span:first-child { overflow: hidden; text-overflow: ellipsis; }
 .verdex-flash-timer { font-size: 0.65rem; color: var(--verdex-yes); flex: 0 0 auto; }
 
-.verdex-hero-banner { position: relative; overflow: hidden; border-radius: 20px; margin-bottom: 14px; background: radial-gradient(circle at 85% 15%, rgba(245,158,11,0.22), transparent 10rem), radial-gradient(circle at 10% 90%, rgba(0,232,135,0.14), transparent 12rem), linear-gradient(135deg, #0f133a, #1a1060 60%, #0d0f26); box-shadow: 0 18px 40px rgba(0,0,0,0.36), var(--verdex-glow); border: 1px solid var(--verdex-border-bright); }
+.verdex-hero-banner { position: relative; overflow: hidden; border-radius: 20px; margin-bottom: 14px; background: var(--verdex-hero-banner-bg); box-shadow: 0 18px 40px rgba(0,0,0,0.18), var(--verdex-glow); border: 1px solid var(--verdex-border-bright); }
 .verdex-hero-banner::before { content: ""; position: absolute; right: -40px; top: -40px; width: 200px; height: 200px; border: 1px solid rgba(99,102,241,0.18); border-radius: 999px; box-shadow: inset 0 0 0 36px rgba(99,102,241,0.06); }
 .verdex-hero-inner { position: relative; z-index: 1; display: grid; gap: 8px; padding: 18px; }
-.verdex-hero-kicker { color: rgba(232,234,246,0.64); font-size: 0.72rem; font-weight: 950; }
-.verdex-hero-inner strong { font-size: 1.42rem; font-weight: 950; color: #fff; line-height: 1.08; }
-.verdex-hero-inner p { margin: 0; color: rgba(232,234,246,0.72); font-size: 0.86rem; line-height: 1.42; }
+.verdex-hero-kicker { color: var(--verdex-muted); font-size: 0.72rem; font-weight: 950; }
+.verdex-hero-inner strong { font-size: 1.42rem; font-weight: 950; color: var(--verdex-text); line-height: 1.08; }
+.verdex-hero-inner p { margin: 0; color: var(--verdex-muted); font-size: 0.86rem; line-height: 1.42; }
 
 /* ════════════════════════════════════════════════════════════════════════════
    MARKET CARD v2 — addictive design system
@@ -672,7 +708,7 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 }
 .vmc-vs-orb span {
   font-size: 0.54rem; font-weight: 950; letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.3);
+  color: var(--verdex-muted);
 }
 
 /* ── Split bar (2px YES|NO color bar under arena) ──────────────────────── */
@@ -741,7 +777,7 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   /* Bottom safe area + 28px breathing room */
   padding: 14px 18px calc(28px + var(--safe-bottom));
   background: radial-gradient(circle at 50% 0%, rgba(99,102,241,0.14), transparent 20rem),
-    linear-gradient(180deg, #131730, #0d0f24);
+    var(--verdex-sheet-bg);
   border: 1px solid var(--verdex-border-bright); border-bottom: 0;
   box-shadow: 0 -18px 48px rgba(0,0,0,0.5);
   display: grid; gap: 14px;
@@ -928,7 +964,7 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   position: relative; width: min(100%, 480px); max-height: 92dvh;
   overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: auto;
   border-radius: 28px 28px 0 0;
-  background: linear-gradient(180deg, #13102e, #0d0b22);
+  background: var(--verdex-profile-sheet-bg);
   border: 1px solid var(--verdex-border-bright); border-bottom: 0;
   box-shadow: 0 -24px 64px rgba(0,0,0,0.6);
   padding: 20px 20px 0; display: flex; flex-direction: column; gap: 18px;
@@ -1270,7 +1306,7 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   color: var(--verdex-yes);
 }
 .verdex-pulse-ticker-scroll {
-  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: auto; overscroll-behavior-x: contain;
 }
 .verdex-pulse-ticker-scroll::-webkit-scrollbar { display: none; }
 .verdex-pulse-ticker-chip {

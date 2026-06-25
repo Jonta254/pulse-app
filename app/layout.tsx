@@ -74,9 +74,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         */}
         <style dangerouslySetInnerHTML={{ __html: `
           *,*::before,*::after{box-sizing:border-box}
-          html,body{margin:0;background:#07091a;color:#e8eaf6;
+          html,body{margin:0;position:fixed;width:100%;height:100%;
+            background:#07091a;color:#e8eaf6;
             font-family:system-ui,-apple-system,sans-serif;
-            overscroll-behavior:none;overflow-x:hidden}
+            overscroll-behavior:none;overflow:hidden}
           .verdex-splash{
             position:fixed;inset:0;
             display:flex;flex-direction:column;
