@@ -128,158 +128,115 @@ function MarketCard({
   onRemoveCombo: (marketId: string) => void;
 }) {
   const { expired, urgent } = formatCountdown(market.closesAt);
-  const meta   = categoryMeta[market.category];
-  const total  = market.yesPool + market.noPool;
-  const yesPct = calcYesPct(market.yesPool, market.noPool);
+  const meta    = categoryMeta[market.category];
+  const total   = market.yesPool + market.noPool;
+  const yesPct  = calcYesPct(market.yesPool, market.noPool);
   const yesOdds = calcOdds("yes", market.yesPool, market.noPool);
   const noOdds  = calcOdds("no",  market.yesPool, market.noPool);
 
-  // Psychology: flag "underdog" side when crowd piles > 68% one way
   const crowdOnYes = yesPct >= 68;
   const crowdOnNo  = yesPct <= 32;
-  // HOT badge: pool > 50 WLD or 10+ bettors
-  const isHot = total >= 50 || (market.totalBettors ?? 0) >= 10;
-  // Treat status=open AND not expired as truly live
+  const isHot  = total >= 50 || (market.totalBettors ?? 0) >= 10;
   const isLive = market.status === "open" && !expired;
 
   const cardClass = [
-    "vmc",
-    market.featured ? "vmc--featured" : "",
-    urgent          ? "vmc--urgent"   : "",
-    expired         ? "vmc--closed"   : "",
-    !isLive         ? "vmc--dimmed"   : "",
+    "mc",
+    market.featured ? "mc--featured" : "",
+    urgent          ? "mc--urgent"   : "",
+    !isLive         ? "mc--dimmed"   : "",
   ].filter(Boolean).join(" ");
 
-  const borderColor = market.featured ? "rgba(245,158,11,0.55)" : `${meta.color}30`;
-
   return (
-    <article
-      className={cardClass}
-      style={{ borderColor }}
-    >
-      {/* ── Category header ──────────────────────────────────────────────── */}
-      <div
-        className="vmc-header"
-        style={{
-          background: `linear-gradient(135deg, ${meta.color}18, ${meta.color}06)`,
-          borderBottomColor: `${meta.color}20`,
-        }}
-      >
-        <div className="vmc-header-left">
-          <span className="vmc-cat-badge" style={{ background: `${meta.color}18`, color: meta.color, borderColor: `${meta.color}40` }}>
+    <article className={cardClass} style={{ borderLeftColor: meta.color }}>
+      {/* Meta row */}
+      <div className="mc-meta">
+        <div className="mc-meta-left">
+          <span className="mc-cat" style={{ color: meta.color, background: `${meta.color}18`, borderColor: `${meta.color}38` }}>
             {meta.emoji} {meta.label.toUpperCase()}
           </span>
-          {market.featured && <span className="vmc-featured-badge">⭐ FEATURED</span>}
-          {isHot && isLive && !market.featured && <span className="vmc-hot-badge">🔥 HOT</span>}
-          {market.aiGenerated && <span className="vmc-ai-badge">AI</span>}
+          {market.featured && <span className="mc-badge-feat">⭐ FEATURED</span>}
+          {isHot && isLive && !market.featured && <span className="mc-badge-hot">🔥</span>}
+          {market.aiGenerated && <span className="mc-badge-ai">AI</span>}
         </div>
-        <div className="vmc-header-right">
-          {isLive && total > 0 && <span className="vmc-live-dot" aria-label="Live" />}
-          {!isLive && <span className="vmc-closed-tag">CLOSED</span>}
+        <div className="mc-meta-right">
+          {isLive && total > 0 && <span className="mc-live-dot" aria-label="Live" />}
+          {!isLive && <span className="mc-closed-tag">CLOSED</span>}
           <CountdownChip closesAt={market.closesAt} />
         </div>
       </div>
 
-      {/* ── Title ────────────────────────────────────────────────────────── */}
-      <h3 className="vmc-title">{market.title}</h3>
+      {/* Question */}
+      <h3 className="mc-q">{market.title}</h3>
       {market.id.startsWith("data-v1-") && (
-        <span className="vmc-fair-badge">⚖️ Provably fair · auto-resolves from public data</span>
+        <span className="mc-fair-tag">⚖️ Provably fair · auto-resolves from public data</span>
       )}
 
-      {/* ── My bet banner ────────────────────────────────────────────────── */}
+      {/* Crowd signal bar */}
+      <div className="mc-signal">
+        <div className="mc-signal-y" style={{ width: `${yesPct}%` }} />
+        <div className="mc-signal-n" />
+      </div>
+      <div className="mc-signal-lbl">
+        <span className="mc-signal-lbl-y">{yesPct}% YES</span>
+        <span className="mc-signal-lbl-n">{100 - yesPct}% NO</span>
+      </div>
+
+      {/* My bet banner */}
       {myBet && (
-        <div className={`vmc-mybet vmc-mybet--${myBet.position}`}>
-          <span className="vmc-mybet-icon">{myBet.position === "yes" ? "✓" : "✗"}</span>
-          <div>
-            <strong>You staked {myBet.amountWld} WLD on {myBet.position.toUpperCase()}</strong>
-            <span>Awaiting resolution</span>
-          </div>
+        <div className={`mc-mybet mc-mybet--${myBet.position}`}>
+          <strong>{myBet.position === "yes" ? "✓ YES" : "✗ NO"}</strong>
+          <span>You staked {myBet.amountWld} WLD · awaiting resolution</span>
         </div>
       )}
 
-      {/* ── ARENA — YES vs NO duel ───────────────────────────────────────── */}
-      <div className={`vmc-arena${!isLive ? " vmc-arena--closed" : ""}`}>
-        {/* YES side — always 50% wide so odds are always readable */}
-        {isLive && !myBet ? (
-          <button className="vmc-arena-yes" onClick={() => onBet(market, "yes")} type="button">
-            <span className="vmc-arena-dir vmc-arena-dir--yes">YES</span>
-            <strong className="vmc-arena-odds vmc-arena-odds--yes">{yesOdds}</strong>
-            <span className="vmc-arena-pct vmc-arena-pct--yes">{yesPct}% crowd</span>
-            {crowdOnNo && <span className="vmc-underdog">🎯 Underdog</span>}
-            {/* Inner fill shows how dominant this side is */}
-            <div className="vmc-arena-fill vmc-arena-fill--yes" style={{ width: `${yesPct}%` }} />
-          </button>
-        ) : (
-          <div className="vmc-arena-yes">
-            <span className="vmc-arena-dir vmc-arena-dir--yes">YES</span>
-            <strong className="vmc-arena-odds vmc-arena-odds--yes">{yesOdds}</strong>
-            <span className="vmc-arena-pct vmc-arena-pct--yes">{yesPct}% crowd</span>
-            <div className="vmc-arena-fill vmc-arena-fill--yes" style={{ width: `${yesPct}%` }} />
-          </div>
-        )}
-
-        <div className="vmc-vs-orb"><span>VS</span></div>
-
-        {/* NO side — always 50% wide */}
-        {isLive && !myBet ? (
-          <button className="vmc-arena-no" onClick={() => onBet(market, "no")} type="button">
-            <span className="vmc-arena-dir vmc-arena-dir--no">NO</span>
-            <strong className="vmc-arena-odds vmc-arena-odds--no">{noOdds}</strong>
-            <span className="vmc-arena-pct vmc-arena-pct--no">{100 - yesPct}% crowd</span>
-            {crowdOnYes && <span className="vmc-underdog">🎯 Underdog</span>}
-            <div className="vmc-arena-fill vmc-arena-fill--no" style={{ width: `${100 - yesPct}%` }} />
-          </button>
-        ) : (
-          <div className="vmc-arena-no">
-            <span className="vmc-arena-dir vmc-arena-dir--no">NO</span>
-            <strong className="vmc-arena-odds vmc-arena-odds--no">{noOdds}</strong>
-            <span className="vmc-arena-pct vmc-arena-pct--no">{100 - yesPct}% crowd</span>
-            <div className="vmc-arena-fill vmc-arena-fill--no" style={{ width: `${100 - yesPct}%` }} />
-          </div>
-        )}
-      </div>
-
-      {/* ── Split bar ────────────────────────────────────────────────────── */}
-      <div className="vmc-split-bar">
-        <div className="vmc-split-bar-yes" style={{ width: `${yesPct}%` }} />
-        <div className="vmc-split-bar-no" style={{ width: `${100 - yesPct}%` }} />
-      </div>
-
-      {/* ── Pool meta row ────────────────────────────────────────────────── */}
-      <div className="vmc-pool-meta">
-        <span className="vmc-pool-yes">YES {yesPct}%</span>
-        <span className="vmc-pool-center">
-          {total > 0
-            ? `${market.totalBettors ?? "—"} humans · ${formatPoolSize(total)}`
-            : "Be the first to bet"}
-        </span>
-        <span className="vmc-pool-no">{100 - yesPct}% NO</span>
-      </div>
-
-      {/* ── Action footer ────────────────────────────────────────────────── */}
+      {/* Bet buttons — odds as the hero */}
       {isLive && !myBet && (
-        <div className="vmc-actions">
-          {comboPick ? (
-            <button className="vmc-combo-btn vmc-combo-btn--added" onClick={() => onRemoveCombo(market.id)} type="button">
-              <span>✓ In Combo</span>
-              <span className="vmc-combo-odds">{comboPick.oddsLabel}</span>
-            </button>
-          ) : (
-            <div className="vmc-combo-add-wrap">
-              <button className="vmc-combo-btn vmc-combo-btn--yes" onClick={() => onAddCombo(market, "yes")} type="button">+ YES</button>
-              <button className="vmc-combo-btn vmc-combo-btn--no" onClick={() => onAddCombo(market, "no")} type="button">+ NO</button>
-            </div>
-          )}
-          <button
-            className={`vmc-clash${market.category === "sports" ? " vmc-clash--hot" : ""}`}
-            onClick={() => onClash(market)}
-            type="button"
-          >
-            <Swords size={12} />
-            <span>⚔️ 1v1</span>
+        <div className="mc-bets">
+          <button className="mc-btn mc-btn--yes" onClick={() => onBet(market, "yes")} type="button">
+            <span className="mc-btn-dir">YES</span>
+            <strong className="mc-btn-odds">{yesOdds}</strong>
+            <span className="mc-btn-crowd">{yesPct}% crowd</span>
+            {crowdOnNo && <span className="mc-underdog">🎯 UNDERDOG</span>}
+          </button>
+          <button className="mc-btn mc-btn--no" onClick={() => onBet(market, "no")} type="button">
+            <span className="mc-btn-dir">NO</span>
+            <strong className="mc-btn-odds">{noOdds}</strong>
+            <span className="mc-btn-crowd">{100 - yesPct}% crowd</span>
+            {crowdOnYes && <span className="mc-underdog">🎯 UNDERDOG</span>}
           </button>
         </div>
       )}
+
+      {/* Footer */}
+      <div className="mc-foot">
+        <span className="mc-foot-pool">
+          {total > 0
+            ? <><span className="acc">{formatPoolSize(total)} WLD</span> · {market.totalBettors ?? 0} humans</>
+            : "Be first to bet"}
+        </span>
+        {isLive && !myBet && (
+          <div className="mc-foot-actions">
+            {comboPick ? (
+              <button className="mc-combo-btn mc-combo-btn--in" onClick={() => onRemoveCombo(market.id)} type="button">
+                ✓ {comboPick.oddsLabel}
+              </button>
+            ) : (
+              <div className="mc-combo-wrap">
+                <button className="mc-combo-btn mc-combo-btn--yes" onClick={() => onAddCombo(market, "yes")} type="button">+YES</button>
+                <button className="mc-combo-btn mc-combo-btn--no" onClick={() => onAddCombo(market, "no")} type="button">+NO</button>
+              </div>
+            )}
+            <button className="mc-clash-btn" onClick={() => onClash(market)} type="button" aria-label="1v1 Clash">
+              <Swords size={13} />
+            </button>
+          </div>
+        )}
+        {!isLive && (
+          <div className="mc-closed-row">
+            <span>Market closed</span>
+          </div>
+        )}
+      </div>
     </article>
   );
 }
@@ -840,13 +797,13 @@ function LivePayoutsTicker() {
   if (wins.length === 0) return null;
 
   return (
-    <div className="verdex-pulse-ticker" aria-label="Recent real payouts">
-      <span className="verdex-pulse-ticker-label">💸 PAID OUT</span>
-      <div className="verdex-pulse-ticker-scroll">
+    <div className="mc-ticker" aria-label="Recent real payouts">
+      <span className="mc-ticker-lbl">💸 PAID OUT</span>
+      <div className="mc-ticker-scroll">
         {wins.map((w, i) => (
           <a
             key={i}
-            className="verdex-pulse-ticker-chip"
+            className="mc-ticker-chip"
             href={w.txHash ? `https://worldscan.org/tx/${w.txHash}` : undefined}
             target="_blank"
             rel="noopener noreferrer"
@@ -1273,53 +1230,49 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
 
   return (
     <div className="verdex-screen" ref={scrollRef}>
-      {/* Header */}
-      <header className="verdex-header">
-        <div className="verdex-header-top">
-          {/* Brand mark */}
-          <div className="verdex-brand">
-            <div className="verdex-brand-icon"><VerdexMark size={36} /></div>
-            <div>
+      {/* Header v2 */}
+      <header className="vh">
+        <div className="vh-top">
+          <div className="vh-brand">
+            <div className="vh-brand-icon"><VerdexMark size={28} /></div>
+            <div className="vh-brand-text">
               <strong>VeRdex</strong>
               <span>Human Prediction Network</span>
             </div>
           </div>
-          {/* Profile trigger — per docs: display username, not address */}
           {humanIdentity && (
-            <ProfileTrigger
-              user={humanIdentity}
-              bets={bets}
-              onClick={() => setProfileOpen(true)}
-            />
+            <ProfileTrigger user={humanIdentity} bets={bets} onClick={() => setProfileOpen(true)} />
           )}
         </div>
-        <StatsBar stats={stats} />
+        <div className="vh-stats">
+          <div className="vh-stat"><strong>{stats.totalBets}</strong><span>Bets</span></div>
+          <div className="vh-stat"><strong>{stats.winRate}%</strong><span>Win Rate</span></div>
+          <div className="vh-stat"><strong>{stats.totalWon > 0 ? `${stats.totalWon}` : "—"}</strong><span>WLD Won</span></div>
+          {stats.currentStreak > 0 && <div className="vh-stat"><strong>🔥{stats.currentStreak}</strong><span>Streak</span></div>}
+        </div>
+        <nav className="vh-tabs" aria-label="VeRdex sections">
+          {(["markets", "mybets", "clash", "leagues"] as VerdexTab[]).map((t) => (
+            <button
+              key={t}
+              className={`vh-tab${verdexTab === t ? " active" : ""}`}
+              onClick={() => setVerdexTab(t)}
+              type="button"
+            >
+              {t === "markets" && <TrendingUp size={14} />}
+              {t === "mybets"  && <Copy size={14} />}
+              {t === "clash"   && <Swords size={14} />}
+              {t === "leagues" && <Trophy size={14} />}
+              {t === "mybets" ? "My Bets" : t === "clash" ? "Clash" : t.charAt(0).toUpperCase() + t.slice(1)}
+              {t === "mybets" && bets.filter((b) => !b.settled).length > 0 && (
+                <span className="vh-tab-badge" style={{ background: "var(--verdex-yes)" }} />
+              )}
+              {t === "clash" && clashes.filter((c) => c.status === "pending").length > 0 && (
+                <span className="vh-tab-badge" />
+              )}
+            </button>
+          ))}
+        </nav>
       </header>
-
-      {/* Sub-tabs */}
-      <nav className="verdex-tabs" aria-label="VeRdex sections">
-        {(["markets", "mybets", "clash", "leagues"] as VerdexTab[]).map((t) => (
-          <button
-            key={t}
-            className={`verdex-tab-btn${verdexTab === t ? " active" : ""}`}
-            onClick={() => setVerdexTab(t)}
-            type="button"
-          >
-            {t === "markets" && <TrendingUp size={14} />}
-            {t === "mybets"  && <Copy size={14} />}
-            {t === "clash"   && <Swords size={14} />}
-            {t === "leagues" && <Trophy size={14} />}
-            {t === "mybets" ? "My Bets" : t === "clash" ? "Clash" : t.charAt(0).toUpperCase() + t.slice(1)}
-            {/* Badge: unsettled bets count */}
-            {t === "mybets" && bets.filter((b) => !b.settled).length > 0 && (
-              <span className="verdex-tab-dot" style={{ background: "var(--verdex-yes)" }} />
-            )}
-            {t === "clash" && clashes.filter((c) => c.status === "pending").length > 0 && (
-              <span className="verdex-tab-dot" />
-            )}
-          </button>
-        ))}
-      </nav>
 
       {/* ── MARKETS TAB ── */}
       {verdexTab === "markets" && (
@@ -1327,46 +1280,56 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
           {/* Live on-chain payouts — public proof VeRdex pays */}
           <LivePayoutsTicker />
 
-          {/* Category filter */}
-          <div className="verdex-cat-scroll">
-            {(["all", "micro", "crypto", "sports", "world", "culture"] as VerdexCategory[]).map((cat) => (
-              <CategoryPill key={cat} cat={cat} active={category === cat} onClick={() => setCategory(cat)} />
-            ))}
+          {/* Category pills v2 */}
+          <div className="mc-cats">
+            {(["all", "micro", "crypto", "sports", "world", "culture"] as VerdexCategory[]).map((cat) => {
+              const m = categoryMeta[cat];
+              const active = category === cat;
+              return (
+                <button
+                  key={cat}
+                  className={`mc-cat-pill${active ? " active" : ""}`}
+                  onClick={() => setCategory(cat)}
+                  style={active ? {} : {}}
+                  type="button"
+                >
+                  {m.emoji} {m.label}
+                </button>
+              );
+            })}
           </div>
 
-          {/* ⚡ Flash ticker — live micro markets */}
+          {/* Flash strip v2 */}
           {flashMarkets.length > 0 && category !== "micro" && (
-            <div className="verdex-flash-strip">
-              <span className="verdex-flash-label">⚡ FLASH</span>
-              <div className="verdex-flash-scroll">
+            <div className="mc-flash">
+              <span className="mc-flash-lbl">⚡ FLASH</span>
+              <div className="mc-flash-scroll">
                 {flashMarkets.map((fm) => (
                   <button
                     key={fm.id}
-                    className="verdex-flash-chip"
+                    className="mc-flash-chip"
                     type="button"
                     onClick={() => setCategory("micro")}
                   >
                     <span>{fm.title.length > 42 ? fm.title.slice(0, 42) + "…" : fm.title}</span>
-                    <span className="verdex-flash-timer"><CountdownChip closesAt={fm.closesAt} /></span>
+                    <span className="timer"><CountdownChip closesAt={fm.closesAt} /></span>
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Market hero (featured) */}
+          {/* Hero banner v2 */}
           {category === "all" && (
-            <div className="verdex-hero-banner">
-              <div className="verdex-hero-inner">
-                <span className="verdex-hero-kicker">🌍 Live right now · {localMarkets.filter((m) => m.status === "open").length} open markets</span>
-                <strong>The world is predicting. Are you?</strong>
-                <p>Every forecaster is a verified human. No bots. No manipulation. Pure signal.</p>
-              </div>
+            <div className="mc-hero">
+              <span className="mc-hero-kicker">🌍 Live right now · {localMarkets.filter((m) => m.status === "open").length} open markets</span>
+              <strong>The world is predicting. Are you?</strong>
+              <p>Every forecaster is a verified human. No bots. No manipulation. Pure signal.</p>
             </div>
           )}
 
-          {/* Market list */}
-          <div className="verdex-market-list">
+          {/* Market list v2 */}
+          <div className="mc-list">
             {sorted.length === 0 && (
               <div className="verdex-empty">No open {category} markets right now. Check back soon.</div>
             )}

@@ -1606,6 +1606,384 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .combo-mybet-status--void  { background: rgba(255,255,255,0.07); color: var(--verdex-muted); }
 .combo-mybet-odds { font-size: 0.78rem; font-weight: 800; color: #a78bfa; }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   HEADER v2 — compact, information-dense, fast
+══════════════════════════════════════════════════════════════════════════ */
+
+.vh {
+  padding: calc(14px + var(--safe-top)) 16px 0;
+  background: var(--verdex-header-bg);
+  border-bottom: 1px solid var(--verdex-border);
+}
+
+.vh-top {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 10px;
+  margin-bottom: 10px;
+}
+
+.vh-brand { display: flex; align-items: center; gap: 9px; }
+
+.vh-brand-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--verdex-surface-2);
+  border: 1px solid rgba(139,92,246,0.38);
+  display: grid; place-items: center; flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(99,102,241,0.18);
+}
+
+.vh-brand-text { display: flex; flex-direction: column; gap: 1px; }
+.vh-brand-text strong {
+  font-size: 1.1rem; font-weight: 950; color: var(--verdex-text);
+  line-height: 1; letter-spacing: -0.01em;
+}
+.vh-brand-text span {
+  font-size: 0.58rem; font-weight: 850; color: var(--verdex-muted);
+  text-transform: uppercase; letter-spacing: 0.1em; line-height: 1;
+}
+
+/* Stats chips */
+.vh-stats {
+  display: flex; gap: 5px; margin-bottom: 10px;
+  overflow-x: auto; scrollbar-width: none;
+  overscroll-behavior-x: contain; -webkit-overflow-scrolling: auto;
+  touch-action: pan-x; padding-bottom: 1px;
+}
+.vh-stats::-webkit-scrollbar { display: none; }
+
+.vh-stat {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 8px;
+  border: 1px solid var(--verdex-border); background: var(--verdex-surface);
+}
+.vh-stat strong { font-size: 0.8rem; font-weight: 950; color: var(--verdex-accent); line-height: 1; }
+.vh-stat span   { font-size: 0.6rem; font-weight: 850; color: var(--verdex-muted); }
+
+/* Tabs */
+.vh-tabs {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  border-top: 1px solid var(--verdex-border);
+}
+.vh-tab {
+  min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 5px;
+  border: 0; border-bottom: 2px solid transparent; background: transparent; cursor: pointer;
+  color: var(--verdex-muted); font-size: 0.72rem; font-weight: 900;
+  transition: color 0.15s, border-color 0.15s; position: relative;
+}
+.vh-tab.active { color: var(--verdex-accent); border-bottom-color: var(--verdex-accent); }
+.vh-tab-badge {
+  position: absolute; top: 7px; right: calc(50% - 16px);
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--verdex-gold);
+}
+
+[data-theme="day"] .vh { background: var(--verdex-header-bg); }
+[data-theme="day"] .vh-stat { background: var(--verdex-surface-2); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CATEGORY PILLS v2
+══════════════════════════════════════════════════════════════════════════ */
+
+.mc-cats {
+  display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 14px;
+  scrollbar-width: none; overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: auto; touch-action: pan-x;
+}
+.mc-cats::-webkit-scrollbar { display: none; }
+
+.mc-cat-pill {
+  flex: 0 0 auto; min-height: 32px;
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid var(--verdex-border); border-radius: 999px;
+  padding: 5px 12px; color: var(--verdex-muted);
+  background: var(--verdex-surface); font-size: 0.74rem; font-weight: 900;
+  white-space: nowrap; cursor: pointer;
+  transition: all 0.14s;
+}
+.mc-cat-pill.active {
+  background: var(--verdex-accent); border-color: var(--verdex-accent); color: #fff;
+}
+.mc-cat-pill:not(.active):active { background: var(--verdex-surface-2); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MARKET CARD v3 — Signal Design
+   Odds as the hero. Clean. Fast. Addictive.
+══════════════════════════════════════════════════════════════════════════ */
+
+.mc {
+  position: relative; border-radius: 18px;
+  background: var(--verdex-surface);
+  border: 1px solid var(--verdex-border);
+  border-left: 3px solid var(--verdex-border);
+  overflow: hidden; display: flex; flex-direction: column;
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+.mc:active { transform: scale(0.993); }
+
+.mc--featured {
+  animation: mc-feat-glow 2.6s ease-in-out infinite;
+}
+@keyframes mc-feat-glow {
+  0%,100% { box-shadow: 0 4px 24px rgba(245,158,11,0.1); }
+  50%      { box-shadow: 0 4px 36px rgba(245,158,11,0.26); }
+}
+.mc--urgent { animation: mc-urgent-pulse 2.2s ease-in-out infinite; }
+@keyframes mc-urgent-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,77,109,0); }
+  50%     { box-shadow: 0 0 0 3px rgba(255,77,109,0.12); }
+}
+.mc--dimmed { opacity: 0.52; filter: grayscale(0.3); }
+
+/* Meta row */
+.mc-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px 6px; gap: 6px;
+}
+.mc-meta-left  { display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; }
+.mc-meta-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+
+.mc-cat {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 6px;
+  font-size: 0.61rem; font-weight: 900; letter-spacing: 0.05em;
+  border: 1px solid transparent; flex-shrink: 0;
+}
+.mc-badge-feat { font-size: 0.57rem; font-weight: 900; letter-spacing: 0.04em; color: var(--verdex-gold); }
+.mc-badge-hot  { font-size: 0.57rem; font-weight: 900; letter-spacing: 0.04em; color: #fb923c; }
+.mc-badge-ai   {
+  font-size: 0.57rem; font-weight: 900; letter-spacing: 0.04em;
+  padding: 2px 5px; border-radius: 4px;
+  background: rgba(139,92,246,0.2); color: #a78bfa;
+  border: 1px solid rgba(139,92,246,0.28);
+}
+
+.mc-live-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  background: var(--verdex-yes);
+  animation: mc-live 1.7s ease-in-out infinite;
+}
+@keyframes mc-live {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,232,135,0.7); }
+  55%      { box-shadow: 0 0 0 4px rgba(0,232,135,0); }
+}
+.mc-closed-tag { font-size: 0.58rem; font-weight: 900; letter-spacing: 0.06em; color: var(--verdex-muted); opacity: 0.7; }
+
+/* Title */
+.mc-q {
+  margin: 0; padding: 2px 12px 9px;
+  font-size: 0.93rem; font-weight: 800; line-height: 1.36; color: var(--verdex-text);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.mc-fair-tag {
+  display: block; padding: 0 12px 6px;
+  font-size: 0.59rem; font-weight: 750; color: var(--verdex-yes); opacity: 0.72;
+}
+
+/* Signal bar — crowd sentiment */
+.mc-signal {
+  margin: 0 12px 3px; height: 5px; border-radius: 999px;
+  overflow: hidden; display: flex; background: var(--verdex-surface-2);
+}
+.mc-signal-y {
+  background: linear-gradient(90deg,#00e887,#00c97a);
+  transition: width 0.75s cubic-bezier(0.34,1.2,0.64,1);
+}
+.mc-signal-n { flex: 1; background: linear-gradient(90deg,#ff4d6d,#c9284a); }
+
+.mc-signal-lbl {
+  display: flex; justify-content: space-between;
+  padding: 2px 12px 9px; font-size: 0.62rem; font-weight: 800;
+}
+.mc-signal-lbl-y { color: var(--verdex-yes); }
+.mc-signal-lbl-n { color: var(--verdex-no); }
+
+/* My-bet banner */
+.mc-mybet {
+  margin: 0 12px 8px; padding: 8px 11px; border-radius: 10px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.78rem; font-weight: 700;
+}
+.mc-mybet--yes { background: rgba(0,232,135,0.08); border: 1px solid rgba(0,232,135,0.22); color: var(--verdex-yes); }
+.mc-mybet--no  { background: rgba(255,77,109,0.08); border: 1px solid rgba(255,77,109,0.22); color: var(--verdex-no); }
+.mc-mybet strong { font-weight: 900; color: inherit; }
+
+/* Bet buttons — the heart of the card */
+.mc-bets {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; padding: 0 12px 10px;
+}
+
+.mc-btn {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+  min-height: 74px; border: 0; border-radius: 14px; cursor: pointer;
+  font-family: inherit; position: relative; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s, filter 0.1s;
+}
+.mc-btn:active { transform: scale(0.97); filter: brightness(1.12); }
+
+.mc-btn--yes {
+  background: linear-gradient(165deg, rgba(0,232,135,0.17) 0%, rgba(0,232,135,0.06) 100%);
+  border: 1.5px solid rgba(0,232,135,0.38);
+}
+.mc-btn--no {
+  background: linear-gradient(165deg, rgba(255,77,109,0.15) 0%, rgba(255,77,109,0.05) 100%);
+  border: 1.5px solid rgba(255,77,109,0.33);
+}
+
+.mc-btn-dir {
+  font-size: 0.57rem; font-weight: 900; letter-spacing: 0.13em; opacity: 0.72;
+  line-height: 1;
+}
+.mc-btn--yes .mc-btn-dir { color: var(--verdex-yes); }
+.mc-btn--no  .mc-btn-dir { color: var(--verdex-no);  }
+
+.mc-btn-odds {
+  font-size: 1.78rem; font-weight: 950;
+  line-height: 1.0; letter-spacing: -0.03em;
+}
+.mc-btn--yes .mc-btn-odds { color: var(--verdex-yes); }
+.mc-btn--no  .mc-btn-odds { color: var(--verdex-no);  }
+
+.mc-btn-crowd {
+  font-size: 0.6rem; font-weight: 750; opacity: 0.6; line-height: 1;
+}
+.mc-btn--yes .mc-btn-crowd { color: var(--verdex-yes); }
+.mc-btn--no  .mc-btn-crowd { color: var(--verdex-no);  }
+
+.mc-underdog {
+  position: absolute; top: 5px; right: 5px;
+  font-size: 0.51rem; font-weight: 950; letter-spacing: 0.04em;
+  background: rgba(251,191,36,0.14); color: #fbbf24;
+  border: 1px solid rgba(251,191,36,0.3); border-radius: 4px;
+  padding: 2px 5px;
+}
+
+/* Footer */
+.mc-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px 10px;
+  border-top: 1px solid var(--verdex-border);
+}
+.mc-foot-pool {
+  font-size: 0.62rem; font-weight: 800; color: var(--verdex-muted);
+  display: flex; align-items: center; gap: 4px;
+}
+.mc-foot-pool .acc { color: var(--verdex-accent); }
+.mc-foot-actions { display: flex; align-items: center; gap: 6px; }
+
+.mc-combo-wrap { display: flex; gap: 5px; }
+.mc-combo-btn {
+  font-size: 0.62rem; font-weight: 900; padding: 4px 8px; border-radius: 8px;
+  border: 1px solid var(--verdex-border); color: var(--verdex-muted);
+  background: var(--verdex-surface-2); transition: all 0.14s; cursor: pointer;
+  white-space: nowrap;
+}
+.mc-combo-btn--yes { border-color: rgba(0,232,135,0.3); color: var(--verdex-yes); background: rgba(0,232,135,0.07); }
+.mc-combo-btn--no  { border-color: rgba(255,77,109,0.3); color: var(--verdex-no);  background: rgba(255,77,109,0.07); }
+.mc-combo-btn--in  { border-color: var(--verdex-accent); color: var(--verdex-accent); background: rgba(99,102,241,0.1); }
+
+.mc-clash-btn {
+  width: 28px; height: 28px; min-height: 28px; border-radius: 8px;
+  border: 1px solid rgba(245,158,11,0.3); background: rgba(245,158,11,0.07);
+  display: grid; place-items: center; font-size: 0.8rem; cursor: pointer;
+  color: var(--verdex-gold); transition: background 0.14s;
+}
+.mc-clash-btn:active { background: rgba(245,158,11,0.16); }
+
+/* Closed display (no bet buttons) */
+.mc-closed-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px 10px; font-size: 0.72rem; font-weight: 800; color: var(--verdex-muted);
+}
+
+/* Day-mode adjustments */
+[data-theme="day"] .mc { background: var(--verdex-surface); }
+[data-theme="day"] .mc-btn--yes {
+  background: linear-gradient(165deg, rgba(5,150,105,0.1), rgba(5,150,105,0.04));
+  border-color: rgba(5,150,105,0.38);
+}
+[data-theme="day"] .mc-btn--no {
+  background: linear-gradient(165deg, rgba(220,38,38,0.08), rgba(220,38,38,0.04));
+  border-color: rgba(220,38,38,0.32);
+}
+[data-theme="day"] .mc-signal-y { background: linear-gradient(90deg,#059669,#047857); }
+[data-theme="day"] .mc-signal-n { background: linear-gradient(90deg,#dc2626,#b91c1c); }
+
+/* ── Payouts ticker v2 ──────────────────────────────────────────────────── */
+.mc-ticker {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  padding: 8px 12px; border-radius: 12px;
+  border: 1px solid rgba(0,232,135,0.22);
+  background: rgba(0,232,135,0.04); overflow: hidden;
+}
+.mc-ticker-lbl {
+  flex-shrink: 0; font-size: 0.61rem; font-weight: 900;
+  letter-spacing: 0.06em; color: var(--verdex-yes);
+}
+.mc-ticker-scroll {
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  -webkit-overflow-scrolling: auto; overscroll-behavior-x: contain;
+}
+.mc-ticker-scroll::-webkit-scrollbar { display: none; }
+.mc-ticker-chip {
+  flex-shrink: 0; padding: 3px 10px; border-radius: 999px;
+  font-size: 0.67rem; color: var(--verdex-text); text-decoration: none;
+  background: var(--verdex-surface); border: 1px solid var(--verdex-border);
+  white-space: nowrap;
+}
+.mc-ticker-chip strong { color: var(--verdex-yes); }
+
+/* ── Flash strip v2 ─────────────────────────────────────────────────────── */
+.mc-flash {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px; overflow: hidden;
+}
+.mc-flash-lbl {
+  flex-shrink: 0; font-size: 0.66rem; font-weight: 900;
+  color: var(--verdex-gold); background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.28); border-radius: 6px;
+  padding: 3px 7px; letter-spacing: 1px;
+}
+.mc-flash-scroll {
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  -webkit-overflow-scrolling: auto; overscroll-behavior-x: contain; touch-action: pan-x;
+}
+.mc-flash-scroll::-webkit-scrollbar { display: none; }
+.mc-flash-chip {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 6px;
+  background: var(--verdex-surface); border: 1px solid rgba(245,158,11,0.22);
+  border-radius: 999px; padding: 5px 12px;
+  font-size: 0.7rem; color: var(--verdex-text); cursor: pointer;
+  white-space: nowrap; transition: border-color 0.14s, background 0.14s;
+  max-width: 230px;
+}
+.mc-flash-chip:active { border-color: var(--verdex-gold); background: rgba(245,158,11,0.07); }
+.mc-flash-chip span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.mc-flash-chip .timer { font-size: 0.63rem; color: var(--verdex-gold); flex-shrink: 0; }
+
+/* ── Hero banner v2 ─────────────────────────────────────────────────────── */
+.mc-hero {
+  position: relative; overflow: hidden; border-radius: 18px;
+  margin-bottom: 14px; padding: 18px;
+  background: var(--verdex-hero-banner-bg);
+  border: 1px solid var(--verdex-border-bright);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18), var(--verdex-glow);
+  display: grid; gap: 6px;
+}
+.mc-hero::before {
+  content: ""; position: absolute; right: -40px; top: -40px;
+  width: 190px; height: 190px; border-radius: 999px;
+  border: 1px solid rgba(99,102,241,0.16);
+  box-shadow: inset 0 0 0 32px rgba(99,102,241,0.05);
+}
+.mc-hero-kicker { font-size: 0.68rem; font-weight: 950; color: var(--verdex-muted); position: relative; }
+.mc-hero strong  { font-size: 1.32rem; font-weight: 950; color: var(--verdex-text); line-height: 1.12; position: relative; }
+.mc-hero p       { margin: 0; font-size: 0.82rem; color: var(--verdex-muted); line-height: 1.4; position: relative; }
+
+/* ── Market list spacing ────────────────────────────────────────────────── */
+.mc-list { display: grid; gap: 12px; }
+
 .combo-mybet-win {
   display: flex; align-items: baseline; gap: 6px;
   padding: 6px 12px 4px;
