@@ -20,7 +20,8 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { Award, ChevronRight, Copy, Gift, LogOut, Moon, Settings, Shield, Star, Sun, TrendingUp, X, Zap } from "lucide-react";
+import { Award, BookOpen, ChevronRight, Copy, FileText, Gift, Lock, LogOut, Moon, Settings, Shield, Star, Sun, TrendingUp, X, Zap } from "lucide-react";
+import { UserGuideSheet, TermsSheet, PrivacySheet } from "./HelpSheets";
 import type { VerifiedHuman } from "@/types/user";
 import type { VerdexBet, VerdexCopyFollow, VerdexLeaderEntry } from "@/types/verdex";
 import type { VerdexTheme } from "@/lib/verdex/theme";
@@ -181,6 +182,10 @@ export function ProfileSheet({
   const { label: streakLabel } = getStreakMultiplier(streak);
 
   const recentBets = [...bets].slice(-5).reverse();
+
+  const [guideOpen, setGuideOpen]     = useState(false);
+  const [termsOpen, setTermsOpen]     = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
   const handleSignOut = useCallback(() => {
     onClose();
@@ -377,6 +382,35 @@ export function ProfileSheet({
           </div>
         </div>
 
+        {/* ── Help & Legal ──────────────────────────────────────────────────── */}
+        <div className="verdex-profile-section">
+          <div className="verdex-profile-section-header">
+            <BookOpen size={14} />
+            <span>Help &amp; Legal</span>
+          </div>
+          <button className="verdex-profile-setting-row" onClick={() => setGuideOpen(true)} type="button">
+            <div className="verdex-profile-setting-left">
+              <BookOpen size={16} />
+              <span>User Guide</span>
+            </div>
+            <ChevronRight size={14} className="verdex-profile-setting-chevron" />
+          </button>
+          <button className="verdex-profile-setting-row" onClick={() => setTermsOpen(true)} type="button">
+            <div className="verdex-profile-setting-left">
+              <FileText size={16} />
+              <span>Terms of Use</span>
+            </div>
+            <ChevronRight size={14} className="verdex-profile-setting-chevron" />
+          </button>
+          <button className="verdex-profile-setting-row" onClick={() => setPrivacyOpen(true)} type="button">
+            <div className="verdex-profile-setting-left">
+              <Lock size={16} />
+              <span>Privacy Policy</span>
+            </div>
+            <ChevronRight size={14} className="verdex-profile-setting-chevron" />
+          </button>
+        </div>
+
         {/* ── Sign out ──────────────────────────────────────────────────────── */}
         <button className="verdex-profile-signout" onClick={handleSignOut} type="button">
           <LogOut size={16} />
@@ -386,6 +420,11 @@ export function ProfileSheet({
         {/* Bottom safe area spacer */}
         <div style={{ height: "var(--safe-bottom, 0px)" }} />
       </div>
+
+      {/* Help sheets — rendered outside the profile scroll so they layer on top */}
+      <UserGuideSheet open={guideOpen} onClose={() => setGuideOpen(false)} />
+      <TermsSheet     open={termsOpen} onClose={() => setTermsOpen(false)} />
+      <PrivacySheet   open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
     </div>
   );
 }
