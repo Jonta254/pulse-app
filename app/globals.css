@@ -1911,7 +1911,11 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 [data-theme="day"] .mc-signal-y { background: linear-gradient(90deg,#059669,#047857); }
 [data-theme="day"] .mc-signal-n { background: linear-gradient(90deg,#dc2626,#b91c1c); }
 
-/* ── Payouts ticker v2 ──────────────────────────────────────────────────── */
+/* ── Payouts / live pulse ticker ────────────────────────────────────────── */
+@keyframes mc-ticker-run {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
 .mc-ticker {
   display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
   padding: 8px 12px; border-radius: 12px;
@@ -1923,10 +1927,13 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   letter-spacing: 0.06em; color: var(--verdex-yes);
 }
 .mc-ticker-scroll {
-  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
-  -webkit-overflow-scrolling: auto; overscroll-behavior-x: contain;
+  display: flex; gap: 6px; overflow: hidden; scrollbar-width: none;
+  width: max-content;
 }
-.mc-ticker-scroll::-webkit-scrollbar { display: none; }
+.mc-ticker-scroll--run {
+  animation: mc-ticker-run linear infinite;
+}
+.mc-ticker-scroll--run:hover { animation-play-state: paused; }
 .mc-ticker-chip {
   flex-shrink: 0; padding: 3px 10px; border-radius: 999px;
   font-size: 0.67rem; color: var(--verdex-text); text-decoration: none;

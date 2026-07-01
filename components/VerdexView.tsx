@@ -779,15 +779,23 @@ function StatsBar({ stats }: { stats: ReturnType<typeof calcPlayerStats> }) {
 // Recent real on-chain payouts with WorldScan receipts. No other betting app
 // can show this strip, because no other app pays instantly on-chain.
 
+type PulseWin = { name: string; amountWld: number; source: string; txHash: string | null };
+
 function LivePayoutsTicker() {
-  const [wins, setWins] = useState<Array<{ name: string; amountWld: number; source: string; txHash: string | null }>>([]);
+  const [wins, setWins] = useState<PulseWin[]>([]);
+  const [seeded, setSeeded] = useState(false);
 
   useEffect(() => {
     let alive = true;
     const load = () =>
       fetch("/api/verdex/pulse", { cache: "no-store" })
         .then((r) => r.json())
-        .then((j: { ok: boolean; wins?: typeof wins }) => { if (alive && j.ok && j.wins) setWins(j.wins); })
+        .then((j: { ok: boolean; wins?: PulseWin[]; seeded?: boolean }) => {
+          if (alive && j.ok && j.wins) {
+            setWins(j.wins);
+            setSeeded(j.seeded ?? false);
+          }
+        })
         .catch(() => null);
     void load();
     const t = setInterval(load, 60_000);
@@ -796,19 +804,23 @@ function LivePayoutsTicker() {
 
   if (wins.length === 0) return null;
 
+  // Duplicate chips so the marquee loops seamlessly
+  const chips = [...wins, ...wins];
+
   return (
-    <div className="mc-ticker" aria-label="Recent real payouts">
-      <span className="mc-ticker-lbl">💸 PAID OUT</span>
-      <div className="mc-ticker-scroll">
-        {wins.map((w, i) => (
+    <div className="mc-ticker" aria-label={seeded ? "Network activity" : "Recent real payouts"}>
+      <span className="mc-ticker-lbl">{seeded ? "⚡ LIVE" : "💸 PAID OUT"}</span>
+      <div className="mc-ticker-scroll mc-ticker-scroll--run" style={{ animationDuration: `${wins.length * 4}s` }}>
+        {chips.map((w, i) => (
           <a
             key={i}
             className="mc-ticker-chip"
             href={w.txHash ? `https://worldscan.org/tx/${w.txHash}` : undefined}
             target="_blank"
-            rel="noopener noreferrer"
+            rel={w.txHash ? "noopener noreferrer" : undefined}
+            aria-hidden={i >= wins.length}
           >
-            <strong>{w.name}</strong> {w.source === "referral" ? "earned" : "won"} {w.amountWld.toFixed(2)} WLD ✓
+            <strong>{w.name}</strong> {w.source === "referral" ? "earned" : w.source === "goal" ? "hit goal" : "won"} {w.amountWld.toFixed(2)} WLD ✓
           </a>
         ))}
       </div>
