@@ -828,6 +828,129 @@ function LivePayoutsTicker() {
   );
 }
 
+// ── Live network intelligence hero ───────────────────────────────────────────
+
+function HeroNetworkCard({ markets }: { markets: VerdexMarket[] }) {
+  const now = Date.now();
+  const open = markets.filter((m) => m.status === "open" && new Date(m.closesAt).getTime() > now);
+  const totalHumans  = open.reduce((s, m) => s + (m.totalBettors ?? 0), 0);
+  const totalWld     = open.reduce((s, m) => s + m.yesPool + m.noPool, 0);
+  const avgYesPct    = open.length > 0
+    ? Math.round(open.reduce((s, m) => s + calcYesPct(m.yesPool, m.noPool), 0) / open.length)
+    : 50;
+  const hasActivity  = totalWld > 0 || totalHumans > 0;
+
+  return (
+    <div className="mc-network">
+      <div className="mc-network-head">
+        <span className="mc-network-label">🌍 VERIFIED HUMAN NETWORK</span>
+        <span className="mc-network-live"><span className="mc-network-dot" />LIVE</span>
+      </div>
+
+      <div className="mc-network-stats">
+        <div className="mc-network-stat">
+          <strong>{open.length}</strong>
+          <span>Open Markets</span>
+        </div>
+        <div className="mc-network-stat">
+          <strong>{totalHumans > 0 ? totalHumans.toLocaleString() : "—"}</strong>
+          <span>Humans Betting</span>
+        </div>
+        <div className="mc-network-stat">
+          <strong>{totalWld > 0 ? formatPoolSize(totalWld) : "—"}</strong>
+          <span>WLD at Stake</span>
+        </div>
+      </div>
+
+      <div className="mc-network-sentiment">
+        <span className="mc-network-yes-lbl">YES {avgYesPct}%</span>
+        <div className="mc-network-bar">
+          <div className="mc-network-bar-yes" style={{ width: `${avgYesPct}%` }} />
+        </div>
+        <span className="mc-network-no-lbl">{100 - avgYesPct}% NO</span>
+      </div>
+
+      {!hasActivity && (
+        <p className="mc-network-cta">Be among the first verified humans to predict →</p>
+      )}
+    </div>
+  );
+}
+
+// ── Featured market spotlight ─────────────────────────────────────────────────
+
+function FeaturedSpotlight({
+  market,
+  comboPick,
+  onBet,
+  onClash,
+  onAddCombo,
+  onRemoveCombo,
+}: {
+  market: VerdexMarket;
+  comboPick: VerdexComboPick | undefined;
+  onBet: (market: VerdexMarket, position: "yes" | "no") => void;
+  onClash: (market: VerdexMarket) => void;
+  onAddCombo: (market: VerdexMarket, position: "yes" | "no") => void;
+  onRemoveCombo: (marketId: string) => void;
+}) {
+  const { expired } = formatCountdown(market.closesAt);
+  const yesPct  = calcYesPct(market.yesPool, market.noPool);
+  const yesOdds = calcOdds("yes", market.yesPool, market.noPool);
+  const noOdds  = calcOdds("no",  market.yesPool, market.noPool);
+  const isLive  = market.status === "open" && !expired;
+  const total   = market.yesPool + market.noPool;
+
+  return (
+    <div className="mc-spotlight">
+      <div className="mc-spotlight-head">
+        <span className="mc-spotlight-badge">🔥 BET OF THE HOUR</span>
+        {isLive && <span className="vmc-live-dot" aria-label="Live" />}
+        <CountdownChip closesAt={market.closesAt} />
+      </div>
+
+      <h3 className="mc-spotlight-title">{market.title}</h3>
+
+      {isLive && (
+        <div className="mc-spotlight-arena">
+          <button className="mc-spotlight-yes" onClick={() => onBet(market, "yes")} type="button">
+            <span>YES</span>
+            <strong>{yesOdds}</strong>
+            <span>{yesPct}% crowd</span>
+          </button>
+          <span className="mc-vs">VS</span>
+          <button className="mc-spotlight-no" onClick={() => onBet(market, "no")} type="button">
+            <span>NO</span>
+            <strong>{noOdds}</strong>
+            <span>{100 - yesPct}% crowd</span>
+          </button>
+        </div>
+      )}
+
+      <div className="mc-spotlight-foot">
+        <span className="mc-spotlight-meta">
+          {(market.totalBettors ?? 0) > 0
+            ? `${market.totalBettors} verified humans · ${formatPoolSize(total)} staked`
+            : "Be the first verified human to predict"}
+        </span>
+        {isLive && (
+          <div className="mc-spotlight-actions">
+            {comboPick ? (
+              <button className="mc-combo-btn mc-combo-btn--in" onClick={() => onRemoveCombo(market.id)} type="button">✓ In Combo</button>
+            ) : (
+              <div style={{ display: "flex", gap: 4 }}>
+                <button className="mc-combo-btn mc-combo-btn--yes" onClick={() => onAddCombo(market, "yes")} type="button">+ YES</button>
+                <button className="mc-combo-btn mc-combo-btn--no"  onClick={() => onAddCombo(market, "no")}  type="button">+ NO</button>
+              </div>
+            )}
+            <button className="mc-clash-btn" onClick={() => onClash(market)} title="1v1 Clash" type="button">⚔️</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main view ─────────────────────────────────────────────────────────────────
 
 export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHistory, theme, onThemeToggle, onSignOut }: VerdexViewProps) {
@@ -1331,14 +1454,29 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
             </div>
           )}
 
-          {/* Hero banner v2 */}
-          {category === "all" && (
-            <div className="mc-hero">
-              <span className="mc-hero-kicker">🌍 Live right now · {localMarkets.filter((m) => m.status === "open").length} open markets</span>
-              <strong>The world is predicting. Are you?</strong>
-              <p>Every forecaster is a verified human. No bots. No manipulation. Pure signal.</p>
-            </div>
-          )}
+          {/* Live network intelligence hero */}
+          {category === "all" && <HeroNetworkCard markets={localMarkets} />}
+
+          {/* Featured market spotlight — shown for any category with a featured open market */}
+          {(() => {
+            const now = Date.now();
+            const spot = sorted.find(
+              (m) => m.featured && m.status === "open" && new Date(m.closesAt).getTime() > now,
+            );
+            if (!spot) return null;
+            const alreadyBet = bets.some((b) => b.marketId === spot.id && b.confirmed);
+            if (alreadyBet) return null;
+            return (
+              <FeaturedSpotlight
+                market={spot}
+                comboPick={comboPicks.find((p) => p.marketId === spot.id)}
+                onBet={(m, pos) => setBetSheet({ market: m, position: pos })}
+                onClash={(m) => setClashSheet(m)}
+                onAddCombo={handleAddCombo}
+                onRemoveCombo={handleRemoveCombo}
+              />
+            );
+          })()}
 
           {/* Market list v2 */}
           <div className="mc-list">
