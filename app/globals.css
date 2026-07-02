@@ -1614,6 +1614,10 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   padding: calc(14px + var(--safe-top)) 16px 0;
   background: var(--verdex-header-bg);
   border-bottom: 1px solid var(--verdex-border);
+  /* Sticky so tabs are always reachable while scrolling through markets */
+  position: sticky; top: 0; z-index: 20;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .vh-top {
@@ -1665,7 +1669,7 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   border-top: 1px solid var(--verdex-border);
 }
 .vh-tab {
-  min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 4px;
+  min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 4px;
   border: 0; border-bottom: 2px solid transparent; background: transparent; cursor: pointer;
   color: var(--verdex-muted); font-size: 0.65rem; font-weight: 900;
   transition: color 0.15s, border-color 0.15s; position: relative; padding: 0 2px;

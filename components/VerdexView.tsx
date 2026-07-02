@@ -961,6 +961,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   const [goals, setGoals] = useState<VerdexGoal[]>(loadVerdexGoals);
   const [clashes, setClashes] = useState<VerdexClash[]>(loadLocalClashes);
   const [copyFollows, setCopyFollows] = useState<VerdexCopyFollow[]>(loadCopyFollows);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [betSheet, setBetSheet] = useState<{ market: VerdexMarket; position: "yes" | "no" } | null>(null);
   const [comboOpen, setComboOpen] = useState(false);
   const [comboPicks, setComboPicks] = useState<VerdexComboPick[]>([]);
@@ -1034,12 +1035,14 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   // ── Fetch leaderboard from API ──────────────────────────────────────────────
   useEffect(() => {
     if (verdexTab !== "leagues") return;
+    setLeaderboardLoading(true);
     fetch("/api/verdex/leaderboard", { cache: "no-store" })
       .then((r) => r.json())
       .then((payload: { ok: boolean; leaderboard?: typeof seedLeaderboard }) => {
         if (payload.ok && Array.isArray(payload.leaderboard)) setLeaderboard(payload.leaderboard);
       })
-      .catch(() => null);
+      .catch(() => null)
+      .finally(() => setLeaderboardLoading(false));
   }, [verdexTab]);
 
   // ── Sync My Bets with server truth: settled, payout, refunds ───────────────
@@ -1390,7 +1393,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
             <button
               key={t}
               className={`vh-tab${verdexTab === t ? " active" : ""}`}
-              onClick={() => setVerdexTab(t)}
+              onClick={() => { setVerdexTab(t); scrollRef.current?.scrollTo({ top: 0 }); }}
               type="button"
             >
               {t === "markets" && <TrendingUp size={13} />}
@@ -1915,7 +1918,14 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
             </div>
           )}
 
-          {leaderboard.length === 0 && (
+          {leaderboardLoading && (
+            <div style={{ textAlign: "center", padding: "32px 0", color: "var(--verdex-muted)" }}>
+              <div className="verdex-payment-progress-spinner" style={{ margin: "0 auto 12px" }} />
+              <p style={{ margin: 0, fontSize: "0.82rem" }}>Loading top forecasters…</p>
+            </div>
+          )}
+
+          {!leaderboardLoading && leaderboard.length === 0 && (
             <div className="verdex-empty" style={{ marginTop: 24 }}>
               <p style={{ fontSize: "2rem" }}>🏆</p>
               <p>No ranked forecasters yet. Win a market and your name opens the board.</p>
