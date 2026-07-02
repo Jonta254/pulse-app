@@ -1386,23 +1386,27 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
           {stats.currentStreak > 0 && <div className="vh-stat"><strong>🔥{stats.currentStreak}</strong><span>Streak</span></div>}
         </div>
         <nav className="vh-tabs" aria-label="VeRdex sections">
-          {(["markets", "mybets", "clash", "leagues"] as VerdexTab[]).map((t) => (
+          {(["markets", "mybets", "clash", "leagues", "goals"] as VerdexTab[]).map((t) => (
             <button
               key={t}
               className={`vh-tab${verdexTab === t ? " active" : ""}`}
               onClick={() => setVerdexTab(t)}
               type="button"
             >
-              {t === "markets" && <TrendingUp size={14} />}
-              {t === "mybets"  && <Copy size={14} />}
-              {t === "clash"   && <Swords size={14} />}
-              {t === "leagues" && <Trophy size={14} />}
-              {t === "mybets" ? "My Bets" : t === "clash" ? "Clash" : t.charAt(0).toUpperCase() + t.slice(1)}
+              {t === "markets" && <TrendingUp size={13} />}
+              {t === "mybets"  && <Copy size={13} />}
+              {t === "clash"   && <Swords size={13} />}
+              {t === "leagues" && <Trophy size={13} />}
+              {t === "goals"   && <Target size={13} />}
+              {t === "mybets" ? "My Bets" : t === "clash" ? "Clash" : t === "leagues" ? "Leagues" : t === "goals" ? "Goals" : "Markets"}
               {t === "mybets" && bets.filter((b) => !b.settled).length > 0 && (
                 <span className="vh-tab-badge" style={{ background: "var(--verdex-yes)" }} />
               )}
               {t === "clash" && clashes.filter((c) => c.status === "pending").length > 0 && (
                 <span className="vh-tab-badge" />
+              )}
+              {t === "goals" && goals.filter((g) => g.status === "active").length > 0 && (
+                <span className="vh-tab-badge" style={{ background: "var(--verdex-gold)" }} />
               )}
             </button>
           ))}

@@ -1661,14 +1661,14 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 
 /* Tabs */
 .vh-tabs {
-  display: grid; grid-template-columns: repeat(4,1fr);
+  display: grid; grid-template-columns: repeat(5,1fr);
   border-top: 1px solid var(--verdex-border);
 }
 .vh-tab {
-  min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 5px;
+  min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 4px;
   border: 0; border-bottom: 2px solid transparent; background: transparent; cursor: pointer;
-  color: var(--verdex-muted); font-size: 0.72rem; font-weight: 900;
-  transition: color 0.15s, border-color 0.15s; position: relative;
+  color: var(--verdex-muted); font-size: 0.65rem; font-weight: 900;
+  transition: color 0.15s, border-color 0.15s; position: relative; padding: 0 2px;
 }
 .vh-tab.active { color: var(--verdex-accent); border-bottom-color: var(--verdex-accent); }
 .vh-tab-badge {
@@ -1970,23 +1970,6 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .mc-flash-chip .timer { font-size: 0.63rem; color: var(--verdex-gold); flex-shrink: 0; }
 
 /* ── Hero banner v2 ─────────────────────────────────────────────────────── */
-.mc-hero {
-  position: relative; overflow: hidden; border-radius: 18px;
-  margin-bottom: 14px; padding: 18px;
-  background: var(--verdex-hero-banner-bg);
-  border: 1px solid var(--verdex-border-bright);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.18), var(--verdex-glow);
-  display: grid; gap: 6px;
-}
-.mc-hero::before {
-  content: ""; position: absolute; right: -40px; top: -40px;
-  width: 190px; height: 190px; border-radius: 999px;
-  border: 1px solid rgba(99,102,241,0.16);
-  box-shadow: inset 0 0 0 32px rgba(99,102,241,0.05);
-}
-.mc-hero-kicker { font-size: 0.68rem; font-weight: 950; color: var(--verdex-muted); position: relative; }
-.mc-hero strong  { font-size: 1.32rem; font-weight: 950; color: var(--verdex-text); line-height: 1.12; position: relative; }
-.mc-hero p       { margin: 0; font-size: 0.82rem; color: var(--verdex-muted); line-height: 1.4; position: relative; }
 
 /* ── Live network intelligence hero ─────────────────────────────────────── */
 .mc-network {
