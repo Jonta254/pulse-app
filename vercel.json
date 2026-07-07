@@ -1,6 +1,6 @@
 {
   "crons": [
-    { "path": "/api/verdex/auto", "schedule": "0 */3 * * *" },
-    { "path": "/api/verdex/flash-gen", "schedule": "*/30 * * * *" }
+    { "path": "/api/verdex/auto", "schedule": "0 8 * * *" },
+    { "path": "/api/verdex/flash-gen", "schedule": "0 14 * * *" }
   ]
 }
