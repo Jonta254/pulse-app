@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { acceptClash, getClash, isVerdexDbReady } from "@/lib/verdex/db";
-import { isRateLimited, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
+import { isRateLimited, isWalletAddress, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
 
 type AcceptBody = {
   clashId?: string;
@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
 
   if (!clashId || !challengerNullifier || !txRef) {
     return noStoreJson({ error: "Missing required fields." }, { status: 400 });
+  }
+
+  if (!isWalletAddress(challengerNullifier)) {
+    return noStoreJson({ error: "Invalid challenger nullifier." }, { status: 400 });
   }
 
   if (!isVerdexDbReady()) {

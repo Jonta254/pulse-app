@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { after } from "next/server";
 import { placeBet, isVerdexDbReady } from "@/lib/verdex/db";
 import { maybeRewardReferral } from "@/lib/verdex/referrals";
-import { isRateLimited, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
+import { isRateLimited, isWalletAddress, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
 
 type BetBody = {
   id?: string;
@@ -28,6 +28,10 @@ export async function POST(req: NextRequest) {
 
   if (!id || !marketId || !worldNullifier || !position || !amountWld || !txReference) {
     return noStoreJson({ error: "Missing required bet fields." }, { status: 400 });
+  }
+
+  if (!isWalletAddress(worldNullifier)) {
+    return noStoreJson({ error: "Invalid nullifier — must be a 0x wallet address." }, { status: 400 });
   }
 
   if (!["yes", "no"].includes(position)) {

@@ -3,8 +3,6 @@ import { resolveMarket, getBetNullifiers, isVerdexDbReady } from "@/lib/verdex/d
 import { isRateLimited, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
 import { getStreakMultiplier } from "@/lib/verdex/data";
 
-const RESOLVE_SECRET = process.env.CRON_SECRET;
-
 type ResolveBody = {
   marketId?: string;
   outcome?: "yes" | "no";
@@ -16,19 +14,22 @@ export async function POST(req: NextRequest) {
     return rateLimitResponse();
   }
 
-  // Require CRON_SECRET via body OR Authorization header (Vercel cron sends header)
+  // Fail closed: resolve is a privileged operation — CRON_SECRET must be configured
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return noStoreJson({ error: "Service not configured." }, { status: 503 });
+  }
+
   const authHeader = req.headers.get("authorization");
   const body = await readJsonBody<ResolveBody>(req);
   if (!body) return noStoreJson({ error: "Invalid request body." }, { status: 400 });
 
   const { marketId, outcome, secret } = body;
 
-  if (RESOLVE_SECRET) {
-    const validHeader = authHeader === `Bearer ${RESOLVE_SECRET}`;
-    const validBody = secret === RESOLVE_SECRET;
-    if (!validHeader && !validBody) {
-      return noStoreJson({ error: "Unauthorized." }, { status: 401 });
-    }
+  const validHeader = authHeader === `Bearer ${cronSecret}`;
+  const validBody   = secret === cronSecret;
+  if (!validHeader && !validBody) {
+    return noStoreJson({ error: "Unauthorized." }, { status: 401 });
   }
 
   if (!marketId || !outcome) {
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${RESOLVE_SECRET ?? ""}`,
+        "Authorization": `Bearer ${cronSecret}`,
       },
       body: JSON.stringify({ marketId, outcome, nullifiers }),
     }).catch(() => null);

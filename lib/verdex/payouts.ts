@@ -143,8 +143,9 @@ export async function processQueuedPayouts(opts: { nullifier?: string; limit?: n
   if (treasury.wldBalance < totalDue) {
     return { ...base, error: `Insufficient treasury WLD: have ${treasury.wldBalance.toFixed(4)}, need ${totalDue.toFixed(4)}.` };
   }
-  if (treasury.ethBalance <= 0) {
-    return { ...base, error: "Treasury has no ETH on World Chain for gas." };
+  // Need at least 0.001 ETH — covers ~10 ERC-20 transfer gas fees on World Chain
+  if (treasury.ethBalance < 0.001) {
+    return { ...base, error: `Treasury ETH too low for gas: ${treasury.ethBalance.toFixed(6)} ETH (need ≥ 0.001).` };
   }
 
   for (const row of rows as PayoutRow[]) {

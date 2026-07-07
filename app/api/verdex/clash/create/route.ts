@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClash, isVerdexDbReady } from "@/lib/verdex/db";
-import { isRateLimited, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
+import { isRateLimited, isWalletAddress, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
 import type { VerdexClash } from "@/types/verdex";
 
 type CreateClashBody = {
@@ -26,6 +26,10 @@ export async function POST(req: NextRequest) {
 
   if (!id || !marketId || !marketTitle || !creatorNullifier || !creatorPosition || !stakeWld || !creatorTxRef) {
     return noStoreJson({ error: "Missing required clash fields." }, { status: 400 });
+  }
+
+  if (!isWalletAddress(creatorNullifier)) {
+    return noStoreJson({ error: "Invalid creator nullifier." }, { status: 400 });
   }
 
   if (!["yes", "no"].includes(creatorPosition)) {
