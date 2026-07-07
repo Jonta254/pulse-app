@@ -15,12 +15,20 @@ import type { VerdexMarket } from "@/types/verdex";
 const KRAKEN = "https://api.kraken.com/0/public";
 
 type CoinCfg = { name: string; pair: string; display: string; decimals: number };
+// Append-only — pairs are encoded in live market IDs (do not remove or reorder)
 const COINS: CoinCfg[] = [
-  { name: "BTC", pair: "XBTUSD", display: "BTC/USD", decimals: 0 },
-  { name: "ETH", pair: "ETHUSD", display: "ETH/USD", decimals: 0 },
-  { name: "SOL", pair: "SOLUSD", display: "SOL/USD", decimals: 2 },
-  { name: "WLD", pair: "WLDUSD", display: "WLD/USD", decimals: 4 },
-  { name: "XRP", pair: "XRPUSD", display: "XRP/USD", decimals: 4 },
+  { name: "BTC",  pair: "XBTUSD",  display: "BTC/USD",  decimals: 0 },
+  { name: "ETH",  pair: "ETHUSD",  display: "ETH/USD",  decimals: 0 },
+  { name: "SOL",  pair: "SOLUSD",  display: "SOL/USD",  decimals: 2 },
+  { name: "WLD",  pair: "WLDUSD",  display: "WLD/USD",  decimals: 4 },
+  { name: "XRP",  pair: "XRPUSD",  display: "XRP/USD",  decimals: 4 },
+  { name: "ADA",  pair: "ADAUSD",  display: "ADA/USD",  decimals: 4 },
+  { name: "AVAX", pair: "AVAXUSD", display: "AVAX/USD", decimals: 2 },
+  { name: "LINK", pair: "LINKUSD", display: "LINK/USD", decimals: 3 },
+  { name: "DOT",  pair: "DOTUSD",  display: "DOT/USD",  decimals: 3 },
+  { name: "DOGE", pair: "XDGUSD",  display: "DOGE/USD", decimals: 5 },
+  { name: "LTC",  pair: "XLTCZUSD",display: "LTC/USD",  decimals: 2 },
+  { name: "MATIC",pair: "MATICUSD",display: "MATIC/USD",decimals: 4 },
 ];
 
 function coinByPair(pair: string): CoinCfg | undefined {

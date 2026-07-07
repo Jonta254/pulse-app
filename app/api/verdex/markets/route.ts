@@ -8,7 +8,7 @@ let seedSynced = false;
 
 // Track last oracle trigger time to avoid spamming it
 let lastOracleTrigger = 0;
-const ORACLE_THROTTLE_MS = 60 * 60 * 1000; // 1 hour between auto-triggers
+const ORACLE_THROTTLE_MS = 20 * 60 * 1000; // 20 min between auto-triggers
 
 /**
  * Fire the oracle in the background (non-blocking) when markets are stale.
@@ -33,7 +33,9 @@ export async function GET(req: NextRequest) {
     return rateLimitResponse();
   }
 
-  const category = req.nextUrl.searchParams.get("category") ?? "all";
+  const VALID_CATEGORIES = new Set(["all", "crypto", "sports", "world", "culture", "micro"]);
+  const rawCategory = req.nextUrl.searchParams.get("category") ?? "all";
+  const category = VALID_CATEGORIES.has(rawCategory) ? rawCategory : "all";
   const forceReseed = req.nextUrl.searchParams.get("reseed") === "1";
 
   if (!isVerdexDbReady()) {
@@ -57,9 +59,8 @@ export async function GET(req: NextRequest) {
     return noStoreJson({ ok: false, error: "Failed to load markets." }, { status: 500 });
   }
 
-  // Auto-trigger oracle if DB has very few open markets (stale / post-cron gap)
-  // This means any user visit can regenerate markets — no waiting for daily cron
-  if (markets.length < 6) {
+  // Auto-trigger oracle if DB is running low — any user visit can top up markets
+  if (markets.length < 18) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? `https://${req.headers.get("host") ?? ""}`;
     void triggerOracleIfStale(appUrl);
   }

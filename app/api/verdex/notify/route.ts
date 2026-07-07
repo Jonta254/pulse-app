@@ -76,23 +76,21 @@ export async function POST(req: NextRequest) {
     return rateLimitResponse();
   }
 
-  // Auth: Vercel CRON_SECRET header or body secret for server-to-server calls
+  // Auth: always required — fail closed if CRON_SECRET is not configured
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = req.headers.get("authorization");
-    const body = await readJsonBody<NotifyBody>(req);
-    if (!body) return noStoreJson({ error: "Invalid request body." }, { status: 400 });
-
-    const callerSecret = authHeader?.replace("Bearer ", "") ?? body.cronSecret ?? "";
-    if (callerSecret !== cronSecret) {
-      return noStoreJson({ error: "Unauthorized." }, { status: 401 });
-    }
-
-    return sendNotifications(body);
+  if (!cronSecret) {
+    return noStoreJson({ error: "Service not configured." }, { status: 503 });
   }
 
+  const authHeader = req.headers.get("authorization");
   const body = await readJsonBody<NotifyBody>(req);
   if (!body) return noStoreJson({ error: "Invalid request body." }, { status: 400 });
+
+  const callerSecret = authHeader?.replace("Bearer ", "") ?? body.cronSecret ?? "";
+  if (callerSecret !== cronSecret) {
+    return noStoreJson({ error: "Unauthorized." }, { status: 401 });
+  }
+
   return sendNotifications(body);
 }
 

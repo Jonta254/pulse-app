@@ -39,6 +39,6 @@ export function isWalletAddress(addr: string) {
 
 export function verifyCronSecret(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true;
+  if (!secret) return false; // fail closed — must be configured
   return req.headers.get("authorization") === `Bearer ${secret}`;
 }

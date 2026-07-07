@@ -130,14 +130,20 @@ export async function GET(req: NextRequest) {
 
   // Fairness gate: drop any market without a binary question and a precise,
   // sourced resolution rule — bettors must be able to verify outcomes themselves.
+  const TRUSTED_SOURCES = /binance|coinbase|kraken|coingecko|coinmarketcap|espn|bls\.gov|federalreserve|ecb|nba\.com|fia\.com|fifa\.com|ufc\.com|usgs\.gov|worldcoin|etherscan|alternative\.me|thespacedevs/i;
+  const VALID_CATS = new Set(["crypto", "sports", "world", "culture", "micro"]);
   const rejected: string[] = [];
   generated = generated.filter((item) => {
+    const title = typeof item.title === "string" ? item.title.trim() : "";
+    const desc  = typeof item.description === "string" ? item.description : "";
     const okShape =
-      typeof item.title === "string" && item.title.trim().endsWith("?") && item.title.length <= 140 &&
-      typeof item.description === "string" && item.description.length <= 400 &&
-      /resolves yes if/i.test(item.description) &&
-      /source:/i.test(item.description);
-    if (!okShape) rejected.push(item?.title ?? "(untitled)");
+      title.endsWith("?") && title.length >= 15 && title.length <= 140 &&
+      desc.length >= 20 && desc.length <= 400 &&
+      /resolves yes if/i.test(desc) &&
+      /source:/i.test(desc) &&
+      TRUSTED_SOURCES.test(desc) &&
+      VALID_CATS.has(item.category);
+    if (!okShape) rejected.push(title || "(untitled)");
     return okShape;
   });
 

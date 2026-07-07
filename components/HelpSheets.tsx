@@ -129,7 +129,7 @@ export function UserGuideSheet({ open, onClose }: { open: boolean; onClose: () =
 export function TermsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Sheet open={open} onClose={onClose} title="Terms of Use" icon={<FileText size={16} />}>
-      <P><strong>Last updated: June 2026</strong></P>
+      <P><strong>Effective July 7, 2026</strong></P>
 
       <Section title="1. Acceptance">
         <P>By accessing or using VeRdex ("the App"), you agree to be bound by these Terms of Use. If you do not agree, do not use the App.</P>
@@ -181,7 +181,7 @@ export function TermsSheet({ open, onClose }: { open: boolean; onClose: () => vo
       </Section>
 
       <Section title="10. Contact">
-        <P>For questions about these Terms, contact us through the World Developer Portal or the App's feedback channel.</P>
+        <P>For questions about these Terms, email <strong>brianokindo2022@gmail.com</strong> or use the App&apos;s feedback channel.</P>
       </Section>
     </Sheet>
   );
@@ -192,7 +192,7 @@ export function TermsSheet({ open, onClose }: { open: boolean; onClose: () => vo
 export function PrivacySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Sheet open={open} onClose={onClose} title="Privacy Policy" icon={<Lock size={16} />}>
-      <P><strong>Last updated: June 2026</strong></P>
+      <P><strong>Effective July 7, 2026</strong></P>
 
       <Section title="1. Overview">
         <P>VeRdex is built on World ID — a privacy-first identity protocol. We collect only what is necessary to operate the prediction market. We do not sell your data.</P>
@@ -248,8 +248,9 @@ export function PrivacySheet({ open, onClose }: { open: boolean; onClose: () => 
         <P>We use the following services:</P>
         <Bullet items={[
           "World Developer Portal — for World ID verification and wallet auth.",
-          "Vercel — for hosting and analytics (anonymized, no cross-site tracking).",
-          "Supabase — for database storage.",
+          "Vercel — for hosting and serverless compute.",
+          "Supabase — for database storage (encrypted at rest, SOC 2 certified).",
+          "Anthropic Claude — for AI-generated market questions (no personal data included in prompts).",
         ]} />
         <P>We do not share your data with advertisers or data brokers.</P>
       </Section>
@@ -260,7 +261,7 @@ export function PrivacySheet({ open, onClose }: { open: boolean; onClose: () => 
           "Request deletion of your account and associated data.",
           "Opt out of anonymized analytics (contact us).",
         ]} />
-        <P>To exercise these rights, use the feedback channel inside the App or contact us through the World Developer Portal.</P>
+        <P>To exercise these rights, email <strong>brianokindo2022@gmail.com</strong> with your World ID nullifier (visible above in your profile).</P>
       </Section>
 
       <Section title="10. Changes">

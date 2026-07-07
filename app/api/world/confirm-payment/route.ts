@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
   const { payload, reference, amount } = body;
   const token = (body.token ?? "WLD").toUpperCase();
 
-  if (!payload?.transactionId || !reference || payload.reference !== reference || !amount || reference.length > 36) {
+  const isValidRef = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reference ?? "");
+  if (!payload?.transactionId || !reference || payload.reference !== reference || !amount || !isValidRef) {
     return noStoreJson({ error: "Missing payment confirmation data." }, { status: 400 });
   }
 

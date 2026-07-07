@@ -19,16 +19,16 @@ import { noStoreJson } from "@/lib/serverApi";
 
 export const maxDuration = 300;
 
-const FLASH_TARGET = 6;
-const DAILY_TARGET = 6;
-const SPORTS_TARGET = 9; // ~3 World Cup matches × 3 markets each
-const NBA_TARGET = 4;    // 2 games × (winner + total points)
-const WEATHER_TARGET = 4;
-const WIKI_TARGET = 3;
-const ROCKET_TARGET = 2;
-const FX_TARGET = 2;
-const FNG_TARGET = 1;
-const PM_TARGET = 3; // mirrored top-volume Polymarket questions
+const FLASH_TARGET = 14;  // always 14 live micro markets
+const DAILY_TARGET = 12;  // 12 daily crypto price markets
+const SPORTS_TARGET = 18; // ~6 World Cup matches × 3 markets each
+const NBA_TARGET = 8;     // 4 games × (winner + total points)
+const WEATHER_TARGET = 10;
+const WIKI_TARGET = 6;
+const ROCKET_TARGET = 4;
+const FX_TARGET = 6;
+const FNG_TARGET = 2;
+const PM_TARGET = 8;  // mirror top-volume Polymarket questions
 
 let lastRunAt = 0; // per-instance throttle for self-triggered calls
 
