@@ -77,11 +77,14 @@ export function calcPotentialPayout(
 }
 
 export function calcOdds(position: "yes" | "no", yesPool: number, noPool: number): string {
-  const total = yesPool + noPool;
-  if (total === 0) return "2.00×";
-  const pct = position === "yes" ? yesPool / total : noPool / total;
-  if (pct === 0) return "∞";
-  return `${(1 / pct).toFixed(2)}×`;
+  // Must derive from calcPotentialPayout (the same formula resolveMarket uses
+  // to actually pay out) — otherwise the odds badge shown on a card can
+  // promise a multiplier the real payout can't honor. Priced per 1 WLD so the
+  // number reflects real pool depth: a fresh market truthfully shows 1.00×
+  // ("be the first to bet") instead of a fake 2.00× that collapses to zero
+  // profit the moment someone actually places the bet.
+  const payout = calcPotentialPayout(1, position, yesPool, noPool);
+  return `${payout.toFixed(2)}×`;
 }
 
 // ── Countdown ────────────────────────────────────────────────────────────────
@@ -104,10 +107,30 @@ export function formatCountdown(closesAt: string): { label: string; urgent: bool
 
 // ── Stats ────────────────────────────────────────────────────────────────────
 
+/**
+ * Definitive won/lost/refunded/open classification for a settled bet.
+ *
+ * Payout amount alone is ambiguous: a genuine win against zero opposing pool
+ * pays back exactly the stake (payout === amountWld) — the same number a
+ * voided/refunded market produces. Prefer the server-joined market status +
+ * resolved outcome (ground truth); fall back to the payout heuristic only for
+ * bets synced before that data was available.
+ */
+export function getBetResult(bet: VerdexBet): "won" | "lost" | "refunded" | "open" {
+  if (!bet.settled) return "open";
+  if (bet.marketStatus === "cancelled") return "refunded";
+  if (bet.marketStatus === "resolved" && bet.marketOutcome) {
+    return bet.position === bet.marketOutcome ? "won" : "lost";
+  }
+  const refunded = bet.payout != null && Math.abs(bet.payout - bet.amountWld) < 1e-9;
+  if (refunded) return "refunded";
+  return (bet.payout ?? 0) > bet.amountWld ? "won" : "lost";
+}
+
 export function calcPlayerStats(bets: VerdexBet[]): VerdexPlayerStats {
   const confirmed = bets.filter((b) => b.confirmed);
   const settled = confirmed.filter((b) => b.settled);
-  const won = settled.filter((b) => (b.payout ?? 0) > b.amountWld);
+  const won = settled.filter((b) => getBetResult(b) === "won");
 
   const totalWon = won.reduce((s, b) => s + (b.payout ?? 0), 0);
   const totalWagered = confirmed.reduce((s, b) => s + b.amountWld, 0);
@@ -116,7 +139,7 @@ export function calcPlayerStats(bets: VerdexBet[]): VerdexPlayerStats {
   // Simple streak: count consecutive wins from latest bet backwards
   let streak = 0;
   for (let i = settled.length - 1; i >= 0; i--) {
-    if ((settled[i].payout ?? 0) > settled[i].amountWld) streak++;
+    if (getBetResult(settled[i]) === "won") streak++;
     else break;
   }
 

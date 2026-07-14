@@ -26,6 +26,7 @@ import type { VerifiedHuman } from "@/types/user";
 import type { VerdexBet, VerdexCopyFollow, VerdexLeaderEntry } from "@/types/verdex";
 import type { VerdexTheme } from "@/lib/verdex/theme";
 import { getStreakMultiplier } from "@/lib/verdex/data";
+import { getBetResult } from "@/lib/verdex/utils";
 import { shareWithWorld, hapticSuccess } from "@/lib/world";
 import { VERDEX_APP_ID } from "@/lib/worldConfig";
 
@@ -53,13 +54,13 @@ function truncateAddress(addr: string) {
 function winRate(bets: VerdexBet[]): number {
   const settled = bets.filter((b) => b.settled);
   if (!settled.length) return 0;
-  const won = settled.filter((b) => (b.payout ?? 0) > b.amountWld).length;
+  const won = settled.filter((b) => getBetResult(b) === "won").length;
   return Math.round((won / settled.length) * 100);
 }
 
 function totalWldWon(bets: VerdexBet[]): string {
   const total = bets
-    .filter((b) => b.settled && (b.payout ?? 0) > b.amountWld)
+    .filter((b) => getBetResult(b) === "won")
     .reduce((s, b) => s + (b.payout ?? 0), 0);
   return total > 0 ? total.toFixed(2) : "—";
 }
@@ -68,7 +69,7 @@ function currentStreak(bets: VerdexBet[]): number {
   const settled = [...bets.filter((b) => b.settled)].reverse();
   let streak = 0;
   for (const b of settled) {
-    if ((b.payout ?? 0) > b.amountWld) streak++;
+    if (getBetResult(b) === "won") streak++;
     else break;
   }
   return streak;
@@ -315,20 +316,22 @@ export function ProfileSheet({
             </div>
             <div className="verdex-profile-bets">
               {recentBets.map((bet) => {
-                const wonBet = bet.settled && (bet.payout ?? 0) > bet.amountWld;
-                const lostBet = bet.settled && !wonBet;
+                const result = getBetResult(bet);
+                const wonBet = result === "won";
+                const lostBet = result === "lost";
+                const refundedBet = result === "refunded";
                 return (
                   <div key={bet.id} className="verdex-profile-bet-row">
-                    <div className={`verdex-profile-bet-dot ${wonBet ? "won" : lostBet ? "lost" : "pending"}`} />
+                    <div className={`verdex-profile-bet-dot ${wonBet ? "won" : lostBet ? "lost" : refundedBet ? "pending" : "pending"}`} />
                     <div className="verdex-profile-bet-info">
                       <span className="verdex-profile-bet-title">{bet.marketTitle ?? bet.marketId}</span>
                       <span className="verdex-profile-bet-meta">
                         {bet.position.toUpperCase()} · {bet.amountWld} WLD
-                        {wonBet && bet.payout && <span className="verdex-profile-bet-won"> +{bet.payout.toFixed(2)} WLD</span>}
+                        {wonBet && bet.payout != null && <span className="verdex-profile-bet-won"> +{bet.payout.toFixed(2)} WLD</span>}
                       </span>
                     </div>
                     <span className={`verdex-profile-bet-badge ${wonBet ? "won" : lostBet ? "lost" : "open"}`}>
-                      {wonBet ? "✓ Won" : lostBet ? "✗ Lost" : "Open"}
+                      {wonBet ? "✓ Won" : lostBet ? "✗ Lost" : refundedBet ? "↩ Refunded" : "Open"}
                     </span>
                   </div>
                 );

@@ -31,6 +31,13 @@ export type VerdexBet = {
   /** Actual payout after market settles (from server). */
   payout?: number;
   settled?: boolean;
+  /**
+   * Server-side ground truth for the bet's market, used to tell a genuine
+   * win apart from a void/refund — both can leave payout === amountWld
+   * (a win with no opposing pool to redistribute pays back only the stake).
+   */
+  marketStatus?: VerdexMarketStatus;
+  marketOutcome?: "yes" | "no" | null;
 };
 
 export type VerdexGoal = {

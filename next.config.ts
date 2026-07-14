@@ -28,6 +28,7 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
+    const isProd = process.env.NODE_ENV === "production";
     return [
       {
         // All pages — security headers + preconnect hints
@@ -59,13 +60,16 @@ const nextConfig: NextConfig = {
           ].join(", ") },
         ],
       },
-      {
-        // Next.js static chunks are content-hashed — cache forever
+      // Next.js static chunks are content-hashed only in production builds —
+      // Turbopack dev filenames are stable across rebuilds, so an immutable
+      // cache header here makes browsers serve stale JS after every edit or
+      // dev-server restart. Production-only, matching how the files are named.
+      ...(isProd ? [{
         source: "/_next/static/(.*)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
-      },
+      }] : []),
       {
         // Public images — 24h cache, revalidate in background
         source: "/(.*\\.png|.*\\.jpg|.*\\.webp|.*\\.svg|.*\\.ico)",

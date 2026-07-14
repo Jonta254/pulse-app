@@ -15,6 +15,7 @@ import {
   categoryMeta,
   formatCountdown,
   formatPoolSize,
+  getBetResult,
   loadVerdexBets,
   loadVerdexCombos,
   loadVerdexGoals,
@@ -1150,7 +1151,11 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
     const wallet = humanIdentity?.wallet ?? "";
     if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) return;
 
-    type ServerBet = { id: string; marketId: string; marketTitle: string; position: "yes" | "no"; amountWld: number; payout?: number; settled: boolean; placedAt: string };
+    type ServerBet = {
+      id: string; marketId: string; marketTitle: string; position: "yes" | "no"; amountWld: number;
+      payout?: number; settled: boolean; placedAt: string;
+      marketStatus?: string; marketOutcome?: "yes" | "no" | null;
+    };
     fetch(`/api/verdex/bets?nullifier=${wallet}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((payload: { ok: boolean; bets?: ServerBet[] }) => {
@@ -1169,6 +1174,8 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
               confirmed: true,
               payout: sb.payout ?? existing?.payout,
               settled: sb.settled || existing?.settled,
+              marketStatus: (sb.marketStatus as VerdexBet["marketStatus"]) ?? existing?.marketStatus,
+              marketOutcome: sb.marketOutcome !== undefined ? sb.marketOutcome : existing?.marketOutcome,
             });
           }
           return [...byId.values()].sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
@@ -1732,10 +1739,11 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
           ) : (
             <div className="verdex-mybets-list">
               {[...bets].reverse().map((bet) => {
-                const refunded = Boolean(bet.settled && bet.payout != null && Math.abs(bet.payout - bet.amountWld) < 1e-9);
-                const won  = bet.settled && !refunded && (bet.payout ?? 0) > bet.amountWld;
-                const lost = bet.settled && !refunded && !won;
-                const open = !bet.settled;
+                const result = getBetResult(bet);
+                const refunded = result === "refunded";
+                const won  = result === "won";
+                const lost = result === "lost";
+                const open = result === "open";
 
                 // For open bets: use stored snapshot first, fall back to live market
                 const market = localMarkets.find(m => m.id === bet.marketId);
