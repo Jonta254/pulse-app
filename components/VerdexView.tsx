@@ -118,6 +118,7 @@ function MarketCard({
   onClash,
   onAddCombo,
   onRemoveCombo,
+  onCategoryClick,
 }: {
   market: VerdexMarket;
   myBet: VerdexBet | undefined;
@@ -126,6 +127,7 @@ function MarketCard({
   onClash: (market: VerdexMarket) => void;
   onAddCombo: (market: VerdexMarket, position: "yes" | "no") => void;
   onRemoveCombo: (marketId: string) => void;
+  onCategoryClick?: (cat: VerdexCategory) => void;
 }) {
   const { expired, urgent } = formatCountdown(market.closesAt);
   const meta    = categoryMeta[market.category];
@@ -151,9 +153,22 @@ function MarketCard({
       {/* Meta row */}
       <div className="mc-meta">
         <div className="mc-meta-left">
-          <span className="mc-cat" style={{ color: meta.color, background: `${meta.color}18`, borderColor: `${meta.color}38` }}>
-            {meta.emoji} {meta.label.toUpperCase()}
-          </span>
+          {onCategoryClick ? (
+            <button
+              className="mc-cat mc-cat--btn"
+              style={{ color: meta.color, background: `${meta.color}18`, borderColor: `${meta.color}38` }}
+              onClick={() => onCategoryClick(market.category)}
+              title={`View all ${meta.label} markets`}
+              type="button"
+            >
+              {meta.emoji} {meta.label.toUpperCase()}
+              <ChevronRight size={10} strokeWidth={3} />
+            </button>
+          ) : (
+            <span className="mc-cat" style={{ color: meta.color, background: `${meta.color}18`, borderColor: `${meta.color}38` }}>
+              {meta.emoji} {meta.label.toUpperCase()}
+            </span>
+          )}
           {market.featured && <span className="mc-badge-feat">⭐ FEATURED</span>}
           {isHot && isLive && !market.featured && <span className="mc-badge-hot">🔥</span>}
           {market.aiGenerated && <span className="mc-badge-ai">AI</span>}
@@ -830,7 +845,17 @@ function LivePayoutsTicker() {
 
 // ── Live network intelligence hero ───────────────────────────────────────────
 
-function HeroNetworkCard({ markets }: { markets: VerdexMarket[] }) {
+function HeroNetworkCard({
+  markets,
+  categoryCounts,
+  totalMarkets,
+  onExplore,
+}: {
+  markets: VerdexMarket[];
+  categoryCounts: Partial<Record<VerdexCategory, number>>;
+  totalMarkets: number;
+  onExplore: (cat: VerdexCategory) => void;
+}) {
   const now = Date.now();
   const open = markets.filter((m) => m.status === "open" && new Date(m.closesAt).getTime() > now);
   const totalHumans  = open.reduce((s, m) => s + (m.totalBettors ?? 0), 0);
@@ -839,6 +864,11 @@ function HeroNetworkCard({ markets }: { markets: VerdexMarket[] }) {
     ? Math.round(open.reduce((s, m) => s + calcYesPct(m.yesPool, m.noPool), 0) / open.length)
     : 50;
   const hasActivity  = totalWld > 0 || totalHumans > 0;
+  // The oracle keeps a rolling window open at all times — surface the full
+  // catalogue size too, so the network never reads as smaller than it is.
+  const catalogueSize = Math.max(totalMarkets, open.length, markets.length);
+  const exploreCats = (["crypto", "sports", "world", "culture", "micro"] as VerdexCategory[])
+    .filter((c) => (categoryCounts[c] ?? 0) > 0);
 
   return (
     <div className="mc-network">
@@ -849,8 +879,8 @@ function HeroNetworkCard({ markets }: { markets: VerdexMarket[] }) {
 
       <div className="mc-network-stats">
         <div className="mc-network-stat">
-          <strong>{open.length}</strong>
-          <span>Open Markets</span>
+          <strong>{catalogueSize > 0 ? catalogueSize : "—"}</strong>
+          <span>{catalogueSize > open.length ? "Markets Live" : "Open Markets"}</span>
         </div>
         <div className="mc-network-stat">
           <strong>{totalHumans > 0 ? totalHumans.toLocaleString() : "—"}</strong>
@@ -870,6 +900,28 @@ function HeroNetworkCard({ markets }: { markets: VerdexMarket[] }) {
         <span className="mc-network-no-lbl">{100 - avgYesPct}% NO</span>
       </div>
 
+      {exploreCats.length > 0 && (
+        <div className="mc-network-explore">
+          <span className="mc-network-explore-lbl">Jump into a category</span>
+          <div className="mc-network-explore-row">
+            {exploreCats.map((c) => {
+              const m = categoryMeta[c];
+              return (
+                <button
+                  key={c}
+                  className="mc-network-explore-chip"
+                  style={{ borderColor: `${m.color}40`, color: m.color }}
+                  onClick={() => onExplore(c)}
+                  type="button"
+                >
+                  {m.emoji} {m.label} <b>{categoryCounts[c]}</b>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {!hasActivity && (
         <p className="mc-network-cta">Be among the first verified humans to predict →</p>
       )}
@@ -886,6 +938,7 @@ function FeaturedSpotlight({
   onClash,
   onAddCombo,
   onRemoveCombo,
+  onCategoryClick,
 }: {
   market: VerdexMarket;
   comboPick: VerdexComboPick | undefined;
@@ -893,6 +946,7 @@ function FeaturedSpotlight({
   onClash: (market: VerdexMarket) => void;
   onAddCombo: (market: VerdexMarket, position: "yes" | "no") => void;
   onRemoveCombo: (marketId: string) => void;
+  onCategoryClick?: (cat: VerdexCategory) => void;
 }) {
   const { expired } = formatCountdown(market.closesAt);
   const yesPct  = calcYesPct(market.yesPool, market.noPool);
@@ -900,6 +954,7 @@ function FeaturedSpotlight({
   const noOdds  = calcOdds("no",  market.yesPool, market.noPool);
   const isLive  = market.status === "open" && !expired;
   const total   = market.yesPool + market.noPool;
+  const meta    = categoryMeta[market.category];
 
   return (
     <div className="mc-spotlight">
@@ -908,6 +963,18 @@ function FeaturedSpotlight({
         {isLive && <span className="vmc-live-dot" aria-label="Live" />}
         <CountdownChip closesAt={market.closesAt} />
       </div>
+
+      {onCategoryClick ? (
+        <button
+          className="mc-spotlight-cat"
+          style={{ color: meta.color, background: `${meta.color}20`, borderColor: `${meta.color}40` }}
+          onClick={() => onCategoryClick(market.category)}
+          title={`View all ${meta.label} markets`}
+          type="button"
+        >
+          {meta.emoji} More {meta.label} markets <ChevronRight size={11} strokeWidth={3} />
+        </button>
+      ) : null}
 
       <h3 className="mc-spotlight-title">{market.title}</h3>
 
@@ -971,6 +1038,10 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   const [goalSheet, setGoalSheet] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [localMarkets, setLocalMarkets] = useState<VerdexMarket[]>(() => applyLocalPools(seedMarkets));
+  // Full catalogue counts, independent of the active category filter — so the
+  // "browse other markets" chips stay accurate no matter which tab is open.
+  const [categoryCounts, setCategoryCounts] = useState<Partial<Record<VerdexCategory, number>>>({});
+  const [totalMarketsAll, setTotalMarketsAll] = useState(0);
   // Real players only — starts empty until the DB returns actual rankings
   const [leaderboard, setLeaderboard] = useState<typeof seedLeaderboard>([]);
   const stats = calcPlayerStats(bets);
@@ -1016,6 +1087,34 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
     const t = setInterval(() => void fetchMarkets(category), 3 * 60_000);
     return () => clearInterval(t);
   }, [category, fetchMarkets]);
+
+  // ── Full catalogue counts (always "all", regardless of active tab) ─────────
+  // Drives the category chips so a user on e.g. Sports still sees how many
+  // Crypto/World/Culture markets are waiting, instead of just what's on screen.
+  useEffect(() => {
+    let alive = true;
+    const loadCounts = () =>
+      fetch("/api/verdex/markets?category=all", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((payload: { ok: boolean; markets?: VerdexMarket[] }) => {
+          if (!alive || !payload.ok || !payload.markets) return;
+          const counts: Partial<Record<VerdexCategory, number>> = {};
+          for (const m of payload.markets) counts[m.category] = (counts[m.category] ?? 0) + 1;
+          setCategoryCounts(counts);
+          setTotalMarketsAll(payload.markets.length);
+        })
+        .catch(() => null);
+    void loadCounts();
+    const t = setInterval(loadCounts, 3 * 60_000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  // ── Jump straight into a category from anywhere (cards, spotlight, hero) ───
+  const handleCategoryJump = useCallback((cat: VerdexCategory) => {
+    setVerdexTab("markets");
+    setCategory(cat);
+    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   // ── Fetch flash markets (auto-refresh every 60 sec) ─────────────────────────
   const [flashMarkets, setFlashMarkets] = useState<VerdexMarket[]>([]);
@@ -1102,6 +1201,17 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
     closed.sort((a, b) => new Date(b.closesAt).getTime() - new Date(a.closesAt).getTime());
     return [...open, ...closed];
   })();
+
+  // Spotlighted market — computed once so the list below can exclude it and
+  // avoid showing the exact same market twice back-to-back.
+  const spotlightMarket = (() => {
+    const now = Date.now();
+    const spot = sorted.find((m) => m.featured && m.status === "open" && new Date(m.closesAt).getTime() > now);
+    if (!spot) return null;
+    if (bets.some((b) => b.marketId === spot.id && b.confirmed)) return null;
+    return spot;
+  })();
+  const listMarkets = spotlightMarket ? sorted.filter((m) => m.id !== spotlightMarket.id) : sorted;
 
   // ── Combo handlers ───────────────────────────────────────────────────────────
   function handleAddCombo(market: VerdexMarket, position: "yes" | "no") {
@@ -1427,6 +1537,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
             {(["all", "micro", "crypto", "sports", "world", "culture"] as VerdexCategory[]).map((cat) => {
               const m = categoryMeta[cat];
               const active = category === cat;
+              const count = cat === "all" ? totalMarketsAll : categoryCounts[cat];
               return (
                 <button
                   key={cat}
@@ -1436,6 +1547,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                   type="button"
                 >
                   {m.emoji} {m.label}
+                  {!!count && <span className="mc-cat-pill-count">{count}</span>}
                 </button>
               );
             })}
@@ -1462,35 +1574,34 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
           )}
 
           {/* Live network intelligence hero */}
-          {category === "all" && <HeroNetworkCard markets={localMarkets} />}
+          {category === "all" && (
+            <HeroNetworkCard
+              markets={localMarkets}
+              categoryCounts={categoryCounts}
+              totalMarkets={totalMarketsAll}
+              onExplore={handleCategoryJump}
+            />
+          )}
 
           {/* Featured market spotlight — shown for any category with a featured open market */}
-          {(() => {
-            const now = Date.now();
-            const spot = sorted.find(
-              (m) => m.featured && m.status === "open" && new Date(m.closesAt).getTime() > now,
-            );
-            if (!spot) return null;
-            const alreadyBet = bets.some((b) => b.marketId === spot.id && b.confirmed);
-            if (alreadyBet) return null;
-            return (
-              <FeaturedSpotlight
-                market={spot}
-                comboPick={comboPicks.find((p) => p.marketId === spot.id)}
-                onBet={(m, pos) => setBetSheet({ market: m, position: pos })}
-                onClash={(m) => setClashSheet(m)}
-                onAddCombo={handleAddCombo}
-                onRemoveCombo={handleRemoveCombo}
-              />
-            );
-          })()}
+          {spotlightMarket && (
+            <FeaturedSpotlight
+              market={spotlightMarket}
+              comboPick={comboPicks.find((p) => p.marketId === spotlightMarket.id)}
+              onBet={(m, pos) => setBetSheet({ market: m, position: pos })}
+              onClash={(m) => setClashSheet(m)}
+              onAddCombo={handleAddCombo}
+              onRemoveCombo={handleRemoveCombo}
+              onCategoryClick={category === "all" ? handleCategoryJump : undefined}
+            />
+          )}
 
           {/* Market list v2 */}
           <div className="mc-list">
-            {sorted.length === 0 && (
+            {listMarkets.length === 0 && (
               <div className="verdex-empty">No open {category} markets right now. Check back soon.</div>
             )}
-            {sorted.map((market) => (
+            {listMarkets.map((market) => (
               <MarketCard
                 key={market.id}
                 market={market}
@@ -1500,6 +1611,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                 onClash={(m) => setClashSheet(m)}
                 onAddCombo={handleAddCombo}
                 onRemoveCombo={handleRemoveCombo}
+                onCategoryClick={category === "all" ? handleCategoryJump : undefined}
               />
             ))}
           </div>

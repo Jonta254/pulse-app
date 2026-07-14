@@ -1708,6 +1708,13 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   background: var(--verdex-accent); border-color: var(--verdex-accent); color: #fff;
 }
 .mc-cat-pill:not(.active):active { background: var(--verdex-surface-2); }
+.mc-cat-pill-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 15px; height: 15px; padding: 0 4px; border-radius: 999px;
+  font-size: 0.6rem; font-weight: 950;
+  background: rgba(0,0,0,0.14); color: inherit; opacity: 0.85;
+}
+.mc-cat-pill.active .mc-cat-pill-count { background: rgba(255,255,255,0.25); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    MARKET CARD v3 — Signal Design
@@ -1752,6 +1759,11 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   font-size: 0.61rem; font-weight: 900; letter-spacing: 0.05em;
   border: 1px solid transparent; flex-shrink: 0;
 }
+button.mc-cat.mc-cat--btn {
+  appearance: none; -webkit-appearance: none; font-family: inherit; cursor: pointer;
+  transition: transform 0.12s, filter 0.12s;
+}
+button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.15); }
 .mc-badge-feat { font-size: 0.57rem; font-weight: 900; letter-spacing: 0.04em; color: var(--verdex-gold); }
 .mc-badge-hot  { font-size: 0.57rem; font-weight: 900; letter-spacing: 0.04em; color: #fb923c; }
 .mc-badge-ai   {
@@ -2031,6 +2043,24 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .mc-network-cta {
   margin: 0; font-size: 0.77rem; font-weight: 750; color: var(--verdex-accent); text-align: center;
 }
+.mc-network-explore { display: grid; gap: 7px; }
+.mc-network-explore-lbl {
+  font-size: 0.63rem; font-weight: 850; color: var(--verdex-muted);
+}
+.mc-network-explore-row {
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  -webkit-overflow-scrolling: auto; touch-action: pan-x;
+}
+.mc-network-explore-row::-webkit-scrollbar { display: none; }
+.mc-network-explore-chip {
+  flex: 0 0 auto; appearance: none; -webkit-appearance: none; font-family: inherit; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+  padding: 6px 10px; border-radius: 999px; border: 1px solid var(--verdex-border);
+  background: var(--verdex-surface); font-size: 0.7rem; font-weight: 850;
+  transition: transform 0.12s, filter 0.12s;
+}
+.mc-network-explore-chip b { font-weight: 950; }
+.mc-network-explore-chip:active { transform: scale(0.95); filter: brightness(1.15); }
 
 /* ── Featured market spotlight ──────────────────────────────────────────── */
 .mc-spotlight {
@@ -2051,6 +2081,14 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .mc-spotlight-title {
   margin: 0; font-size: 1.05rem; font-weight: 900; color: var(--verdex-text); line-height: 1.25;
 }
+.mc-spotlight-cat {
+  justify-self: start; appearance: none; -webkit-appearance: none; font-family: inherit; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 9px; border-radius: 999px; border: 1px solid transparent;
+  font-size: 0.66rem; font-weight: 850;
+  transition: transform 0.12s, filter 0.12s;
+}
+.mc-spotlight-cat:active { transform: scale(0.96); filter: brightness(1.15); }
 .mc-spotlight-arena {
   display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: stretch;
 }
