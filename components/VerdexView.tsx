@@ -139,8 +139,6 @@ function MarketCard({
   const yesOdds = calcOdds("yes", market.yesPool, market.noPool);
   const noOdds  = calcOdds("no",  market.yesPool, market.noPool);
 
-  const crowdOnYes = yesPct >= 68;
-  const crowdOnNo  = yesPct <= 32;
   const isHot  = total >= 50 || (market.totalBettors ?? 0) >= 10;
   const isLive = market.status === "open" && !expired;
 
@@ -207,20 +205,16 @@ function MarketCard({
         </div>
       )}
 
-      {/* Bet buttons — odds as the hero */}
+      {/* Bet buttons — compact; crowd split is already shown in the signal bar above */}
       {isLive && !myBet && (
         <div className="mc-bets">
           <button className="mc-btn mc-btn--yes" onClick={() => onBet(market, "yes")} type="button">
             <span className="mc-btn-dir">YES</span>
             <strong className="mc-btn-odds">{yesOdds}</strong>
-            <span className="mc-btn-crowd">{yesPct}% crowd</span>
-            {crowdOnNo && <span className="mc-underdog">🎯 UNDERDOG</span>}
           </button>
           <button className="mc-btn mc-btn--no" onClick={() => onBet(market, "no")} type="button">
             <span className="mc-btn-dir">NO</span>
             <strong className="mc-btn-odds">{noOdds}</strong>
-            <span className="mc-btn-crowd">{100 - yesPct}% crowd</span>
-            {crowdOnYes && <span className="mc-underdog">🎯 UNDERDOG</span>}
           </button>
         </div>
       )}
@@ -281,6 +275,12 @@ function BetSheet({
   const finalAmount = custom ? parseFloat(custom) || 0 : amount;
   const valid       = finalAmount > 0 && finalAmount <= MAX_BET_WLD;
 
+  function adjustStake(delta: number) {
+    const next = Math.round(Math.min(MAX_BET_WLD, Math.max(0.1, finalAmount + delta)) * 10) / 10;
+    setAmount(next);
+    setCustom("");
+  }
+
   // Live recalculate as stake / position changes
   const payout      = calcPotentialPayout(finalAmount, position, market.yesPool, market.noPool);
   const profit      = Math.round((payout - finalAmount) * 10000) / 10000;
@@ -339,8 +339,43 @@ function BetSheet({
           </div>
         </div>
 
-        {/* Stake chips */}
+        {/* Stake stepper — fine control by hand, or type an exact amount */}
         <div className="verdex-amount-label">Your stake (WLD)</div>
+        <div className="verdex-amount-stepper">
+          <button
+            className="verdex-amount-step"
+            disabled={finalAmount <= 0.1}
+            onClick={() => adjustStake(-0.5)}
+            type="button"
+            aria-label="Decrease stake"
+          >
+            −
+          </button>
+          <div className="verdex-amount-field">
+            <input
+              className="verdex-amount-value"
+              inputMode="decimal"
+              max={MAX_BET_WLD}
+              min="0.1"
+              onChange={(e) => setCustom(e.target.value)}
+              step="0.1"
+              type="number"
+              value={custom !== "" ? custom : String(amount)}
+            />
+            <span className="verdex-amount-unit">WLD</span>
+          </div>
+          <button
+            className="verdex-amount-step"
+            disabled={finalAmount >= MAX_BET_WLD}
+            onClick={() => adjustStake(0.5)}
+            type="button"
+            aria-label="Increase stake"
+          >
+            +
+          </button>
+        </div>
+
+        {/* Quick presets */}
         <div className="verdex-amount-chips">
           {BET_CHIPS.map((chip) => (
             <button
@@ -352,17 +387,6 @@ function BetSheet({
               {chip}
             </button>
           ))}
-          <input
-            className="verdex-amount-custom"
-            inputMode="decimal"
-            max={MAX_BET_WLD}
-            min="0.1"
-            onChange={(e) => setCustom(e.target.value)}
-            placeholder="Custom"
-            step="0.1"
-            type="number"
-            value={custom}
-          />
         </div>
 
         {/* Summary row */}

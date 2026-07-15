@@ -798,7 +798,31 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
 .verdex-pos-no.active { border-color: rgba(255,77,109,0.34); color: var(--verdex-no); background: rgba(255,77,109,0.1); box-shadow: 0 0 18px rgba(255,77,109,0.14); }
 
 .verdex-amount-label { font-size: 0.74rem; font-weight: 950; color: var(--verdex-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.verdex-amount-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Stake stepper — tap +/- to fine-tune, or type an exact amount */
+.verdex-amount-stepper { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 10px; }
+.verdex-amount-step {
+  width: 44px; height: 44px; min-height: 44px; flex-shrink: 0; border-radius: 12px;
+  border: 1px solid var(--verdex-border); background: var(--verdex-surface);
+  color: var(--verdex-text); font-size: 1.4rem; font-weight: 900; line-height: 1;
+  display: grid; place-items: center; cursor: pointer; transition: background 0.14s;
+}
+.verdex-amount-step:active { background: var(--verdex-surface-2); }
+.verdex-amount-step:disabled { opacity: 0.35; cursor: not-allowed; }
+.verdex-amount-field {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  flex: 1; max-width: 150px; min-height: 44px; padding: 0 10px;
+  border: 1px solid var(--verdex-border); border-radius: 12px; background: var(--verdex-surface);
+}
+.verdex-amount-field:focus-within { border-color: var(--verdex-accent); }
+.verdex-amount-value {
+  flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+  text-align: center; font-size: 1.3rem; font-weight: 950; color: var(--verdex-text); padding: 0;
+}
+.verdex-amount-value::-webkit-outer-spin-button, .verdex-amount-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.verdex-amount-unit { font-size: 0.66rem; font-weight: 800; color: var(--verdex-muted); }
+
+.verdex-amount-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .verdex-amount-chip { min-height: 40px; min-width: 54px; border: 1px solid var(--verdex-border); border-radius: 12px; color: var(--verdex-muted); background: var(--verdex-surface); font-size: 0.9rem; font-weight: 950; }
 .verdex-amount-chip.active { border-color: var(--verdex-accent); color: var(--verdex-accent); background: rgba(99,102,241,0.14); }
 .verdex-amount-custom { min-height: 40px; flex: 1; min-width: 80px; border: 1px solid var(--verdex-border); border-radius: 12px; padding: 0 12px; color: var(--verdex-text); background: var(--verdex-surface); font-size: 0.9rem; font-weight: 900; outline: none; }
@@ -1823,16 +1847,18 @@ button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.
 .mc-mybet--no  { background: rgba(255,77,109,0.08); border: 1px solid rgba(255,77,109,0.22); color: var(--verdex-no); }
 .mc-mybet strong { font-weight: 900; color: inherit; }
 
-/* Bet buttons — the heart of the card */
+/* Bet buttons — compact single-row pills. Odds are flat (everyone gets the
+   same 2x on a correct call), so there's no per-side number worth a giant
+   hero treatment anymore — crowd split already lives in the signal bar above. */
 .mc-bets {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 8px; padding: 0 12px 10px;
+  gap: 6px; padding: 0 12px 8px;
 }
 
 .mc-btn {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 2px;
-  min-height: 74px; border: 0; border-radius: 14px; cursor: pointer;
+  display: flex; flex-direction: row;
+  align-items: baseline; justify-content: center; gap: 6px;
+  min-height: 42px; border: 0; border-radius: 10px; cursor: pointer;
   font-family: inherit; position: relative; overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   transition: transform 0.1s, filter 0.1s;
@@ -1849,32 +1875,18 @@ button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.
 }
 
 .mc-btn-dir {
-  font-size: 0.57rem; font-weight: 900; letter-spacing: 0.13em; opacity: 0.72;
+  font-size: 0.66rem; font-weight: 900; letter-spacing: 0.08em; opacity: 0.85;
   line-height: 1;
 }
 .mc-btn--yes .mc-btn-dir { color: var(--verdex-yes); }
 .mc-btn--no  .mc-btn-dir { color: var(--verdex-no);  }
 
 .mc-btn-odds {
-  font-size: 1.78rem; font-weight: 950;
-  line-height: 1.0; letter-spacing: -0.03em;
+  font-size: 1.02rem; font-weight: 950;
+  line-height: 1.0; letter-spacing: -0.02em;
 }
 .mc-btn--yes .mc-btn-odds { color: var(--verdex-yes); }
 .mc-btn--no  .mc-btn-odds { color: var(--verdex-no);  }
-
-.mc-btn-crowd {
-  font-size: 0.6rem; font-weight: 750; opacity: 0.6; line-height: 1;
-}
-.mc-btn--yes .mc-btn-crowd { color: var(--verdex-yes); }
-.mc-btn--no  .mc-btn-crowd { color: var(--verdex-no);  }
-
-.mc-underdog {
-  position: absolute; top: 5px; right: 5px;
-  font-size: 0.51rem; font-weight: 950; letter-spacing: 0.04em;
-  background: rgba(251,191,36,0.14); color: #fbbf24;
-  border: 1px solid rgba(251,191,36,0.3); border-radius: 4px;
-  padding: 2px 5px;
-}
 
 /* Footer */
 .mc-foot {
