@@ -1208,13 +1208,25 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
     }
     // Closed sorted by closesAt desc (most recently closed first)
     closed.sort((a, b) => new Date(b.closesAt).getTime() - new Date(a.closesAt).getTime());
+
+    // The DB now genuinely holds hundreds of open markets per category (fixed
+    // a hard-coded query limit that was silently hiding all but the first 40)
+    // — rendering all of them as cards in one scrollable feed would be a real
+    // performance problem on mobile. Cap the RENDERED list only; the fetched
+    // localMarkets/categoryCounts stats stay uncapped so "N markets live"
+    // numbers stay honest even though the visible feed is trimmed. Already
+    // sorted by relevance (featured → pool size, or soonest-closing for
+    // micro), so capping never hides the markets that matter most.
+    const MAX_RENDERED_OPEN_MARKETS = 50;
+    const openShown = open.slice(0, MAX_RENDERED_OPEN_MARKETS);
+
     // Never let closed/resolved markets outnumber live ones in the feed — a
     // long scroll of dead cards reads as "this app is mostly closed", which
     // undercuts every "there are more markets than you think" signal above.
-    // Cap closed to match the open count (floor of 3 so a category with zero
-    // open markets still shows a little recent history instead of nothing).
-    const closedLimit = Math.max(open.length, 3);
-    return [...open, ...closed.slice(0, closedLimit)];
+    // Cap closed to match the (post-cap) open count shown (floor of 3 so a
+    // category with zero open markets still shows a little recent history).
+    const closedLimit = Math.max(openShown.length, 3);
+    return [...openShown, ...closed.slice(0, closedLimit)];
   })();
 
   // Spotlighted market — computed once so the list below can exclude it and
