@@ -268,17 +268,20 @@ function BetSheet({
   onClose: () => void;
   onConfirm: (position: "yes" | "no", amount: number) => void;
 }) {
-  const [position, setPosition] = useState<"yes" | "no">(initialPosition);
-  const [amount, setAmount]     = useState(1);
-  const [custom, setCustom]     = useState("");
+  const [position, setPosition]   = useState<"yes" | "no">(initialPosition);
+  const [stakeText, setStakeText] = useState("1");
 
-  const finalAmount = custom ? parseFloat(custom) || 0 : amount;
+  const finalAmount = parseFloat(stakeText) || 0;
   const valid       = finalAmount > 0 && finalAmount <= MAX_BET_WLD;
 
+  // Functional update — reads the true latest value even if +/- is tapped
+  // faster than a render (a plain closure read of finalAmount would drop taps).
   function adjustStake(delta: number) {
-    const next = Math.round(Math.min(MAX_BET_WLD, Math.max(0.1, finalAmount + delta)) * 10) / 10;
-    setAmount(next);
-    setCustom("");
+    setStakeText((prev) => {
+      const cur = parseFloat(prev) || 0;
+      const next = Math.round(Math.min(MAX_BET_WLD, Math.max(0.1, cur + delta)) * 10) / 10;
+      return String(next);
+    });
   }
 
   // Live recalculate as stake / position changes
@@ -357,10 +360,10 @@ function BetSheet({
               inputMode="decimal"
               max={MAX_BET_WLD}
               min="0.1"
-              onChange={(e) => setCustom(e.target.value)}
+              onChange={(e) => setStakeText(e.target.value)}
               step="0.1"
               type="number"
-              value={custom !== "" ? custom : String(amount)}
+              value={stakeText}
             />
             <span className="verdex-amount-unit">WLD</span>
           </div>
@@ -380,8 +383,8 @@ function BetSheet({
           {BET_CHIPS.map((chip) => (
             <button
               key={chip}
-              className={`verdex-amount-chip${amount === chip && !custom ? " active" : ""}`}
-              onClick={() => { setAmount(chip); setCustom(""); }}
+              className={`verdex-amount-chip${finalAmount === chip ? " active" : ""}`}
+              onClick={() => setStakeText(String(chip))}
               type="button"
             >
               {chip}
