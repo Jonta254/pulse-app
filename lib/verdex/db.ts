@@ -56,6 +56,13 @@ function rowToMarket(row: MarketRow): VerdexMarket {
 
 // ── Markets ───────────────────────────────────────────────────────────────────
 
+// Generous ceiling, not a real page size — every category query (and the
+// "all" aggregate) was silently truncating at the old limit of 40, which
+// made markets past the 40th invisible with no error or indication anywhere.
+// This guards only against a genuine runaway (e.g. a broken generator loop),
+// not against the app's real scale.
+const MAX_OPEN_MARKETS_QUERY = 500;
+
 export async function getOpenMarkets(category?: string): Promise<VerdexMarket[] | null> {
   const db = getSupabaseClient();
   if (!db) return null;
@@ -66,7 +73,7 @@ export async function getOpenMarkets(category?: string): Promise<VerdexMarket[] 
     .eq("status", "open")
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(40);
+    .limit(MAX_OPEN_MARKETS_QUERY);
 
   if (category && category !== "all") {
     query = query.eq("category", category);
@@ -112,7 +119,9 @@ export async function upsertMarkets(markets: VerdexMarket[]): Promise<boolean> {
 export async function getOpenMarketsExposureWld(excludeMarketId?: string): Promise<number> {
   const db = getSupabaseClient();
   if (!db) return 0;
-  const { data } = await db.from("verdex_markets").select("id, yes_pool, no_pool").eq("status", "open");
+  // Explicit limit — this feeds a safety check, so it must never silently
+  // undercount via an implicit default row cap.
+  const { data } = await db.from("verdex_markets").select("id, yes_pool, no_pool").eq("status", "open").limit(MAX_OPEN_MARKETS_QUERY);
   return (data ?? [])
     .filter((m) => m.id !== excludeMarketId)
     .reduce((s, m) => s + Math.abs(Number(m.yes_pool) - Number(m.no_pool)), 0);
