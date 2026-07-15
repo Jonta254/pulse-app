@@ -1845,6 +1845,21 @@ button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.
 .mc-signal-lbl-y { color: var(--verdex-yes); }
 .mc-signal-lbl-n { color: var(--verdex-no); }
 
+/* Social proof — placed right before the bet buttons on purpose: seeing
+   others already staking (or "be first") right before the CTA reads far
+   stronger than the same line buried in a muted footer. */
+.mc-proof {
+  display: flex; align-items: center; gap: 5px;
+  padding: 0 12px 8px; font-size: 0.68rem; font-weight: 800; color: var(--verdex-text);
+}
+.mc-proof strong { color: var(--verdex-accent); font-weight: 950; }
+.mc-proof-dot {
+  width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+  background: var(--verdex-yes);
+  animation: mc-live 1.7s ease-in-out infinite;
+}
+.mc-proof-first { color: var(--verdex-gold); font-weight: 850; }
+
 /* My-bet banner */
 .mc-mybet {
   margin: 0 12px 8px; padding: 8px 11px; border-radius: 10px;
@@ -1908,7 +1923,7 @@ button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.
   display: flex; align-items: center; gap: 4px;
 }
 .mc-foot-pool .acc { color: var(--verdex-accent); }
-.mc-foot-actions { display: flex; align-items: center; gap: 6px; }
+.mc-foot-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 
 .mc-combo-wrap { display: flex; gap: 5px; }
 .mc-combo-btn {

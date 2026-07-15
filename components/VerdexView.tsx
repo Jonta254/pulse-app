@@ -197,6 +197,22 @@ function MarketCard({
         <span className="mc-signal-lbl-n">{100 - yesPct}% NO</span>
       </div>
 
+      {/* Social proof — right before the CTA, not buried in a muted footer:
+          people act on seeing others already act, and a fresh market reads as
+          "be first" (opportunity) rather than "empty" (dead). */}
+      {isLive && !myBet && (
+        <div className="mc-proof">
+          {total > 0 ? (
+            <>
+              <span className="mc-proof-dot" aria-hidden="true" />
+              <span><strong>{market.totalBettors ?? 0}</strong> staking · <strong>{formatPoolSize(total)}</strong> in play</span>
+            </>
+          ) : (
+            <span className="mc-proof-first">⚡ Be the first to stake</span>
+          )}
+        </div>
+      )}
+
       {/* My bet banner */}
       {myBet && (
         <div className={`mc-mybet mc-mybet--${myBet.position}`}>
@@ -219,13 +235,14 @@ function MarketCard({
         </div>
       )}
 
-      {/* Footer */}
+      {/* Footer — pool/humans info now lives in the proof strip above the
+          buttons for live markets (right before the CTA reads better than a
+          muted footnote); footer keeps showing it once you've already bet or
+          the market's closed, since the proof strip hides in both cases. */}
       <div className="mc-foot">
-        <span className="mc-foot-pool">
-          {total > 0
-            ? <><span className="acc">{formatPoolSize(total)} WLD</span> · {market.totalBettors ?? 0} humans</>
-            : "Be first to bet"}
-        </span>
+        {(!isLive || myBet) && total > 0 && (
+          <span className="mc-foot-pool"><span className="acc">{formatPoolSize(total)}</span> · {market.totalBettors ?? 0} humans</span>
+        )}
         {isLive && !myBet && (
           <div className="mc-foot-actions">
             {comboPick ? (
