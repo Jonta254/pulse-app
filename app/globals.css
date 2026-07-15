@@ -1751,9 +1751,12 @@ button, [role="button"], [role="tab"] { min-height: 44px; min-width: 44px; }
   border: 1px solid var(--verdex-border);
   border-left: 3px solid var(--verdex-border);
   overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 3px 14px rgba(0,0,0,0.22);
   transition: box-shadow 0.2s, transform 0.1s;
 }
-.mc:active { transform: scale(0.993); }
+.mc:active { transform: scale(0.993); box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 1px 6px rgba(0,0,0,0.18); }
+[data-theme="day"] .mc { box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 10px rgba(15,23,42,0.07); }
+[data-theme="day"] .mc:active { box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 1px 4px rgba(15,23,42,0.05); }
 
 .mc--featured {
   animation: mc-feat-glow 2.6s ease-in-out infinite;
@@ -1788,14 +1791,16 @@ button.mc-cat.mc-cat--btn {
   transition: transform 0.12s, filter 0.12s;
 }
 button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.15); }
-.mc-badge-feat { font-size: 0.57rem; font-weight: 900; letter-spacing: 0.04em; color: var(--verdex-gold); }
-.mc-badge-hot  { font-size: 0.57rem; font-weight: 900; letter-spacing: 0.04em; color: #fb923c; }
-.mc-badge-ai   {
+/* Badge chips — one consistent pill treatment (was a mix of bare colored
+   text and full chips, which read as inconsistent/unfinished) */
+.mc-badge {
+  display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; white-space: nowrap;
   font-size: 0.57rem; font-weight: 900; letter-spacing: 0.04em;
-  padding: 2px 5px; border-radius: 4px;
-  background: rgba(139,92,246,0.2); color: #a78bfa;
-  border: 1px solid rgba(139,92,246,0.28);
+  padding: 3px 6px; border-radius: 5px; border: 1px solid transparent; line-height: 1;
 }
+.mc-badge-feat { color: var(--verdex-gold); background: rgba(245,158,11,0.14); border-color: rgba(245,158,11,0.28); }
+.mc-badge-hot  { color: #fb923c; background: rgba(251,146,60,0.14); border-color: rgba(251,146,60,0.28); }
+.mc-badge-ai   { color: #a78bfa; background: rgba(139,92,246,0.16); border-color: rgba(139,92,246,0.28); }
 
 .mc-live-dot {
   width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
@@ -1815,14 +1820,17 @@ button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .mc-fair-tag {
-  display: block; padding: 0 12px 6px;
-  font-size: 0.59rem; font-weight: 750; color: var(--verdex-yes); opacity: 0.72;
+  display: inline-flex; align-items: center; gap: 3px; margin: 0 12px 7px;
+  font-size: 0.59rem; font-weight: 800; letter-spacing: 0.01em; color: var(--verdex-yes);
+  padding: 3px 7px; border-radius: 5px;
+  background: rgba(0,232,135,0.09); border: 1px solid rgba(0,232,135,0.2);
 }
 
 /* Signal bar — crowd sentiment */
 .mc-signal {
-  margin: 0 12px 3px; height: 5px; border-radius: 999px;
+  margin: 0 12px 3px; height: 6px; border-radius: 999px;
   overflow: hidden; display: flex; background: var(--verdex-surface-2);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12) inset;
 }
 .mc-signal-y {
   background: linear-gradient(90deg,#00e887,#00c97a);
@@ -1861,9 +1869,10 @@ button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.
   min-height: 42px; border: 0; border-radius: 10px; cursor: pointer;
   font-family: inherit; position: relative; overflow: hidden;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s, filter 0.1s;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.07) inset;
+  transition: transform 0.1s, filter 0.1s, box-shadow 0.1s;
 }
-.mc-btn:active { transform: scale(0.97); filter: brightness(1.12); }
+.mc-btn:active { transform: scale(0.97); filter: brightness(1.12); box-shadow: none; }
 
 .mc-btn--yes {
   background: linear-gradient(165deg, rgba(0,232,135,0.17) 0%, rgba(0,232,135,0.06) 100%);
@@ -2079,7 +2088,7 @@ button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.
   border-radius: 18px; margin-bottom: 14px; padding: 16px 18px;
   background: linear-gradient(135deg,rgba(245,158,11,0.08) 0%,rgba(99,102,241,0.06) 100%);
   border: 1.5px solid rgba(245,158,11,0.32);
-  box-shadow: 0 0 0 1px rgba(245,158,11,0.06);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 22px rgba(0,0,0,0.2), 0 0 0 1px rgba(245,158,11,0.06);
   display: grid; gap: 12px;
 }
 .mc-spotlight-head {

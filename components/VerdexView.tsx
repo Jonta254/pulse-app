@@ -170,9 +170,9 @@ function MarketCard({
               {meta.emoji} {meta.label.toUpperCase()}
             </span>
           )}
-          {market.featured && <span className="mc-badge-feat">⭐ FEATURED</span>}
-          {isHot && isLive && !market.featured && <span className="mc-badge-hot">🔥</span>}
-          {market.aiGenerated && <span className="mc-badge-ai">AI</span>}
+          {market.featured && <span className="mc-badge mc-badge-feat">⭐ FEATURED</span>}
+          {isHot && isLive && !market.featured && <span className="mc-badge mc-badge-hot">🔥 HOT</span>}
+          {market.aiGenerated && <span className="mc-badge mc-badge-ai">AI</span>}
         </div>
         <div className="mc-meta-right">
           {isLive && total > 0 && <span className="mc-live-dot" aria-label="Live" />}
