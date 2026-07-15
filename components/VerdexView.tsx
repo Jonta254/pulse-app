@@ -1208,7 +1208,13 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
     }
     // Closed sorted by closesAt desc (most recently closed first)
     closed.sort((a, b) => new Date(b.closesAt).getTime() - new Date(a.closesAt).getTime());
-    return [...open, ...closed];
+    // Never let closed/resolved markets outnumber live ones in the feed — a
+    // long scroll of dead cards reads as "this app is mostly closed", which
+    // undercuts every "there are more markets than you think" signal above.
+    // Cap closed to match the open count (floor of 3 so a category with zero
+    // open markets still shows a little recent history instead of nothing).
+    const closedLimit = Math.max(open.length, 3);
+    return [...open, ...closed.slice(0, closedLimit)];
   })();
 
   // Spotlighted market — computed once so the list below can exclude it and
