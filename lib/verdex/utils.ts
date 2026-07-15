@@ -14,7 +14,14 @@ export const MAX_BET_WLD = 5;
 // ── Storage ──────────────────────────────────────────────────────────────────
 
 export function loadVerdexBets(): VerdexBet[] {
-  return loadJsonFromStorage<VerdexBet[]>(STORAGE_BETS, []);
+  // Sort newest-first unconditionally — don't just trust storage order.
+  // New bets get prepended at placement time and the server-sync effect
+  // re-sorts too, but neither runs before this initial load (and the sync
+  // effect never runs at all for a preview-mode session without a real
+  // wallet), so a stale or out-of-order localStorage blob would otherwise
+  // display oldest-first until something happened to re-sort it.
+  const bets = loadJsonFromStorage<VerdexBet[]>(STORAGE_BETS, []);
+  return [...bets].sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
 }
 
 export function saveVerdexBets(bets: VerdexBet[]) {

@@ -241,7 +241,7 @@ function MarketCard({
           the market's closed, since the proof strip hides in both cases. */}
       <div className="mc-foot">
         {(!isLive || myBet) && total > 0 && (
-          <span className="mc-foot-pool"><span className="acc">{formatPoolSize(total)}</span> · {market.totalBettors ?? 0} humans</span>
+          <span className="mc-foot-pool"><span className="acc">{formatPoolSize(total)}</span> · {market.totalBettors ?? 0} {(market.totalBettors ?? 0) === 1 ? "human" : "humans"}</span>
         )}
         {isLive && !myBet && (
           <div className="mc-foot-actions">
@@ -1044,7 +1044,7 @@ function FeaturedSpotlight({
       <div className="mc-spotlight-foot">
         <span className="mc-spotlight-meta">
           {(market.totalBettors ?? 0) > 0
-            ? `${market.totalBettors} verified humans · ${formatPoolSize(total)} staked`
+            ? `${market.totalBettors} verified ${market.totalBettors === 1 ? "human" : "humans"} · ${formatPoolSize(total)} staked`
             : "Be the first verified human to predict"}
         </span>
         {isLive && (
@@ -1231,7 +1231,12 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   }, [verdexTab, humanIdentity]);
 
   // ── Filter markets ──────────────────────────────────────────────────────────
-  const filtered = category === "all" ? localMarkets : localMarkets.filter((m) => m.category === category);
+  // A market you've already staked on has nothing left to do in this feed (no
+  // buttons, just a static banner) — it belongs in My Bets, not cluttering
+  // discovery of markets you haven't acted on yet.
+  const betMarketIds = new Set(bets.filter((b) => b.confirmed).map((b) => b.marketId));
+  const byCategory = category === "all" ? localMarkets : localMarkets.filter((m) => m.category === category);
+  const filtered = byCategory.filter((m) => !betMarketIds.has(m.id));
 
   // Open markets first; within open: featured → pool size; then closed at bottom
   const sorted = (() => {
@@ -1817,7 +1822,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
             </div>
           ) : (
             <div className="verdex-mybets-list">
-              {[...bets].reverse().map((bet) => {
+              {bets.map((bet) => {
                 const result = getBetResult(bet);
                 const refunded = result === "refunded";
                 const won  = result === "won";
