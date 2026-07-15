@@ -13,9 +13,11 @@ import {
   calcPotentialPayout,
   calcYesPct,
   categoryMeta,
+  FLAT_PAYOUT_MULTIPLIER,
   formatCountdown,
   formatPoolSize,
   getBetResult,
+  MAX_BET_WLD,
   loadVerdexBets,
   loadVerdexCombos,
   loadVerdexGoals,
@@ -277,7 +279,7 @@ function BetSheet({
   const [custom, setCustom]     = useState("");
 
   const finalAmount = custom ? parseFloat(custom) || 0 : amount;
-  const valid       = finalAmount > 0 && finalAmount <= 100;
+  const valid       = finalAmount > 0 && finalAmount <= MAX_BET_WLD;
 
   // Live recalculate as stake / position changes
   const payout      = calcPotentialPayout(finalAmount, position, market.yesPool, market.noPool);
@@ -353,7 +355,7 @@ function BetSheet({
           <input
             className="verdex-amount-custom"
             inputMode="decimal"
-            max="100"
+            max={MAX_BET_WLD}
             min="0.1"
             onChange={(e) => setCustom(e.target.value)}
             placeholder="Custom"
@@ -397,7 +399,7 @@ function BetSheet({
         </button>
 
         <p className="verdex-sheet-note">
-          Payout is an estimate based on current pool. Final amount depends on the pool at market close. Platform fee: 2% of losing pool.
+          Guessed right → you receive exactly {FLAT_PAYOUT_MULTIPLIER.toFixed(0)}x your stake. Guessed wrong → your stake stays with the house. Max {MAX_BET_WLD} WLD per bet.
         </p>
       </div>
     </div>
@@ -1305,6 +1307,21 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
       feature: "tip-verdex",
       allowCustomAmount: false,
       success: `Bet placed! If ${position.toUpperCase()} wins → you receive ${projectedPayout.toFixed(2)} WLD (profit: +${projectedProfit.toFixed(2)} WLD)`,
+      // Treasury capacity must be confirmed BEFORE WLD leaves the wallet —
+      // rejecting after payment would strand a user's money with no bet on record.
+      preCheck: async () => {
+        try {
+          const res = await fetch("/api/verdex/bet/check", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ marketId: market.id, position, amountWld: amount }),
+          });
+          const payload = await res.json() as { ok: boolean; error?: string };
+          return payload;
+        } catch {
+          return { ok: false, error: "Couldn't verify treasury capacity — check your connection and try again." };
+        }
+      },
       onConfirmed: async (_amount, txReference) => {
         const betId = `verdex-bet-${Date.now()}`;
         const newBet: VerdexBet = {
@@ -1784,7 +1801,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
                           </span>
                         </div>
                         <span className="verdex-mybet-win-note">
-                          Estimated · updates as more humans bet
+                          Fixed payout · guaranteed if this side wins
                         </span>
                       </div>
                     )}
@@ -1873,7 +1890,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
             <div className="verdex-mybets-flow">
               <div className="verdex-flow-step">
                 <span className="verdex-flow-icon">💸</span>
-                <div><strong>You bet</strong><span>WLD goes to the market pool via World App</span></div>
+                <div><strong>You bet</strong><span>WLD goes to the treasury via World App</span></div>
               </div>
               <div className="verdex-flow-arrow">↓</div>
               <div className="verdex-flow-step">
@@ -1883,11 +1900,11 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
               <div className="verdex-flow-arrow">↓</div>
               <div className="verdex-flow-step won">
                 <span className="verdex-flow-icon">🏆</span>
-                <div><strong>Correct prediction</strong><span>Winning forecasters share the losers' pool pro-rata</span></div>
+                <div><strong>Correct prediction</strong><span>You receive exactly {FLAT_PAYOUT_MULTIPLIER.toFixed(0)}x your stake</span></div>
               </div>
               <div className="verdex-flow-step lost">
                 <span className="verdex-flow-icon">❌</span>
-                <div><strong>Wrong prediction</strong><span>Your stake funds the winners' payout</span></div>
+                <div><strong>Wrong prediction</strong><span>Your stake stays with the house</span></div>
               </div>
             </div>
           </div>

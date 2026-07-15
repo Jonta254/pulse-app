@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import type { VerdexMarket, VerdexGoal, VerdexLeaderEntry, VerdexClash } from "@/types/verdex";
-import { queuePayouts, type PayoutQueueEntry } from "./payouts";
+import { queuePayouts, getOwedPayoutsWld, type PayoutQueueEntry } from "./payouts";
+import { getTreasuryStatus } from "./treasury";
+import { FLAT_PAYOUT_MULTIPLIER } from "./utils";
 
 // ── Supabase client (server-side only, service role) ─────────────────────────
 
@@ -102,6 +104,58 @@ export async function upsertMarkets(markets: VerdexMarket[]): Promise<boolean> {
 
 // ── Bets ──────────────────────────────────────────────────────────────────────
 
+// Under flat 2x payouts, a market's worst-case liability is |yesPool - noPool|
+// — a perfectly balanced market breaks exactly even (2x the smaller side is
+// covered by both sides combined); an imbalanced one needs the treasury to
+// cover the gap. Sum across every open market for the conservative worst case
+// where every market breaks maximally against the house at once.
+export async function getOpenMarketsExposureWld(excludeMarketId?: string): Promise<number> {
+  const db = getSupabaseClient();
+  if (!db) return 0;
+  const { data } = await db.from("verdex_markets").select("id, yes_pool, no_pool").eq("status", "open");
+  return (data ?? [])
+    .filter((m) => m.id !== excludeMarketId)
+    .reduce((s, m) => s + Math.abs(Number(m.yes_pool) - Number(m.no_pool)), 0);
+}
+
+// Read-only capacity check — call BEFORE a bet's payment is initiated (money
+// must never move before we know the treasury can cover it) and again at
+// record time for an audit-trail warning (never to reject already-paid money).
+export async function checkBetCapacity(
+  marketId: string,
+  position: "yes" | "no",
+  amountWld: number,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const db = getSupabaseClient();
+  if (!db) return { ok: false, error: "Database not configured." };
+
+  const { data: market } = await db.from("verdex_markets").select("yes_pool, no_pool").eq("id", marketId).single();
+  if (!market) return { ok: false, error: "Market not found." };
+
+  const treasury = await getTreasuryStatus();
+  if (!treasury) return { ok: false, error: "Treasury not configured — betting is paused." };
+
+  const [otherExposure, owed] = await Promise.all([
+    getOpenMarketsExposureWld(marketId),
+    getOwedPayoutsWld(),
+  ]);
+
+  const curYes = Number(market.yes_pool);
+  const curNo = Number(market.no_pool);
+  const newYes = position === "yes" ? curYes + amountWld : curYes;
+  const newNo  = position === "no"  ? curNo  + amountWld : curNo;
+  const thisMarketExposure = Math.abs(newYes - newNo);
+
+  const projected = otherExposure + thisMarketExposure + owed;
+  if (projected > treasury.wldBalance) {
+    return {
+      ok: false,
+      error: "Betting is temporarily paused on this side — the treasury can't safely cover a larger imbalance right now. Try the other side or a smaller stake.",
+    };
+  }
+  return { ok: true };
+}
+
 export async function placeBet(bet: {
   id: string;
   marketId: string;
@@ -124,6 +178,15 @@ export async function placeBet(bet: {
   if (mErr || !market) return { ok: false, error: "Market not found." };
   if (market.status !== "open") return { ok: false, error: "Market is closed." };
   if (new Date(market.closes_at) < new Date()) return { ok: false, error: "Market betting has closed." };
+
+  // The real capacity gate runs BEFORE payment (see /api/verdex/bet/check).
+  // By this point the user's WLD has already left their wallet for the
+  // treasury, so this is a warning-only audit trail — never reject money
+  // that's already been paid, just flag the rare race-condition overage.
+  const capacity = await checkBetCapacity(bet.marketId, bet.position, bet.amountWld);
+  if (!capacity.ok) {
+    console.warn(`[verdex/db] placeBet: capacity exceeded after payment for bet ${bet.id} on market ${bet.marketId} — ${capacity.error}`);
+  }
 
   // Insert bet
   const { error: betErr } = await db.from("verdex_bets").insert({
@@ -435,24 +498,18 @@ export async function resolveMarket(marketId: string, outcome: "yes" | "no"): Pr
 
   if (bErr) return { ok: false, payouts: 0, error: "Failed to fetch bets." };
 
-  // Pools are computed from REAL confirmed bets only — never from the stored
-  // pool columns, which may include display/seed amounts. This guarantees the
-  // treasury can never owe more than it actually collected.
-  const yesPool = (bets as BetForPayout[]).filter((b) => b.position === "yes").reduce((s, b) => s + Number(b.amount_wld), 0);
-  const noPool = (bets as BetForPayout[]).filter((b) => b.position === "no").reduce((s, b) => s + Number(b.amount_wld), 0);
-  const winPool = outcome === "yes" ? yesPool : noPool;
-  const losePool = outcome === "yes" ? noPool : yesPool;
-  const platformFee = 0.02; // 2% of the losing pool — disclosed in the bet sheet
-  const netLosePool = losePool * (1 - platformFee);
-
+  // Flat payout: every winner gets exactly FLAT_PAYOUT_MULTIPLIER x their own
+  // stake — no longer a share of the losing pool. Losers get nothing (their
+  // stake is already sitting in the treasury from bet placement, so it just
+  // stays). Must match calcPotentialPayout in lib/verdex/utils.ts. Treasury
+  // safety for this model lives in checkBetCapacity, enforced at bet time.
   const winners = (bets as BetForPayout[]).filter((b) => b.position === outcome);
   let payoutCount = 0;
   const payoutQueue: PayoutQueueEntry[] = [];
 
   for (const winner of winners) {
     const stake = Number(winner.amount_wld);
-    const share = winPool > 0 ? (stake / winPool) * netLosePool : 0;
-    const payout = Math.round((stake + share) * 10000) / 10000;
+    const payout = Math.round(stake * FLAT_PAYOUT_MULTIPLIER * 10000) / 10000;
 
     await db.from("verdex_bets").update({ payout_wld: payout, paid_out: true, settled: true }).eq("id", winner.id);
 

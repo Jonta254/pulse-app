@@ -243,6 +243,15 @@ export function VerdexApp() {
     if (!amount || amount <= 0) return;
     setPaymentBusy(true);
     try {
+      if (paymentPrompt.preCheck) {
+        const check = await paymentPrompt.preCheck();
+        if (!check.ok) {
+          void hapticError();
+          setToast({ title: "Can't place that bet", detail: check.error ?? "Please try a different amount or side." });
+          setPaymentPrompt(null);
+          return;
+        }
+      }
       void hapticImpact();
       const result = await payWithWorld({
         amount,
@@ -319,7 +328,7 @@ export function VerdexApp() {
               <span className="verdex-gate-prop-icon">💰</span>
               <div>
                 <strong>Win WLD</strong>
-                <span>Pro-rata payout from the pool</span>
+                <span>Guess right, win 2x your stake</span>
               </div>
             </div>
             <div className="verdex-gate-prop">
@@ -449,10 +458,6 @@ export function VerdexApp() {
               <div className="verdex-payout-row">
                 <span>Network</span>
                 <strong>World Chain</strong>
-              </div>
-              <div className="verdex-payout-row">
-                <span>Fee</span>
-                <strong>2% of losing pool</strong>
               </div>
             </div>
             {paymentBusy ? (

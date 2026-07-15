@@ -44,6 +44,19 @@ export type PayoutRow = {
   paid_at: string | null;
 };
 
+// Sum of payouts already committed but not yet on-chain — a real liability
+// against the treasury balance regardless of how it's used (revenue
+// reporting, bet-capacity checks, etc.).
+export async function getOwedPayoutsWld(): Promise<number> {
+  const db = getDb();
+  if (!db) return 0;
+  const { data } = await db
+    .from("verdex_payouts")
+    .select("amount_wld")
+    .in("status", ["queued", "processing", "awaiting_wallet", "failed"]);
+  return Math.round((data ?? []).reduce((s, r) => s + Number(r.amount_wld), 0) * 10000) / 10000;
+}
+
 // Queue payouts at settlement. The bettor's nullifier IS their SIWE-verified
 // wallet address, so funds can only ever go to the wallet that placed the bet.
 export async function queuePayouts(entries: PayoutQueueEntry[]): Promise<number> {

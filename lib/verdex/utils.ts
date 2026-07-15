@@ -6,6 +6,11 @@ const STORAGE_GOALS  = "verdex_goals_v1";
 const STORAGE_COMBOS = "verdex_combos_v1";
 const STORAGE_LOCAL_POOLS = "verdex_local_pools_v1";
 
+// Per-bet ceiling under the flat 2x payout model — keeps any single bet's
+// worst-case treasury impact small; the real safety net is the aggregate
+// exposure cap in lib/verdex/db.ts, this is just a sane sanity ceiling.
+export const MAX_BET_WLD = 5;
+
 // ── Storage ──────────────────────────────────────────────────────────────────
 
 export function loadVerdexBets(): VerdexBet[] {
@@ -62,29 +67,26 @@ export function calcYesPct(yesPool: number, noPool: number): number {
   return Math.round((yesPool / total) * 100);
 }
 
+// Flat payout model: a correct call always pays exactly 2x the stake; a wrong
+// call forfeits the stake to the treasury (it's already there — every stake
+// is paid to the treasury address at bet time). Pool sizes no longer affect
+// the payout — they're kept as params so every call site (bet sheet, market
+// card, spotlight, combo odds) needs no signature changes. Safety against
+// this now depends entirely on the exposure cap enforced in
+// lib/verdex/db.ts (checkBetCapacity / placeBet) — see FLAT_PAYOUT_MULTIPLIER.
+export const FLAT_PAYOUT_MULTIPLIER = 2;
+
 export function calcPotentialPayout(
   betAmount: number,
-  position: "yes" | "no",
-  yesPool: number,
-  noPool: number,
+  _position: "yes" | "no",
+  _yesPool: number,
+  _noPool: number,
 ): number {
-  const winPool = position === "yes" ? yesPool : noPool;
-  const losePool = position === "yes" ? noPool : yesPool;
-  const platformFee = 0.02; // 2% — must match resolveMarket in db.ts
-  const net = losePool * (1 - platformFee);
-  const payout = betAmount + (betAmount / (winPool + betAmount)) * net;
-  return Math.round(payout * 100) / 100;
+  return Math.round(betAmount * FLAT_PAYOUT_MULTIPLIER * 100) / 100;
 }
 
-export function calcOdds(position: "yes" | "no", yesPool: number, noPool: number): string {
-  // Must derive from calcPotentialPayout (the same formula resolveMarket uses
-  // to actually pay out) — otherwise the odds badge shown on a card can
-  // promise a multiplier the real payout can't honor. Priced per 1 WLD so the
-  // number reflects real pool depth: a fresh market truthfully shows 1.00×
-  // ("be the first to bet") instead of a fake 2.00× that collapses to zero
-  // profit the moment someone actually places the bet.
-  const payout = calcPotentialPayout(1, position, yesPool, noPool);
-  return `${payout.toFixed(2)}×`;
+export function calcOdds(_position: "yes" | "no", _yesPool: number, _noPool: number): string {
+  return `${FLAT_PAYOUT_MULTIPLIER.toFixed(2)}×`;
 }
 
 // ── Countdown ────────────────────────────────────────────────────────────────

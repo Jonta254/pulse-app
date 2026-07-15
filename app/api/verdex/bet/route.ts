@@ -3,6 +3,7 @@ import { after } from "next/server";
 import { placeBet, isVerdexDbReady } from "@/lib/verdex/db";
 import { maybeRewardReferral } from "@/lib/verdex/referrals";
 import { isRateLimited, isWalletAddress, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
+import { MAX_BET_WLD } from "@/lib/verdex/utils";
 
 type BetBody = {
   id?: string;
@@ -38,8 +39,8 @@ export async function POST(req: NextRequest) {
     return noStoreJson({ error: "Position must be yes or no." }, { status: 400 });
   }
 
-  if (amountWld <= 0 || amountWld > 100) {
-    return noStoreJson({ error: "Bet amount must be between 0.1 and 100 WLD." }, { status: 400 });
+  if (amountWld <= 0 || amountWld > MAX_BET_WLD) {
+    return noStoreJson({ error: `Bet amount must be between 0.1 and ${MAX_BET_WLD} WLD.` }, { status: 400 });
   }
 
   if (!isVerdexDbReady()) {
