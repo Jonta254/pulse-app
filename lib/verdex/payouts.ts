@@ -3,7 +3,7 @@
 // records processing → paid/failed with tx hash, attempts, and errors.
 
 import { createClient } from "@supabase/supabase-js";
-import { getTreasuryStatus, isTreasuryPayoutEnabled, sendWldFromTreasury, treasuryDisabledReason } from "./treasury";
+import { getTreasuryStatus, getTreasuryWarnings, isTreasuryPayoutEnabled, sendWldFromTreasury, treasuryDisabledReason } from "./treasury";
 
 const MAX_ATTEMPTS = 3;
 
@@ -101,6 +101,7 @@ export type ProcessSummary = {
   skipped: number;
   paidWallets: string[];
   treasury?: { address: string; wldBalance: number; ethBalance: number };
+  warnings?: string[];
   results: Array<{ id: string; status: string; txHash?: string; error?: string }>;
   error?: string;
 };
@@ -138,6 +139,14 @@ export async function processQueuedPayouts(opts: { nullifier?: string; limit?: n
   const treasury = await getTreasuryStatus();
   if (!treasury) return { ...base, error: "Treasury signer not configured." };
   base.treasury = treasury;
+
+  // Proactive warning, logged on every real payout run — well before the hard
+  // gas/WLD floors below actually block a batch, so there's lead time to top up.
+  const warnings = getTreasuryWarnings(treasury);
+  if (warnings.length > 0) {
+    console.warn(`[verdex/treasury] ${warnings.join(" | ")}`);
+    base.warnings = warnings;
+  }
 
   const totalDue = (rows as PayoutRow[]).reduce((s, r) => s + Number(r.amount_wld), 0);
   if (treasury.wldBalance < totalDue) {

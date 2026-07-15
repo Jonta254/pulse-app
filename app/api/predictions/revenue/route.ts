@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getTreasuryStatus } from "@/lib/verdex/treasury";
+import { getTreasuryStatus, getTreasuryWarnings } from "@/lib/verdex/treasury";
 import { noStoreJson } from "@/lib/serverApi";
 
 // GET /api/predictions/revenue — owner's profit dashboard. CRON_SECRET only.
@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
     owedPayoutsWld,
     lifetimePaidWld,
     safeWithdrawWld,
+    warnings: treasury ? getTreasuryWarnings(treasury) : [],
     note: "safeWithdrawWld keeps every possible player claim covered. Withdrawing more risks failed payouts.",
   });
 }

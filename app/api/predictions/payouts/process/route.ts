@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { processQueuedPayouts, notifyPaidWinners } from "@/lib/verdex/payouts";
-import { getTreasuryStatus, isTreasuryPayoutEnabled, treasuryDisabledReason } from "@/lib/verdex/treasury";
+import { getTreasuryStatus, getTreasuryWarnings, isTreasuryPayoutEnabled, treasuryDisabledReason } from "@/lib/verdex/treasury";
 import { isRateLimited, noStoreJson, rateLimitResponse, readJsonBody } from "@/lib/serverApi";
 
 // POST /api/predictions/payouts/process — sends queued WLD payouts on World
@@ -60,5 +60,6 @@ export async function GET(req: NextRequest) {
     enabled,
     reason: enabled ? undefined : treasuryDisabledReason(),
     treasury,
+    warnings: treasury ? getTreasuryWarnings(treasury) : [],
   });
 }

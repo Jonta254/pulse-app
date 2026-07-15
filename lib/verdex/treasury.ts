@@ -66,6 +66,27 @@ export async function getTreasuryStatus(): Promise<TreasuryStatus | null> {
   };
 }
 
+// ── Balance monitoring ────────────────────────────────────────────────────────
+// Warn well before the hard gas floor in processQueuedPayouts (0.001 ETH) so
+// there's lead time to top up before payouts actually start failing.
+export const LOW_GAS_WARNING_ETH = 0.005;
+export const LOW_WLD_WARNING_WLD = 5;
+
+export function getTreasuryWarnings(status: TreasuryStatus): string[] {
+  const warnings: string[] = [];
+  if (status.ethBalance < LOW_GAS_WARNING_ETH) {
+    warnings.push(
+      `Low gas: ${status.ethBalance.toFixed(6)} ETH left (warn threshold ${LOW_GAS_WARNING_ETH} ETH). Payouts hard-fail below 0.001 ETH — top up soon.`,
+    );
+  }
+  if (status.wldBalance < LOW_WLD_WARNING_WLD) {
+    warnings.push(
+      `Low WLD: ${status.wldBalance.toFixed(4)} WLD left (warn threshold ${LOW_WLD_WARNING_WLD} WLD). Queued winner payouts may soon exceed this.`,
+    );
+  }
+  return warnings;
+}
+
 export type WldTransferResult =
   | { ok: true; txHash: string }
   | { ok: false; error: string };
