@@ -197,22 +197,6 @@ function MarketCard({
         <span className="mc-signal-lbl-n">{100 - yesPct}% NO</span>
       </div>
 
-      {/* Social proof — right before the CTA, not buried in a muted footer:
-          people act on seeing others already act, and a fresh market reads as
-          "be first" (opportunity) rather than "empty" (dead). */}
-      {isLive && !myBet && (
-        <div className="mc-proof">
-          {total > 0 ? (
-            <>
-              <span className="mc-proof-dot" aria-hidden="true" />
-              <span><strong>{market.totalBettors ?? 0}</strong> staking · <strong>{formatPoolSize(total)}</strong> in play</span>
-            </>
-          ) : (
-            <span className="mc-proof-first">⚡ Be the first to stake</span>
-          )}
-        </div>
-      )}
-
       {/* My bet banner */}
       {myBet && (
         <div className={`mc-mybet mc-mybet--${myBet.position}`}>
@@ -235,10 +219,27 @@ function MarketCard({
         </div>
       )}
 
-      {/* Footer — pool/humans info now lives in the proof strip above the
-          buttons for live markets (right before the CTA reads better than a
-          muted footnote); footer keeps showing it once you've already bet or
-          the market's closed, since the proof strip hides in both cases. */}
+      {/* Social proof — below the buttons per design feedback. Note: the
+          "first" copy ties to the real payout (flat 2x, same for everyone
+          who's right) rather than a fabricated first-mover bonus — there
+          is no bonus mechanic, so the line must not imply one. */}
+      {isLive && !myBet && (
+        <div className="mc-proof">
+          {total > 0 ? (
+            <>
+              <span className="mc-proof-dot" aria-hidden="true" />
+              <span><strong>{market.totalBettors ?? 0}</strong> staking · <strong>{formatPoolSize(total)}</strong> in play</span>
+            </>
+          ) : (
+            <span className="mc-proof-first">⚡ Be first — 2x on the line</span>
+          )}
+        </div>
+      )}
+
+      {/* Footer — pool/humans info now lives in the proof strip above for
+          live markets (right before the CTA reads better than a muted
+          footnote); footer keeps showing it once you've already bet or the
+          market's closed, since the proof strip hides in both cases. */}
       <div className="mc-foot">
         {(!isLive || myBet) && total > 0 && (
           <span className="mc-foot-pool"><span className="acc">{formatPoolSize(total)}</span> · {market.totalBettors ?? 0} {(market.totalBettors ?? 0) === 1 ? "human" : "humans"}</span>
