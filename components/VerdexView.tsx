@@ -413,27 +413,8 @@ function BetSheet({
           ))}
         </div>
 
-        {/* Summary row */}
-        <div className="verdex-payout-box">
-          <div className="verdex-payout-row">
-            <span>Your stake</span>
-            <strong>{valid ? `${finalAmount} WLD` : "—"}</strong>
-          </div>
-          <div className="verdex-payout-row">
-            <span>Total return if correct</span>
-            <strong className="verdex-payout-highlight">{valid ? `${payout.toFixed(4)} WLD` : "—"}</strong>
-          </div>
-          <div className="verdex-payout-row">
-            <span>Net profit if correct</span>
-            <strong className="verdex-profit-pos">{valid ? `+${profit.toFixed(4)} WLD` : "—"}</strong>
-          </div>
-          <div className="verdex-payout-row">
-            <span>Odds multiplier</span>
-            <strong style={{ color: "var(--verdex-accent)" }}>{valid ? `${multiplier}×` : "—"}</strong>
-          </div>
-        </div>
-
-        {/* Confirm — stake → win framing */}
+        {/* Confirm — stake → win framing. (The win-hero above already shows
+            stake/return/profit/multiplier — no need to restate them here.) */}
         <button
           className={`verdex-confirm-btn ${position}`}
           disabled={!valid}
@@ -967,11 +948,15 @@ function HeroNetworkCard({
                 <button
                   key={c}
                   className="mc-network-explore-chip"
-                  style={{ borderColor: `${m.color}40`, color: m.color }}
+                  style={{ borderColor: `${m.color}40` }}
                   onClick={() => onExplore(c)}
                   type="button"
                 >
-                  {m.emoji} {m.label} <b>{categoryCounts[c]}</b>
+                  {/* Label reads in the normal theme text color — the raw
+                      category hue (tuned to pop on a dark card) drops to
+                      ~2.2:1 contrast on this chip's plain white day-mode
+                      surface. The border keeps the category's color identity. */}
+                  {m.emoji} {m.label} <b style={{ color: m.color }}>{categoryCounts[c]}</b>
                 </button>
               );
             })}
