@@ -1117,12 +1117,22 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   }, []);
 
   // ── Fetch markets from API (auto-refresh every 3 min) ──────────────────────
+  // When fetching the "all" category, this response is also the full
+  // catalogue — reuse it for categoryCounts instead of firing a second,
+  // identical request (see the counts effect below, which skips its own
+  // fetch in that case).
   const fetchMarkets = useCallback(async (cat: string) => {
     try {
       const res = await fetch(`/api/verdex/markets?category=${cat}`, { cache: "no-store" });
       const payload = await res.json() as { ok: boolean; markets?: VerdexMarket[] };
       if (payload.ok && payload.markets?.length) {
         setLocalMarkets(applyLocalPools(payload.markets));
+        if (cat === "all") {
+          const counts: Partial<Record<VerdexCategory, number>> = {};
+          for (const m of payload.markets) counts[m.category] = (counts[m.category] ?? 0) + 1;
+          setCategoryCounts(counts);
+          setTotalMarketsAll(payload.markets.length);
+        }
       }
     } catch {
       // keep seed data on network failure
@@ -1139,7 +1149,10 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
   // ── Full catalogue counts (always "all", regardless of active tab) ─────────
   // Drives the category chips so a user on e.g. Sports still sees how many
   // Crypto/World/Culture markets are waiting, instead of just what's on screen.
+  // Skipped while browsing "all" — fetchMarkets above already requests the
+  // full catalogue in that case and derives these same counts from it.
   useEffect(() => {
+    if (category === "all") return;
     let alive = true;
     const loadCounts = () =>
       fetch("/api/verdex/markets?category=all", { cache: "no-store" })
@@ -1155,7 +1168,7 @@ export function VerdexView({ earnPoints, humanIdentity, openPayment, recordHisto
     void loadCounts();
     const t = setInterval(loadCounts, 3 * 60_000);
     return () => { alive = false; clearInterval(t); };
-  }, []);
+  }, [category]);
 
   // ── Jump straight into a category from anywhere (cards, spotlight, hero) ───
   const handleCategoryJump = useCallback((cat: VerdexCategory) => {
