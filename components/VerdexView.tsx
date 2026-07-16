@@ -910,6 +910,12 @@ function HeroNetworkCard({
   const now = Date.now();
   const open = markets.filter((m) => m.status === "open" && new Date(m.closesAt).getTime() > now);
   const totalHumans  = open.reduce((s, m) => s + (m.totalBettors ?? 0), 0);
+  // Below this, a raw headcount reads as a dead network rather than a real
+  // one — reframe as an invite ("Be Verified Human #N") instead of faking a
+  // bigger number. Once real activity crosses the threshold the honest count
+  // becomes the stronger signal, so it takes over automatically.
+  const HUMANS_INVITE_THRESHOLD = 10;
+  const humansLow    = totalHumans < HUMANS_INVITE_THRESHOLD;
   const totalWld     = open.reduce((s, m) => s + m.yesPool + m.noPool, 0);
   const avgYesPct    = open.length > 0
     ? Math.round(open.reduce((s, m) => s + calcYesPct(m.yesPool, m.noPool), 0) / open.length)
@@ -934,8 +940,8 @@ function HeroNetworkCard({
           <span>{catalogueSize > open.length ? "Markets Live" : "Open Markets"}</span>
         </div>
         <div className="mc-network-stat">
-          <strong>{totalHumans > 0 ? totalHumans.toLocaleString() : "—"}</strong>
-          <span>Humans Betting</span>
+          <strong>{humansLow ? `#${totalHumans + 1}` : totalHumans.toLocaleString()}</strong>
+          <span>{humansLow ? "Be Verified Human" : "Humans Betting"}</span>
         </div>
         <div className="mc-network-stat">
           <strong>{totalWld > 0 ? formatPoolSize(totalWld) : "—"}</strong>
