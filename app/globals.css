@@ -1845,8 +1845,8 @@ button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.
 .mc-signal-lbl-y { color: var(--verdex-yes); }
 .mc-signal-lbl-n { color: var(--verdex-no); }
 
-/* Social proof — placed right before the bet buttons on purpose: seeing
-   others already staking (or "be first") right before the CTA reads far
+/* Social proof — placed right below the bet buttons per design feedback:
+   seeing others already staking (or "be first") right after the CTA reads
    stronger than the same line buried in a muted footer. */
 .mc-proof {
   display: flex; align-items: center; gap: 5px;
@@ -1858,7 +1858,23 @@ button.mc-cat.mc-cat--btn:active { transform: scale(0.95); filter: brightness(1.
   background: var(--verdex-yes);
   animation: mc-live 1.7s ease-in-out infinite;
 }
-.mc-proof-first { color: var(--verdex-gold); font-weight: 850; }
+/* Empty-market badge — a sharp, high-contrast chip rather than plain text,
+   with the payout called out in a solid monospace tag for a "digital" feel. */
+.mc-proof-first {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border: 1px solid rgba(245,158,11,0.4); border-radius: 6px;
+  background: linear-gradient(135deg, rgba(245,158,11,0.18), rgba(245,158,11,0.05));
+  color: var(--verdex-gold); font-weight: 800; letter-spacing: 0.01em;
+}
+.mc-proof-bolt { font-size: 0.85em; filter: drop-shadow(0 0 4px rgba(245,158,11,0.65)); }
+.mc-proof-bonus {
+  font-family: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, monospace;
+  font-size: 0.74rem; font-weight: 950; letter-spacing: 0.04em;
+  color: #1a0f02; background: var(--verdex-gold);
+  padding: 1px 6px; border-radius: 4px;
+  box-shadow: 0 0 10px rgba(245,158,11,0.55);
+}
 
 /* My-bet banner */
 .mc-mybet {

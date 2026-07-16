@@ -219,10 +219,9 @@ function MarketCard({
         </div>
       )}
 
-      {/* Social proof — below the buttons per design feedback. Note: the
-          "first" copy ties to the real payout (flat 2x, same for everyone
-          who's right) rather than a fabricated first-mover bonus — there
-          is no bonus mechanic, so the line must not imply one. */}
+      {/* Social proof — below the buttons per design feedback. The empty-market
+          badge reads "bonus" as flavor for the real payout (flat 2x, same for
+          everyone who's right, not an extra first-mover reward on top). */}
       {isLive && !myBet && (
         <div className="mc-proof">
           {total > 0 ? (
@@ -231,7 +230,11 @@ function MarketCard({
               <span><strong>{market.totalBettors ?? 0}</strong> staking · <strong>{formatPoolSize(total)}</strong> in play</span>
             </>
           ) : (
-            <span className="mc-proof-first">⚡ Be first — 2x on the line</span>
+            <span className="mc-proof-first">
+              <span className="mc-proof-bolt" aria-hidden="true">⚡</span>
+              Be first
+              <b className="mc-proof-bonus">2X BONUS</b>
+            </span>
           )}
         </div>
       )}
